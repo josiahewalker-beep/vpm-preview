@@ -1,0 +1,1661 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex, nofollow"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body><title>Very Prosperous Men</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the room fills the screen; a quiet frame of type sits in the four corners like a title card. */
+:root {
+  --ink: #0d0b09;          /* ground behind the film frame */
+  --paper: #efe6d4;        /* text, warm print white */
+  --dim: #b7ab95;          /* secondary text */
+  --green: #9fc2a3;        /* the film's green (TV, jadeite) */
+  --rule: rgba(239, 230, 212, 0.22);
+  --scrim: rgba(13, 11, 9, 0.72);
+  --display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--paper); font-family: var(--mono); font-size: 13px; overflow: hidden; }
+a { color: var(--paper); }
+a:hover { color: var(--green); }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+
+#stage { position: fixed; inset: 0; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; }
+.bar { -webkit-user-select: none; user-select: none; }
+body.dragging-ui * { -webkit-user-select: none; user-select: none; }
+#stage.dragging { cursor: grabbing; }
+#stage.hot { cursor: pointer; }
+#gl, #poster { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* thread D: the live crucifix, drawn over the case close-up */
+#crux3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; touch-action: none; }
+#crux3d.on { opacity: 1; } #crux3d.live { pointer-events: auto; cursor: grab; } #crux3d.grab { cursor: grabbing; }
+/* page thread: the live family Bible over the Bible close-up (no fade: it is shown the instant it lifts off the rendered still) */
+#bible3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; touch-action: none; }
+#bible3d.on { opacity: 1; } #bible3d.live { pointer-events: auto; }
+#poster { object-fit: cover; }
+@media (max-aspect-ratio: 1/1) { #poster { top: 7%; height: 60%; object-position: 55% 50%; } }
+
+.bar { position: fixed; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+       padding-inline: max(16px, 2.2vw); pointer-events: none; z-index: 5; }
+.bar > * { pointer-events: auto; }
+.top { top: 0; padding-top: calc(env(safe-area-inset-top, 0px) + 14px); padding-bottom: 28px;
+       background: linear-gradient(var(--scrim), transparent); }
+.bottom { bottom: 0; align-items: flex-end; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); padding-top: 40px;
+          background: linear-gradient(transparent, var(--scrim)); flex-wrap: wrap; }
+.name { font-family: var(--display); font-size: 17px; letter-spacing: 0.02em; text-decoration: none; }
+nav.site { display: flex; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
+nav.site a { text-decoration: none; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; color: var(--dim); }
+nav.site a:hover { color: var(--paper); }
+
+.card { display: flex; flex-direction: column; gap: 8px; max-width: 34rem; min-width: 0; }
+.card .year { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.card h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(30px, 3.6vw, 50px); line-height: 1; letter-spacing: -0.01em; text-wrap: balance; }
+.card p { margin: 0; font-family: var(--display); font-style: italic; font-size: clamp(14px, 1.25vw, 17px); line-height: 1.4; color: var(--paper); max-width: 60ch; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.btn { font: inherit; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper); background: transparent;
+       border: 1px solid var(--rule); padding: 10px 14px; min-height: 40px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.btn:hover { border-color: var(--paper); color: var(--paper); }
+.btn.primary { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.btn.primary:hover { background: var(--green); border-color: var(--green); color: var(--ink); }
+
+.controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
+.hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; }
+.looks { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { font: inherit; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); background: transparent;
+        border: 1px solid transparent; padding: 6px 8px; cursor: pointer; }
+.chip[aria-pressed="true"] { color: var(--paper); border-color: var(--rule); }
+.chip kbd { font: inherit; opacity: 0.6; margin-right: 4px; }
+
+.panel { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--scrim); padding: 16px; }
+.sheet { background: var(--ink); border: 1px solid var(--rule); max-width: 46rem; width: 100%; max-height: 86vh; overflow: auto; padding: clamp(18px, 3vw, 36px);
+         display: flex; flex-direction: column; gap: 14px; }
+.sheet h2 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(24px, 3vw, 36px); }
+.sheet h3 { margin: 10px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
+.sheet p, .sheet li { font-family: var(--display); font-size: 16px; line-height: 1.5; margin: 0; max-width: 62ch; }
+.sheet ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.placeholder { color: var(--green); font-family: var(--mono); font-size: 12px; }
+.sheet .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.tvframe { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: #111; border-radius: 18px / 22px; overflow: hidden;
+           box-shadow: inset 0 0 60px rgba(0,0,0,0.9); }
+.tvframe img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1) brightness(0.9); }
+.tvframe .scan { position: absolute; inset: 0; background: repeating-linear-gradient(transparent 0 2px, rgba(0,0,0,0.25) 2px 3px); pointer-events: none; }
+
+.poster-sheet { max-width: min(34rem, calc(74vh * 0.675 + 72px)); }
+.poster-full { width: 100%; max-height: 74vh; object-fit: contain; display: block; }
+#tip { position: fixed; z-index: 7; pointer-events: none; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+       color: var(--ink); background: var(--paper); padding: 5px 8px; transform: translate(12px, -140%); white-space: nowrap; }
+.bottom .card { transition: opacity 0.6s ease; }
+body.away .bottom .card { opacity: 0; pointer-events: none; }
+body.tv .controls { opacity: 0; pointer-events: none; }
+@media (max-width: 900px) { body.tv #cuHint { display: none; } }   /* the channel strip takes the bottom edge while the set is on */
+#back { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 64px); left: max(16px, 2.2vw); z-index: 6; }
+#loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); z-index: 4; }
+
+#cuLayer { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+.tv-strip { position: absolute; inset: 0; pointer-events: none; }
+.tv-chan { position: absolute; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(52rem, calc(100% - 32px)); display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; pointer-events: auto; }
+.tv-chan button { font: inherit; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: rgba(13, 11, 9, 0.55); border: 1px solid transparent; padding: 8px 10px; cursor: pointer; min-height: 36px; }
+.tv-chan button[aria-selected="true"] { color: var(--paper); border-color: var(--rule); }
+.tv-guide { position: absolute; left: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); width: min(300px, 26%); pointer-events: auto; background: #e7dfcc; color: #221e1a; font-family: var(--display); font-size: 14px; line-height: 1.4; padding: 12px 14px; max-height: 40vh; overflow: auto; border: 1px solid rgba(34,30,26,0.35); box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+.tv-guide h3 { margin: 0 0 4px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #5a5247; font-weight: 500; }
+.tv-guide p { margin: 0 0 6px; }
+.tv-guide a { color: #221e1a; }
+@media (max-width: 900px) { .tv-guide { display: none; } }
+@media (max-width: 640px) { .tv-chan button { padding: 8px 7px; font-size: 9px; } }
+
+.psa { position: absolute; left: 50%; bottom: 17%; transform: translateX(-50%); width: min(40rem, calc(100% - 32px)); text-align: center;
+       opacity: 0; transition: opacity 1.4s ease; text-shadow: 0 1px 12px rgba(0,0,0,0.85); }
+.psa.on { opacity: 1; }
+.psa-main { margin: 0; font-family: var(--display); font-style: italic; font-size: clamp(22px, 3vw, 38px); line-height: 1.2; color: var(--paper); text-wrap: balance; }
+.psa-sub { margin: 10px 0 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
+.crux-cap { position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); width: min(36rem, calc(100% - 32px)); text-align: center;
+            opacity: 0; transition: opacity 1s ease 0.3s; text-shadow: 0 1px 12px rgba(0,0,0,0.9); }
+.crux-cap.on { opacity: 1; }
+.crux-cap p { margin: 0; font-family: var(--display); font-size: clamp(17px, 2vw, 24px); line-height: 1.35; color: var(--paper); text-wrap: balance; }
+.crux-cap .note { margin-top: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.cu-hint { position: absolute; right: max(16px, 2.2vw); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
+/* page thread: leafing controls while the Bible is open (phones have no arrow keys and see one page at a time) */
+.bible-strip { position: absolute; left: max(16px, 2.2vw); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; gap: 6px; pointer-events: auto; }
+.bible-strip button { font: inherit; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: rgba(13, 11, 9, 0.55); border: 1px solid transparent; padding: 8px 10px; cursor: pointer; min-height: 36px; }
+.bible-strip button:hover { color: var(--paper); border-color: var(--rule); }
+.bible-strip .pg { display: none; } @media (max-aspect-ratio: 1/1) { .bible-strip .pg { display: inline-block; } }
+.clipping { background: #e7dfcc; color: #221e1a; font-family: var(--display); max-width: 40rem; }
+.clipping h2 { font-weight: 600; line-height: 1.12; color: #221e1a; }
+.clipping p, .clipping blockquote { color: #221e1a; }
+.clipping a { color: #221e1a; }
+.clipping blockquote { margin: 4px 0; font-size: 24px; font-style: italic; text-align: center; }
+.clipping cite { display: block; margin-top: 6px; font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+.clip-mast { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.clipping .btn { color: #221e1a; border-color: rgba(34,30,26,0.3); }
+@media (max-width: 640px) {
+  nav.site { gap: 12px; }
+  .controls { align-items: flex-start; }
+  .hint, .looks { text-align: left; justify-content: flex-start; }
+  .bottom { flex-direction: column; align-items: stretch; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .top { padding-top: calc(env(safe-area-inset-top, 0px) + 8px); padding-bottom: 16px; }
+  .bottom { padding-top: 24px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); }
+  .card { gap: 4px; }
+  .card .year, .card p, .hint { display: none; }
+  .card h1 { font-size: 26px; }
+  .btn { min-height: 34px; padding: 6px 10px; }
+  .looks .chip { padding: 4px 6px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div id="stage" aria-label="The living room from the film. Drag to look around; click the window or the television.">
+  <img id="poster" src="frames/v_+00.0_00.jpg" alt="A 1962 living room: chevron sofa with an open salesman's case, a coffee table with Bibles, a smoking ashtray and the film's poster, and a powder-green television by a sunny window.">
+  <canvas id="gl"></canvas>
+  <canvas id="crux3d" hidden aria-hidden="true"></canvas><!-- thread D -->
+  <canvas id="bible3d" hidden aria-hidden="true"></canvas><!-- page thread: the family Bible -->
+</div>
+<div id="loading">Loading the room</div>
+
+<header class="bar top">
+  <a class="name" href="https://www.josiahwalker.com/">Josiah Walker</a>
+  <nav class="site" aria-label="Site">
+    <a href="https://www.josiahwalker.com/bio">Bio</a>
+    <a href="https://www.josiahwalker.com/contact">Contact</a>
+    <a href="https://www.instagram.com/josiahwalker_/">Instagram</a>
+    <a href="https://www.imdb.com/name/nm9711704/">IMDb</a>
+  </nav>
+</header>
+
+<button id="back" class="btn" hidden>Back to the room · Esc</button>
+
+<footer class="bar bottom">
+  <div class="card">
+    <span class="year">Short film · 26 min</span>
+    <h1>Very Prosperous Men</h1>
+    <p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer ↗</a>
+      <button class="btn" id="aboutBtn" type="button">About the film</button>
+      <button class="btn" id="soundBtn" type="button" aria-pressed="false">Sound off</button>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="hint" id="hint">Drag to look around · Click the window · Click the TV</div>
+    <div class="looks" role="group" aria-label="Film look">
+      <button class="chip" type="button" data-look="print62" aria-pressed="false"><kbd>1</kbd>1962 print</button>
+      <button class="chip" type="button" data-look="faded16" aria-pressed="false"><kbd>2</kbd>Faded 16mm</button>
+      <button class="chip" type="button" data-look="oldglass" aria-pressed="true"><kbd>3</kbd>Old glass</button>
+      <button class="chip" type="button" data-look="clean" aria-pressed="false"><kbd>4</kbd>Clean</button>
+      <button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button>
+    </div>
+  </div>
+</footer>
+
+<div class="panel" id="about" hidden role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="sheet">
+    <div class="row"><h2 id="aboutTitle">Very Prosperous Men</h2><button class="btn" type="button" data-close>Close</button></div>
+    <p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p>
+    <p><i>What gain has man from all his toil?</i></p>
+    <h3>Film</h3>
+    <ul>
+      <li>Horror · Thriller · Drama, 26 minutes</li>
+      <li>Directed by Josiah Walker</li>
+      <li>Written by Joshua Oakley and Josiah Walker</li>
+      <li>Produced by Tommy Koponen and Dominic Koponen</li>
+      <li>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar</li>
+      <li>Walker Motion Pictures presents a Render Social production</li>
+    </ul>
+    <h3>Festivals</h3>
+    <ul>
+      <li>Winner, Audience Choice Award, Screamfest Horror Film Festival 2025 (world premiere)</li>
+      <li>Official Selection, Raindance Film Festival 2026</li>
+      <li>Official Selection, FilmQuest 2025</li>
+      <li>Best Short, June–July 2026, Indie Short Fest</li>
+    </ul>
+    <h3>Press</h3>
+    <p>“Feature-caliber filmmaking in every frame.” <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">— Indie Short Fest jury, July 2026 · <a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">read the write-up ↗</a></span></p>
+    <p class="placeholder">[More press to come]</p>
+    <h3>Screenings</h3>
+    <p class="placeholder">[Upcoming screenings and release to come]</p>
+    <h3>Links</h3>
+    <ul>
+      <li><button class="btn" type="button" id="posterBtn">See the poster</button></li>
+      <li><a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Trailer on Vimeo ↗</a></li>
+      <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm ↗</a></li>
+      <li><a href="https://www.josiahwalker.com/bio" target="_blank" rel="noopener">Josiah Walker, bio ↗</a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="panel" id="posterpanel" hidden role="dialog" aria-modal="true" aria-label="Poster">
+  <div class="sheet poster-sheet">
+    <div class="row"><h2>The poster</h2><button class="btn" type="button" data-close>Close</button></div>
+    <img class="poster-full" src="frames/poster.jpg" alt="Very Prosperous Men theatrical poster" decoding="async">
+  </div>
+</div>
+<div id="tip" hidden></div>
+<div id="cuLayer" hidden aria-live="polite">
+  <div id="psa" class="psa" hidden>
+    <p class="psa-main">Every pack comes complimentary with emphysema.</p>
+    <p class="psa-sub">A public service message from Very Prosperous Men.</p>
+  </div>
+  <div id="cruxCap" class="crux-cap" hidden>
+    <p>A 12" crucifix. These are complimentary with the purchase of any Spurgeon Gold Leaf Edition Bibles.</p>
+    <p class="note">Note: All Bibles have been confirmed by the Vatican.</p>
+  </div>
+  <div id="tvStrip" class="tv-strip" hidden>
+    <div class="tv-chan" role="tablist" aria-label="Channels">
+      <button type="button" data-ch="2" role="tab">2 · Trailer</button><button type="button" data-ch="3" role="tab">3 · Synopsis</button><button type="button" data-ch="4" role="tab">4 · Stills</button><button type="button" data-ch="5" role="tab">5 · Cast &amp; Crew</button><button type="button" data-ch="6" role="tab">6 · Press</button><button type="button" data-ch="7" role="tab">7 · Screenings</button>
+    </div>
+    <div class="tv-guide" id="tvGuide" aria-live="polite"></div>
+  </div>
+  <div id="cuHint" class="cu-hint"></div>
+  <div id="bibleStrip" class="bible-strip" hidden><button type="button" data-turn="-1" aria-label="Previous leaf">‹ Turn back</button><button type="button" data-turn="1" aria-label="Next leaf">Turn ›</button><button type="button" class="pg" data-focus="-1">Left page</button><button type="button" class="pg" data-focus="1">Right page</button></div>
+</div>
+<div class="panel" id="clippanel" hidden role="dialog" aria-modal="true" aria-labelledby="clipTitle">
+  <article class="sheet clipping">
+    <div class="row"><span class="clip-mast">Indie Short Fest · July 12, 2026</span><button class="btn" type="button" data-close>Close</button></div>
+    <h2 id="clipTitle">Psychological Thriller “Very Prosperous Men” Named Best Short of June-July 2026 at Indie Short Fest</h2>
+    <p>Few short films balance moral tension, dark humor, and existential unease with the confidence displayed by <i>Very Prosperous Men</i>, the latest work from American filmmaker Josiah Walker. Awarded Best Short of the Season at Indie Short Fest for the June-July 2026 competition, the film transforms a seemingly straightforward crime story into a meditation on faith, guilt, and the quiet desperation that often hides beneath the pursuit of prosperity.</p>
+    <blockquote>“Feature-caliber filmmaking in every frame.”<cite>Indie Short Fest Jury Verdict</cite></blockquote>
+    <p><a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">Read the full write-up ↗</a></p>
+  </article>
+</div>
+<div class="panel" id="linkpanel" hidden role="dialog" aria-modal="true" aria-labelledby="linkTitle">
+  <div class="sheet" style="max-width: 30rem">
+    <div class="row"><h2 id="linkTitle"></h2><button class="btn" type="button" data-close>Close</button></div>
+    <p id="linkText"></p>
+    <div class="actions" id="linkActions"></div>
+  </div>
+</div>
+
+<div class="panel" id="tvpanel" hidden role="dialog" aria-modal="true" aria-labelledby="tvTitle">
+  <div class="sheet">
+    <div class="row"><h2 id="tvTitle">Now playing</h2><button class="btn" type="button" data-close>Close</button></div>
+    <div class="tvframe"><img src="frames/tv_screen.jpg" alt="Still from the film on the television"><div class="scan"></div></div>
+    <div class="row">
+      <p>The trailer plays on Vimeo.</p>
+      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer ↗</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const stage = $('#stage'), canvas = $('#gl'), poster = $('#poster'), loading = $('#loading');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- panels ----------
+function openPanel(el) { el.hidden = false; el.querySelector('[data-close]').focus(); }
+document.querySelectorAll('.panel').forEach(p => {
+  p.addEventListener('click', e => { if (e.target === p || e.target.hasAttribute('data-close')) p.hidden = true; });
+});
+$('#aboutBtn').addEventListener('click', () => openPanel($('#about')));
+$('#posterBtn').addEventListener('click', () => { $('#about').hidden = true; openPanel($('#posterpanel')); });
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { const open = [...document.querySelectorAll('.panel')].some(p => !p.hidden); document.querySelectorAll('.panel').forEach(p => p.hidden = true); if (!open) { if (cu) leaveCloseup(); else if (mode === 'window') leaveWindow(); } }
+  const k = { '1': 'print62', '2': 'faded16', '3': 'oldglass', '4': 'clean' }[e.key];
+  if (k && !e.target.closest('input,textarea')) setLook(k);
+});
+
+// ---------- film looks (same parameters as the still-image prototype) ----------
+const LOOKS = {
+  print62: { distort: 0.018, fringe: 0.0022, edge: 0.45, vig: 0.32, bloom: 0.10, hal: 0.30, halc: [1.0, 0.36, 0.14], lift: [0.030, 0.022, 0.018], gam: [0.97, 1.0, 1.06], gain: [1.03, 1.0, 0.93], sat: 0.88, con: 1.06, grain: 0.030, weave: 0.35 },
+  faded16: { distort: 0.03, fringe: 0.0035, edge: 0.7, vig: 0.48, bloom: 0.14, hal: 0.42, halc: [1.0, 0.42, 0.18], lift: [0.045, 0.06, 0.06], gam: [1.0, 0.98, 1.0], gain: [0.98, 0.97, 0.9], sat: 0.72, con: 0.94, grain: 0.06, weave: 0.7 },
+  oldglass: { distort: 0.045, fringe: 0.006, edge: 1.0, vig: 0.42, bloom: 0.26, hal: 0.55, halc: [1.0, 0.5, 0.25], lift: [0.02, 0.018, 0.02], gam: [0.98, 1.0, 1.03], gain: [1.02, 1.0, 0.95], sat: 0.9, con: 1.02, grain: 0.036, weave: 0.3 },
+  clean: { distort: 0, fringe: 0, edge: 0, vig: 0, bloom: 0, hal: 0, halc: [1, 1, 1], lift: [0, 0, 0], gam: [1, 1, 1], gain: [1, 1, 1], sat: 1, con: 1, grain: 0.008, weave: 0 },
+};
+let look = 'oldglass';
+function setLook(k) {
+  look = k;
+  document.querySelectorAll('.chip[data-look]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.look === k)));
+  try { localStorage.setItem('vpm-look', k); } catch (e) {}
+}
+try { const s = localStorage.getItem('vpm-look'); if (s && LOOKS[s]) setLook(s); } catch (e) {}
+document.querySelectorAll('.chip[data-look]').forEach(b => b.addEventListener('click', () => setLook(b.dataset.look)));
+
+// ---------- lite view ----------
+let lite = false;
+function setLite(v) {
+  lite = v; $('#liteBtn').setAttribute('aria-pressed', String(v));
+  canvas.hidden = v; poster.hidden = false;
+  $('#hint').textContent = v ? 'Lite view: a still of the room' : 'Drag to look around · Click the window · Click the TV';
+}
+$('#liteBtn').addEventListener('click', () => setLite(!lite));
+
+// ---------- sound (Web Audio, generated; starts on load where the browser allows it, else at the first gesture) ----------
+const QA_WEBM = /webmtest/.test(location.hash);   // headless Chromium has no H.264/AAC: QA runs against VP9/Vorbis copies (frames/_*.webm, _*.ogg)
+let actx = null, master = null, soundOn = false, sparkBus = null;
+function initAudio() {
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  master = actx.createGain(); master.gain.value = 0.0; master.connect(actx.destination);
+  sparkBus = actx.createGain(); sparkBus.gain.value = 0.075; sparkBus.connect(master); SND.master = master; SND.ctx = () => actx;   // every spark sound runs through here (Josiah 18:01: another 50% down)
+  // room tone: low filtered noise + 60 Hz hum from the television
+  const n = actx.createBufferSource(); n.buffer = noiseBuf(4); n.loop = true;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400;
+  const g = actx.createGain(); g.gain.value = 0.05; n.connect(lp).connect(g).connect(master); n.start();
+  // (the 60 Hz hum and the transformer buzz oscillators are gone: with Josiah's drone and spark recordings they read as a stray synth tone)
+}
+const audio = {};
+// ---------- Josiah's recordings (frames/*.mp4, AAC): drone under the room tone, sparks spliced per burst, pumpjack loop and
+// car pass-bys under the window view. Decoded once into buffers; until a buffer is in, the generated sound stands in.
+const SND = { buf: {}, loading: {}, drone: null, pump: null };
+const SPARK_SLICES = [[0.03,0.69],[2.195,3.22],[6.235,7.145],[9.72,11.06],[12.655,13.23],[15.85,16.48],[19.865,20.595],[23.78,24.465],[27.045,27.775],[30.935,31.945],[35.28,36.27],[37.4,37.875],[39.21,39.62],[41.2,41.895],[42.02,42.095],[43.74,45.285],[46.805,47.4],[49.47,50.48],[51.495,52.55],[53.525,53.9],[54.885,55.315],[55.36,55.435],[56.49,56.92],[57.71,58.11],[58.165,58.25],[59.485,59.79],[60.805,61.515],[63.885,64.335],[66.215,66.78],[66.82,66.94],[68.425,68.77],[69.595,70.09],[70.15,70.24],[71.4,72.07],[73.635,74.37],[75.81,76.435],[76.53,76.615]];   // [start, end] seconds of each sputter in sparks.mp4, cut at the transients
+function sndLoad(name, loop) {
+  if (!actx || SND.buf[name] || SND.loading[name]) return; SND.loading[name] = true;
+  fetch(QA_WEBM ? 'frames/_' + name + '.ogg' : 'frames/' + name + '.mp4').then(r => r.arrayBuffer()).then(ab => actx.decodeAudioData(ab)).then(b => {
+    return loop ? seamless(b, loop) : b;
+  }).then(b => {
+    SND.buf[name] = b; SND.loading[name] = false;
+    if (name === 'drone' && soundOn) droneStart();
+    if (name === 'pumpjack' && looping) pumpStart();
+  }).catch(() => { SND.loading[name] = false; });
+}
+function seamless(b, x) {   // a loop that joins without a click, rendered offline AT THE CONTEXT'S SAMPLE RATE (Safari mishandles
+  // looping a buffer of another rate): the file from x onward, its last x seconds crossfading (equal power) into its first x seconds
+  const sr = actx.sampleRate, L = b.duration - x; if (L <= x) return Promise.resolve(b);
+  const oc = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(b.numberOfChannels, Math.ceil(L * sr), sr);
+  const N = 128, down = new Float32Array(N), up = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const k = i / (N - 1); down[i] = Math.cos(k * Math.PI / 2); up[i] = Math.sin(k * Math.PI / 2); }
+  const s1 = oc.createBufferSource(), g1 = oc.createGain(); s1.buffer = b; s1.connect(g1).connect(oc.destination);
+  g1.gain.setValueAtTime(1, 0); g1.gain.setValueCurveAtTime(down, L - x, x); s1.start(0, x, L);
+  const s2 = oc.createBufferSource(), g2 = oc.createGain(); s2.buffer = b; s2.connect(g2).connect(oc.destination);
+  g2.gain.setValueAtTime(0, 0); g2.gain.setValueCurveAtTime(up, L - x, x); s2.start(L - x, 0, x);
+  return oc.startRendering();
+}
+function droneStart() {
+  if (SND.drone || !SND.buf.drone) return;
+  const s = actx.createBufferSource(); s.buffer = SND.buf.drone; s.loop = true; const g = actx.createGain(); g.gain.value = 0;
+  s.connect(g).connect(master); s.start(actx.currentTime, Math.random() * SND.buf.drone.duration); g.gain.setTargetAtTime(0.32, actx.currentTime, 1.5); SND.drone = { s, g };
+}
+function sndPreload() { sndLoad('sparks'); sndLoad('drone', 2.0); setTimeout(() => { sndLoad('pumpjack', 3.0); sndLoad('car_a'); sndLoad('car_b'); }, 4000); }
+function noiseBuf(sec) {
+  const b = actx.createBuffer(1, actx.sampleRate * sec, actx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b;
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+// --- the four spark textures; each takes a start time, an energy and a per-element gain and plays into sparkBus ---
+function sparkCrackle(t, e, k) {                         // (a) broadband highpass fizz with a random decay
+  const s = actx.createBufferSource(); s.buffer = noiseBuf(0.4);
+  const f = actx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
+  const g = actx.createGain(); g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.35 * e * k, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.18 + 0.2 * Math.random());
+  s.connect(f).connect(g).connect(sparkBus); s.start(t); s.stop(t + 0.45);
+}
+function sparkHiss(t, e, k) {                            // (b) arc hiss: bandpass noise, centre swept 2-6 kHz, amplitude wobbled by a jittery LFO
+  const dur = rnd(0.08, 0.30), s = actx.createBufferSource(); s.buffer = noiseBuf(dur + 0.05);
+  const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = rnd(2, 6);
+  f.frequency.setValueAtTime(rnd(2000, 6000), t); f.frequency.exponentialRampToValueAtTime(rnd(2000, 6000), t + dur);
+  const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.30 * e * k, t + 0.008);
+  const steps = Math.max(3, Math.floor(dur / 0.012));   // hand-drawn jitter instead of a smooth LFO: the arc stutters
+  for (let i = 1; i <= steps; i++) { const tt = t + dur * i / steps, env = 1 - i / steps; g.gain.linearRampToValueAtTime(0.30 * e * k * env * rnd(0.15, 1.0), tt); }
+  g.gain.linearRampToValueAtTime(0, t + dur + 0.01);
+  s.connect(f).connect(g).connect(sparkBus); s.start(t); s.stop(t + dur + 0.05);
+}
+function sparkPop(t, e, k) {                             // (c) dry pops: 3-8 ms lowpassed impulses, 1-4 in a cluster 15-90 ms apart
+  const n = 1 + Math.floor(Math.random() * 4); let tt = t;
+  for (let i = 0; i < n; i++) {
+    const w = rnd(0.003, 0.008), s = actx.createBufferSource(); s.buffer = noiseBuf(0.02);
+    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = rnd(900, 1500);
+    const g = actx.createGain(); g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(0.35 * e * k * rnd(0.5, 1), tt + 0.0008); g.gain.exponentialRampToValueAtTime(0.001, tt + w);
+    s.connect(f).connect(g).connect(sparkBus); s.start(tt); s.stop(tt + w + 0.01);
+    tt += rnd(0.015, 0.09);
+  }
+}
+function sparkZing(t, e, k) {                            // (d) metallic zing: a short decaying tone 2.8-5.5 kHz gliding down, with a detuned second partial
+  const dur = rnd(0.06, 0.20), f0 = rnd(2800, 5500);
+  for (const [ratio, gain, type] of [[1, 0.09, 'sine'], [rnd(1.3, 1.7), 0.045, 'triangle']]) {
+    const o = actx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0 * ratio, t); o.frequency.exponentialRampToValueAtTime(f0 * ratio * rnd(0.82, 0.94), t + dur);
+    const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain * e * k, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    o.connect(g).connect(sparkBus); o.start(t); o.stop(t + dur + 0.01);
+  }
+}
+const SPARK_KINDS = [sparkCrackle, sparkHiss, sparkPop, sparkZing];
+function sparkSound(energy) {                            // one burst -> one sputter from Josiah's recording, picked by the burst's energy
+  if (!soundOn || !actx || !sparkBus) return;
+  if (SND.buf.sparks) {
+    try {
+      const b = SND.buf.sparks, t = actx.currentTime;
+      const pool = SPARK_SLICES.filter(([a, e]) => energy < 0.85 ? e - a < 0.45 : energy < 1.15 ? e - a >= 0.3 && e - a < 0.8 : e - a >= 0.6);
+      const [a, e] = (pool.length ? pool : SPARK_SLICES)[Math.floor(Math.random() * (pool.length ? pool.length : SPARK_SLICES.length))];
+      const s = actx.createBufferSource(); s.buffer = b; s.playbackRate.value = 0.94 + Math.random() * 0.12;
+      const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6 * (0.7 + 0.4 * energy), t + 0.004);
+      g.gain.setValueAtTime(1.6 * (0.7 + 0.4 * energy), t + (e - a) - 0.03); g.gain.linearRampToValueAtTime(0, t + (e - a));
+      s.connect(g).connect(sparkBus); s.start(t, a, e - a + 0.01);
+    } catch (err) {}
+    return;
+  }
+  try {
+    const t = actx.currentTime, count = 1 + Math.floor(Math.random() * 3);
+    const pool = SPARK_KINDS.slice().sort(() => Math.random() - 0.5).slice(0, count);
+    const norm = 1 / Math.sqrt(count);                  // more elements, each a little quieter: the summed burst stays at about half the old level
+    for (const fn of pool) fn(t + rnd(0, 0.12), energy, rnd(0.4, 1.0) * norm);
+    if (audio.buzz) {                                   // the transformer buzz: random pitch 100-140 Hz and a random hold per burst
+      const d = rnd(0.06, 0.22);
+      if (audio.buzzOsc) audio.buzzOsc.frequency.setValueAtTime(rnd(100, 140), t);
+      audio.buzz.gain.setTargetAtTime(0.05 * energy * rnd(0.5, 1.0), t, 0.01); audio.buzz.gain.setTargetAtTime(0, t + d, rnd(0.03, 0.09));
+    }
+  } catch (e) {}
+}
+function crackle(energy) { sparkSound(energy); }        // kept for any older caller
+function curtainSound() {
+  if (!soundOn || !actx) return;
+  const t = actx.currentTime, s = actx.createBufferSource(); s.buffer = noiseBuf(1.6);
+  const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(2400, t + 1.2);
+  const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.15); g.gain.linearRampToValueAtTime(0.16, t + 1.0); g.gain.linearRampToValueAtTime(0, t + 1.4);
+  s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 1.6);
+  // rings sliding on the rod
+  for (let i = 0; i < 7; i++) { const o = actx.createOscillator(), og = actx.createGain(), tt = t + 0.12 + i * 0.16 + Math.random() * 0.05;
+    o.type = 'triangle'; o.frequency.value = 2600 + Math.random() * 900; og.gain.setValueAtTime(0.0, tt); og.gain.linearRampToValueAtTime(0.03, tt + 0.004); og.gain.exponentialRampToValueAtTime(0.0005, tt + 0.08);
+    o.connect(og).connect(master); o.start(tt); o.stop(tt + 0.1); }
+}
+let userMuted = false;
+function setSoundUI() { $('#soundBtn').textContent = soundOn ? 'Sound on' : 'Sound off'; $('#soundBtn').setAttribute('aria-pressed', String(soundOn)); }
+function autoSound() {   // turns sound on unless the button muted it; safe to call from any gesture, any number of times
+  if (soundOn || userMuted) return;
+  try {
+    if (!actx) initAudio();
+    const p = actx.resume();
+    const go = () => { if (soundOn || userMuted || actx.state !== 'running') return; soundOn = true; master.gain.setTargetAtTime(0.9, actx.currentTime, 0.6); setSoundUI(); sndPreload(); droneStart(); };
+    if (p && p.then) p.then(go, () => {}); go();
+  } catch (e) {}
+}
+function armAutoSound() {   // sound on at load where autoplay is allowed; otherwise at the very first gesture anywhere on the page
+  if (!(window.AudioContext || window.webkitAudioContext)) return;
+  autoSound();
+  const evs = ['pointerdown', 'keydown', 'touchend', 'click'], tgts = [window, document];
+  const onGesture = () => { autoSound(); if (soundOn || userMuted) for (const t of tgts) for (const ev of evs) t.removeEventListener(ev, onGesture, true); };
+  for (const t of tgts) for (const ev of evs) t.addEventListener(ev, onGesture, true);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') autoSound(); });
+  if (actx) actx.addEventListener && actx.addEventListener('statechange', () => { if (actx.state === 'running') autoSound(); });
+}
+$('#soundBtn').addEventListener('click', () => {
+  try {
+    if (!actx) initAudio();
+    soundOn = !soundOn; userMuted = !soundOn; actx.resume();
+    master.gain.setTargetAtTime(soundOn ? 0.9 : 0.0, actx.currentTime, 0.2);
+    setSoundUI(); if (soundOn) { sndPreload(); droneStart(); }
+  } catch (e) {}
+});
+try { armAutoSound(); } catch (e) {}
+window.__snd = SND; window.__sound = { sparkSound, autoSound, get soundOn() { return soundOn; }, get state() { return actx && actx.state; } };   // for headless QA
+
+// ---------- WebGL ----------
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+if (!gl) { setLite(true); $('#liteBtn').hidden = true; loading.hidden = true; return; }
+
+function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function prog(vs, fs) { const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); u[info.name.replace('[0]', '')] = gl.getUniformLocation(p, info.name); }
+  return { p, u }; }
+
+const FSQ_VS = `#version 300 es
+in vec2 a; out vec2 v; void main(){ v = a * 0.5 + 0.5; gl_Position = vec4(a, 0.0, 1.0); }`;
+// pass 1: blend the four nearest pre-rendered views, add the flickering light layers
+const COMP_FS = `#version 300 es
+precision highp float; in vec2 v; out vec4 o;
+uniform sampler2D b0, b1, b2, b3, l0, l1, l2, l3, d0, d1, d2, d3; uniform vec4 w; uniform vec2 sc, fc, vc; uniform vec2 zc; uniform float zoom;
+uniform vec3 cp0, cp1, cp2, cp3, cc; uniform mat3 vr0, vr1, vr2, vr3, cr; uniform vec4 hasD; uniform float tx, ty;
+const float ZNEAR = 0.3, ZFAR = 60.0;
+float depthAt(sampler2D d, vec2 s){ vec4 t = texture(d, s); float n = (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / 65535.0;
+  return 1.0 / (1.0 / ZFAR + n * (1.0 / ZNEAR - 1.0 / ZFAR)); }
+// backward warp: find where this pixel of the current camera sits in view (ci, ri), using that view's depth map
+vec2 warp(sampler2D d, vec3 ci, mat3 ri, vec2 f){
+  vec2 s = f;
+  for (int k = 0; k < 3; k++) {
+    float z = depthAt(d, clamp(s, 0.001, 0.999));
+    vec3 pw = ci + ri * vec3((s.x * 2.0 - 1.0) * tx * z, (1.0 - s.y * 2.0) * ty * z, -z);
+    vec3 q = transpose(cr) * (pw - cc);
+    vec2 uc = vec2(0.5 + (q.x / -q.z) / tx * 0.5, 0.5 - (q.y / -q.z) / ty * 0.5);
+    s += f - uc;
+  }
+  return s;
+}
+uniform float head, spark; uniform float fade; uniform sampler2D alt; uniform float altMix; uniform sampler2D alt2; uniform float alt2Mix; uniform vec2 a2h; uniform float a2s;
+void main(){
+  vec2 uv0 = fc + (v - vc) * sc; vec2 uv = zc + (uv0 - zc) / zoom; uv.y = 1.0 - uv.y; uv0.y = 1.0 - uv0.y;
+  // settled on one rendered view: no warping needed; otherwise warp only the views that carry weight
+  bool single = w.x > 0.999;
+  vec3 c = vec3(0.0); vec2 L = vec2(0.0);
+  if (w.x > 0.001) { vec2 s = (!single && hasD.x > 0.5) ? warp(d0, cp0, vr0, uv) : uv; c += texture(b0, s).rgb * w.x; L += texture(l0, s).rg * w.x; }
+  if (w.y > 0.001) { vec2 s = hasD.y > 0.5 ? warp(d1, cp1, vr1, uv) : uv; c += texture(b1, s).rgb * w.y; L += texture(l1, s).rg * w.y; }
+  if (w.z > 0.001) { vec2 s = hasD.z > 0.5 ? warp(d2, cp2, vr2, uv) : uv; c += texture(b2, s).rgb * w.z; L += texture(l2, s).rg * w.z; }
+  if (w.w > 0.001) { vec2 s = hasD.w > 0.5 ? warp(d3, cp3, vr3, uv) : uv; c += texture(b3, s).rgb * w.w; L += texture(l3, s).rg * w.w; }
+  c += L.g * 0.25 * head * vec3(1.0, 0.93, 0.8) * 1.2;
+  c += L.r * 0.25 * spark * vec3(1.0, 0.58, 0.25) * 1.5;
+  vec3 a = texture(alt, uv0).rgb;
+  c = mix(c, a, altMix);
+  if (alt2Mix > 0.0) {                                  // second image grows out of the point a2h (image space) to fill the frame
+    vec2 u2 = a2h + (uv0 - a2h) / a2s;
+    float inside = step(0.0, u2.x) * step(u2.x, 1.0) * step(0.0, u2.y) * step(u2.y, 1.0);
+    c = mix(c, texture(alt2, u2).rgb, alt2Mix * inside);
+  }
+  vec2 uc = mix(uv, uv0, altMix);
+  bool out_ = uc.x < 0.0 || uc.x > 1.0 || uc.y < 0.0 || uc.y > 1.0;
+  o = vec4(out_ ? vec3(0.05, 0.045, 0.04) : c * fade, 1.0);
+}`;
+// pass 2a: cigarette smoke, drawn on a quad anchored at the ember
+const SMOKE_VS = `#version 300 es
+in vec2 a; in vec2 q; out vec2 lq; void main(){ lq = q; gl_Position = vec4(a, 0.0, 1.0); }`;
+const SMOKE_FS = `#version 300 es
+precision highp float; in vec2 lq; out vec4 o; uniform float t, gain;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
+float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
+void main(){
+  float y = lq.y, x = lq.x;
+  float lam = smoothstep(0.05, 0.28, y);
+  float wander = (fbm(vec2(y * 2.6 - t * 0.32, t * 0.07)) - 0.5) * 0.85 * lam + sin(y * 10.0 - t * 1.6) * 0.04 * lam;
+  float sway = (fbm(vec2(t * 0.06, 3.1)) - 0.5) * 0.7 * y * y;
+  float dx = x - wander - sway;
+  float width = 0.010 + 0.20 * lam * lam;
+  float core = exp(-dx * dx / (width * width));
+  float fil = fbm(vec2(dx * 7.0 / (0.3 + lam), y * 5.5 - t * 0.85));
+  float brk = mix(1.0, smoothstep(0.38, 0.78, fil) * 1.6, lam);
+  float fade = smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(0.5, 1.0, y));
+  float d = core * brk * fade * mix(1.0, 0.32, lam);
+  o = vec4(vec3(0.84, 0.88, 0.95) * d * gain, 1.0);
+}`;
+// pass 2b: spark streaks and the hot glow at the nozzle
+const PART_VS = `#version 300 es
+in vec2 a; in vec4 c; out vec4 vc; void main(){ vc = c; gl_Position = vec4(a, 0.0, 1.0); }`;
+const PART_FS = `#version 300 es
+precision highp float; in vec4 vc; out vec4 o; void main(){ o = vec4(vc.rgb * vc.a, 1.0); }`;
+// pass 2c: the picture tube's faint roll bar and flicker
+const TV_FS = `#version 300 es
+precision highp float; out vec4 o; uniform float bandY, bandH, amp;
+void main(){ float b = exp(-pow((gl_FragCoord.y - bandY) / bandH, 2.0)); o = vec4(vec3(0.85, 0.92, 1.0) * amp * (0.35 + b), 1.0); }`;
+// pass 2d: the man in the kitchen doorway, a lit RGBA sprite (premultiplied) seen in the mirror, clipped to the glass and
+// the door opening. Drawn "over" (ONE, ONE_MINUS_SRC_ALPHA); k = opacity (the glass's darkening, or a ghost's weight),
+// tint = the mirror's faint warmth. sil = 1 for the old walker.json silhouette sheet (r = coverage, black).
+const WALK_VS = `#version 300 es
+in vec2 a; in vec2 q; out vec2 uv; void main(){ uv = q; gl_Position = vec4(a, 0.0, 1.0); }`;
+const WALK_FS = `#version 300 es
+precision highp float; in vec2 uv; out vec4 o; uniform sampler2D s; uniform vec2 g[4]; uniform vec2 d[4]; uniform float k, sil; uniform vec3 tint;
+bool inq(vec2 P0, vec2 P1, vec2 P2, vec2 P3, vec2 p){
+  vec2 P[4] = vec2[4](P0, P1, P2, P3); bool pos = true, neg = true;
+  for (int i = 0; i < 4; i++) { vec2 a = P[i], b = P[(i + 1) % 4]; float c = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x); pos = pos && c >= 0.0; neg = neg && c <= 0.0; }
+  return pos || neg; }
+void main(){
+  vec2 p = gl_FragCoord.xy;
+  if (!inq(g[0], g[1], g[2], g[3], p) || !inq(d[0], d[1], d[2], d[3], p)) discard;
+  vec4 c = texture(s, uv);
+  o = sil > 0.5 ? vec4(0.0, 0.0, 0.0, c.r * k) : vec4(c.rgb * tint, c.a) * k;
+}`;
+// pass 3: lens and print
+const FILM_FS = `#version 300 es
+precision highp float; in vec2 v; out vec4 o;
+uniform sampler2D s; uniform vec2 res; uniform float t;
+uniform float distort, fringe, edge, vig, bloom, hal, sat, con, grain; uniform vec3 halc, lift, gam, gain; uniform vec2 weave;
+float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+  vec2 uv = v + weave / res;
+  vec2 nn = (uv - 0.5) * vec2(2.0, 2.0 * res.y / res.x); float r2 = dot(nn, nn);
+  float sgeo = 1.0 - distort * 0.25 + distort * r2 * 0.25;
+  float lod = edge * pow(clamp((sqrt(r2) - 0.45) / 0.75, 0.0, 1.0), 1.5) * 2.2;
+  vec3 c;
+  c.r = textureLod(s, 0.5 + (uv - 0.5) * sgeo * (1.0 + fringe), lod).r;
+  c.g = textureLod(s, 0.5 + (uv - 0.5) * sgeo, lod).g;
+  c.b = textureLod(s, 0.5 + (uv - 0.5) * sgeo * (1.0 - fringe), lod).b;
+  vec2 uvg = 0.5 + (uv - 0.5) * sgeo;
+  vec3 g1 = textureLod(s, uvg, 3.5).rgb, g2 = textureLod(s, uvg, 5.5).rgb;
+  float l1 = dot(g1, vec3(0.2126, 0.7152, 0.0722)), l2 = dot(g2, vec3(0.2126, 0.7152, 0.0722));
+  c += max(g2 - 0.62, 0.0) * bloom * 2.0;
+  c += halc * (max(l1 - 0.62, 0.0) + 0.6 * max(l2 - 0.62, 0.0)) * hal;
+  c *= 1.0 - vig * pow(clamp(r2 / 1.6, 0.0, 1.0), 1.3);
+  c = clamp(0.5 + (c - 0.5) * con, 0.0, 1.0);
+  c = pow(c, gam) * gain; c = lift + c * (1.0 - lift);
+  float y = dot(c, vec3(0.299, 0.587, 0.114)); c = y + (c - y) * sat;
+  float mid = 0.35 + 0.65 * 4.0 * y * (1.0 - y);
+  float gn = (h(gl_FragCoord.xy + t * 91.7) + h(gl_FragCoord.xy * 1.37 + t * 13.1) - 1.0);
+  c += gn * grain * mid;
+  o = vec4(c, 1.0);
+}`;
+
+const P = { comp: prog(FSQ_VS, COMP_FS), smoke: prog(SMOKE_VS, SMOKE_FS), part: prog(PART_VS, PART_FS), film: prog(FSQ_VS, FILM_FS), tv: prog(SMOKE_VS, TV_FS), walk: prog(WALK_VS, WALK_FS) };
+const walkBuf = gl.createBuffer();
+const tvBuf = gl.createBuffer();
+const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+const smokeBuf = gl.createBuffer(), partBuf = gl.createBuffer();
+function fsq(p) { gl.useProgram(p.p); gl.bindBuffer(gl.ARRAY_BUFFER, quad); const loc = gl.getAttribLocation(p.p, 'a');
+  gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disableVertexAttribArray(loc); }
+
+function tex(img, raw) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, raw ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  const f = raw ? gl.NEAREST : gl.LINEAR;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; }
+const black = (() => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255])); return t; })();
+
+// offscreen target for the film pass (mipmapped for glow and edge softness)
+let fbo = null, fboTex = null, W = 0, H = 0;
+function resize() {
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const w = Math.round(stage.clientWidth * dpr), h = Math.round(stage.clientHeight * dpr);
+  if (w === W && h === H) return; W = canvas.width = w; H = canvas.height = h;
+  if (fboTex) gl.deleteTexture(fboTex); if (fbo) gl.deleteFramebuffer(fbo);
+  fboTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, fboTex);
+  gl.texStorage2D(gl.TEXTURE_2D, 1 + Math.floor(Math.log2(Math.max(W, H))), gl.RGBA8, W, H);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+addEventListener('resize', resize);
+
+// ---------- the view grid ----------
+let views = null, TS = [], TILTS = [], FA = 1.6;
+const cache = new Map();   // name -> {b, l} textures
+const SMALL = Math.max(innerWidth, innerHeight) < 1000 || (navigator.connection && navigator.connection.saveData);   // phones get the 960px frames
+function vname(t, tilt) { const s = (t >= 0 ? '+' : '-') + String(Math.abs(t).toFixed(1)).padStart(4, '0'); return `${s}_${String(Math.round(tilt)).padStart(2, '0')}`; }
+function loadView(name) {
+  if (cache.has(name)) return cache.get(name);
+  const e = { b: null, l: null, d: null, pending: true }; cache.set(name, e);
+  const ib = new Image(), il = new Image(), id = new Image(); let n = 0;
+  const done = () => { if (++n === 3) { e.b = tex(ib); e.l = il.naturalWidth ? tex(il) : black; e.d = id.naturalWidth ? tex(id, true) : null; e.pending = false; } };
+  ib.onload = done; il.onload = done; il.onerror = done; id.onload = done; id.onerror = done; ib.onerror = () => { e.pending = false; };
+  id.src = `frames/d_${name}.png`;
+  ib.src = SMALL ? `frames/m/v_${name}.jpg` : `frames/v_${name}.jpg`; il.src = `frames/l_${name}.png`; return e;
+}
+fetch('views.json').then(r => r.json()).then(j => {
+  views = j.views; FA = j.res[0] / j.res[1]; FEATURES = j.features || {};
+  TS = [...new Set(views.map(v => v.t))].sort((a, b) => a - b); TILTS = [...new Set(views.map(v => v.tilt))].sort((a, b) => a - b);
+  // load the centre first, then outward; the far ends last
+  const order = views.slice().sort((a, b) => (Math.abs(a.t) + a.tilt * 1.5) - (Math.abs(b.t) + b.tilt * 1.5));
+  let i = 0; const next = () => { if (i < order.length) { loadView(vname(order[i].t, order[i].tilt)); i++; setTimeout(next, i < 6 ? 0 : 40); } };
+  next();
+  resize(); requestAnimationFrame(frame);
+});
+const VIEWMAP = () => { const m = new Map(); for (const v of views) m.set(vname(v.t, v.tilt), v); return m; };
+let vmap = null;
+
+// ---------- camera state (swing t, tilt), drag and ease back ----------
+let t = 0, tilt = 0, gt = 0, gtilt = 0, drag = null, mode = 'room';   // g* = where the hand is, t/tilt = where the camera is
+const T_MAX = 35, TILT_MAX = 12;
+stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui'); drag = { x: e.clientX, y: e.clientY, t0: gt, tilt0: gtilt, moved: 0 }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
+stage.addEventListener('pointermove', e => {
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    const k = 70 / Math.max(420, stage.clientWidth * 0.55);
+    drag.last = performance.now();
+    gt = Math.max(-T_MAX, Math.min(T_MAX, drag.t0 - dx * k));
+    gtilt = Math.max(0, Math.min(TILT_MAX, drag.tilt0 + dy * k * 0.8));
+  } else if (mode === 'closeup') {
+    const r = stage.getBoundingClientRect(), h = cuHotspot((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    stage.classList.toggle('hot', !!h && !h.info); const tip = $('#tip'); tip.hidden = !h;
+    if (h) { tip.textContent = h.label; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; }
+  } else if (mode === 'room') {
+    const h = hit(e.clientX, e.clientY); stage.classList.toggle('hot', !!h);
+    const tip = $('#tip'); const label = h ? (h.label || (h === 'window' ? 'Look outside' : 'Watch the trailer')) : null;
+    tip.hidden = !label; if (label) { tip.textContent = label; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; }
+  }
+});
+function endDrag(e) {
+  document.body.classList.remove('dragging-ui');
+  if (!drag) return; stage.classList.remove('dragging'); $('#tip').hidden = true;
+  if (drag.moved < 6) { const h = hit(e.clientX, e.clientY); if (h === 'window') enterWindow(); else if (h === 'tv') openTV(); else if (h && h.act) h.act(); }
+  else if (TS.length) {   // stay here: settle on the nearest rendered view so the resting frame is a full render
+    gt = TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]);
+    gtilt = TILTS.reduce((a, b) => Math.abs(b - gtilt) < Math.abs(a - gtilt) ? b : a, TILTS[0]);
+  }
+  drag = null;
+}
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('click', e => {
+  if (mode !== 'closeup' || !cu) return;
+  const r = stage.getBoundingClientRect(), h = cuHotspot((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+  if (h) cuClick(h);
+});
+stage.addEventListener('pointerleave', () => { $('#tip').hidden = true; }); stage.addEventListener('pointercancel', endDrag);
+
+// ---------- where things are on screen ----------
+// screen <-> frame mapping: frameUV = fc + (screenUV - vc) * sc   (both y up)
+function framing() {
+  const CA = W / H;
+  if (CA < 1) {                                        // portrait: the room fills a band in the upper part, cropped around the table and TV
+    const band = 0.6, hpx = band * H, wpx = hpx * FA;
+    return { sc: [W / wpx, 1 / band], fc: [0.55, 0.5], vc: [0.5, 1 - (0.07 + band / 2)] };
+  }
+  return { sc: CA > FA ? [1, FA / CA] : [CA / FA, 1], fc: [0.5, 0.5], vc: [0.5, 0.5] };   // landscape: cover
+}
+let cur = { anchors: {}, w: [1, 0, 0, 0], keys: [] };
+function toScreen(p) { const f = framing(); return [f.vc[0] + (p[0] - f.fc[0]) / f.sc[0], 1 - (f.vc[1] + ((1 - p[1]) - f.fc[1]) / f.sc[1])]; }   // frame (y down) -> screen (y down)
+function A(name) { const p = cur.anchors[name]; return p ? toScreen(p) : null; }
+function hit(cx, cy) {
+  const r = stage.getBoundingClientRect(), x = (cx - r.left) / r.width, y = (cy - r.top) / r.height;
+  const pr = propHit(x, y); if (pr) return pr;
+  const win = [0, 1, 2, 3].map(i => A('win' + i)).filter(Boolean);
+  if (win.length === 4 && inPoly(x, y, win)) return 'window';
+  const tv = [0, 1, 2, 3, 4, 5, 6, 7].map(i => A('tv' + i)).filter(Boolean);
+  if (tv.length) { const xs = tv.map(p => p[0]), ys = tv.map(p => p[1]);
+    const pad = 0.012; if (x > Math.min(...xs) - pad && x < Math.max(...xs) + pad && y > Math.min(...ys) - pad * 1.5 && y < Math.max(...ys) + pad) return 'tv'; }
+  return null;
+}
+function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) {
+  if (((P[i][1] > y) !== (P[j][1] > y)) && (x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0])) c = !c; } return c; }
+
+
+// ---------- clickable props (world boxes, projected each frame with the blended camera) ----------
+const PROPS = [
+  { id: 'poster', label: 'The poster', lo: [1.583, 2.497, 0.342], hi: [2.057, 3.017, 0.438], act: () => openPanel($('#posterpanel')) },
+  { id: 'fam', get label() { return FEATURES.bible ? 'The family Bible' : 'About · Josiah Walker'; }, lo: [2.235, 2.63, 0.436], hi: [2.6, 3.0, 0.50], act: () => { if (FEATURES.bible) enterCloseup('c_bible', [2.415, 2.815, 0.45]); else linkPanel('Josiah Walker', 'Writer and director of Very Prosperous Men.', [['Read the bio', 'https://www.josiahwalker.com/bio'], ['IMDb', 'https://www.imdb.com/name/nm9711704/']]); } },
+  { id: 'kjv', label: 'About the film', lo: [2.08, 2.69, 0.436], hi: [2.23, 2.91, 0.482], act: () => openPanel($('#about')) },
+  { id: 'watch', needs: 'closeups', label: 'The watch', lo: [0.97, 3.06, 0.0], hi: [1.2, 3.29, 0.05], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
+  { id: 'hand', needs: 'closeups', label: 'The watch', lo: [0.72, 2.95, 0.0], hi: [1.06, 3.2, 0.09], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
+  { id: 'ashtray', needs: 'closeups', label: 'The cigarette', lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49], act: () => enterCloseup('c_ashtray', [2.25, 3.06, 0.47]) },
+  { id: 'case', needs: 'closeups', label: "The salesman's case", lo: [1.71, 3.52, 0.48], hi: [2.19, 3.9, 0.82], act: () => enterCloseup('c_case', [1.95, 3.72, 0.56]) },
+  { id: 'phone', label: 'Contact', lo: [0.327, 3.853, 0.58], hi: [0.613, 4.147, 0.722], needs: 'phone', act: () => linkPanel('Contact', 'For screenings, press and representation.', [['Contact page', 'https://www.josiahwalker.com/contact'], ['Instagram', 'https://www.instagram.com/josiahwalker_/']]) },
+];
+let FEATURES = {};
+function linkPanel(title, text, links) {
+  $('#linkTitle').textContent = title; $('#linkText').textContent = text;
+  const box = $('#linkActions'); box.textContent = '';
+  links.forEach(([label, href], i) => { const a = document.createElement('a'); a.className = 'btn' + (i === 0 ? ' primary' : ''); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label + ' ↗'; box.appendChild(a); });
+  openPanel($('#linkpanel'));
+}
+function propHit(x, y) {
+  for (const pr of PROPS) {
+    if (pr.needs && !FEATURES[pr.needs]) continue;
+    const pts = [];
+    for (let i = 0; i < 8; i++) { const q = project([i & 1 ? pr.hi[0] : pr.lo[0], i & 2 ? pr.hi[1] : pr.lo[1], i & 4 ? pr.hi[2] : pr.lo[2]]); if (!q) { pts.length = 0; break; } pts.push(toScreen([q[0], q[1]])); }
+    if (pts.length === 8 && inPoly(x, y, hull(pts))) return pr;
+  }
+  return null;
+}
+
+// ---------- sparks and the electrical surge ----------
+const parts = []; let sparkE = 0, headI = 1, nextBurst = 1.5, flick = 0, brown = 0;
+function burst(now) {
+  const s = A('spark'), d = A('spark_dir'); if (!s || !d) return;
+  const e = 0.6 + Math.random() * 0.8; sparkE += e; sparkSound(e);   // the buzz is varied inside sparkSound
+  const px = [s[0] * W, s[1] * H], dir = [(d[0] - s[0]) * W, (d[1] - s[1]) * H]; const len = Math.hypot(dir[0], dir[1]) || 1;
+  const ppm = len / 0.13;   // pixels per metre at the nozzle
+  const base = Math.atan2(dir[1], dir[0]);
+  const n = 14 + Math.floor(Math.random() * 40 * e);
+  for (let i = 0; i < n; i++) {
+    const a = base + (Math.random() - 0.5) * 2.4 - (Math.random() < 0.5 ? 0.6 : 0) , sp = (0.8 + Math.random() * 2.6) * ppm;
+    parts.push({ x: px[0], y: px[1], vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - Math.random() * 1.2 * ppm, life: 0, max: 0.12 + Math.random() * 0.5, g: 9.8 * ppm, hot: Math.random() });
+  }
+}
+function updateSurge(now, dt) {
+  // the sparks are only heard in the room: at the window or on the set the bus fades out (Josiah, 17:11)
+  if (sparkBus && actx) { const want = mode === 'room' ? 0.075 : 0; if (Math.abs(sparkBus.gain.value - want) > 0.001) sparkBus.gain.setTargetAtTime(want, actx.currentTime, mode === 'room' ? 0.4 : 0.15); }
+  if (now > nextBurst) { burst(now); const cluster = Math.random() < 0.35;
+    nextBurst = now + (cluster ? 0.06 + Math.random() * 0.25 : 1.2 + Math.random() * 3.8); }
+  sparkE *= Math.exp(-dt / 0.09);
+  flick -= dt; if (flick <= 0) { flick = 1 / 30;
+    const surge = Math.min(1, sparkE);
+    const hum = 0.9 + 0.1 * Math.random();
+    headI = surge > 0.15 ? 0.15 + Math.random() * 1.4 : hum;
+    if (brown <= 0 && Math.random() < 0.004) brown = 0.15 + Math.random() * 0.35;
+  }
+  if (brown > 0) { brown -= dt; headI *= 0.3; }
+  for (const p of parts) { p.life += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+  for (let i = parts.length - 1; i >= 0; i--) if (parts[i].life > parts[i].max) parts.splice(i, 1);
+}
+function drawParticles(now, dt) {
+  const s = A('spark'); const verts = [];
+  drawDust(now, dt, verts);
+  const push = (x, y, r, g, b, a) => verts.push(x / W * 2 - 1, 1 - y / H * 2, r, g, b, a);
+  const wpx = Math.max(1, H / 900) * 1.3;
+  for (const p of parts) {
+    const k = 1 - p.life / p.max, tail = 0.018;
+    const hx = p.x, hy = p.y, tx = p.x - p.vx * tail, ty = p.y - p.vy * tail;
+    let nx = -(hy - ty), ny = hx - tx; const l = Math.hypot(nx, ny) || 1; nx = nx / l * wpx; ny = ny / l * wpx;
+    const r = 1.0, g = 0.55 + 0.4 * p.hot * k, b = 0.2 + 0.5 * p.hot * k * k, a = 1.6 * k;
+    push(hx + nx, hy + ny, r, g, b, a); push(hx - nx, hy - ny, r, g, b, a); push(tx + nx, ty + ny, r, g, b, 0);
+    push(hx - nx, hy - ny, r, g, b, a); push(tx - nx, ty - ny, r, g, b, 0); push(tx + nx, ty + ny, r, g, b, 0);
+  }
+  if (s && sparkE > 0.02) {   // hot glow at the break in the cord
+    const cx = s[0] * W, cy = s[1] * H, R = Math.max(6, H * 0.02) * (0.6 + sparkE * 0.6), a = Math.min(1.2, sparkE);
+    const seg = 18; for (let i = 0; i < seg; i++) { const a0 = i / seg * Math.PI * 2, a1 = (i + 1) / seg * Math.PI * 2;
+      push(cx, cy, 1, 0.8, 0.5, a); push(cx + Math.cos(a0) * R, cy + Math.sin(a0) * R, 1, 0.5, 0.2, 0); push(cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 1, 0.5, 0.2, 0); }
+  }
+  if (!verts.length) return;
+  const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
+  const la = gl.getAttribLocation(pr.p, 'a'), lc = gl.getAttribLocation(pr.p, 'c');
+  gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 24, 8);
+  gl.drawArrays(gl.TRIANGLES, 0, verts.length / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc);
+}
+function drawSmoke(now, bo, uo, gain) {
+  const b = bo || A('smoke_base'), u = uo || A('smoke_up'); if (!b || !u) return;
+  const B = [b[0] * W, b[1] * H], U = [u[0] * W, u[1] * H];
+  const ax = [U[0] - B[0], U[1] - B[1]]; const L = Math.hypot(ax[0], ax[1]); if (L < 4) return;
+  const up = [ax[0] / L, ax[1] / L], side = [-up[1], up[0]];
+  const hgt = L * 1.9, wid = L * 0.75;
+  const c = (sx, sy) => [B[0] + side[0] * sx * wid + up[0] * sy * hgt, B[1] + side[1] * sx * wid + up[1] * sy * hgt];
+  const pts = [[-1, 0], [1, 0], [-1, 1], [1, 1]].map(([x, y]) => { const p = c(x, y); return [p[0] / W * 2 - 1, 1 - p[1] / H * 2, x, y]; });
+  const pr = P.smoke; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, smokeBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pts.flat()), gl.DYNAMIC_DRAW);
+  const la = gl.getAttribLocation(pr.p, 'a'), lq = gl.getAttribLocation(pr.p, 'q');
+  gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0);
+  gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 2, gl.FLOAT, false, 16, 8);
+  gl.uniform1f(pr.u.t, now); gl.uniform1f(pr.u.gain, gain || 0.55);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lq);
+}
+
+
+// ---------- dust in the sunbeam ----------
+// The sun (elevation 20 deg, azimuth -20 deg) comes through the right-wall window (x = 4.6, y 2.35..4.3, z 0.95..2.22).
+const SUN_D = [-Math.cos(0.349) * Math.cos(-0.349), Math.cos(0.349) * Math.sin(-0.349), -Math.sin(0.349)];
+const motes = [];
+for (let i = 0; i < 420; i++) {
+  const wy = 2.35 + Math.random() * 1.95, wz = 0.95 + Math.random() * 1.27;
+  const tmax = Math.min(wz / -SUN_D[2], 3.4), tt = 0.15 + Math.random() * (tmax - 0.15);
+  motes.push({ p: [4.6 + SUN_D[0] * tt, wy + SUN_D[1] * tt, wz + SUN_D[2] * tt], ph: Math.random() * 6.28, sp: 0.4 + Math.random(), s: 0.4 + Math.random() * 0.9 });
+}
+function project(p) {   // world point -> frame coords (0..1, y down) for the blended camera; null if behind
+  const c = cur.cam, a = cur.aim; if (!c) return null;
+  const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
+  const d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], z = dot(d, f); if (z < 0.05) return null;
+  const tx = 18 / 31, ty = tx / FA;
+  return [0.5 + dot(d, r) / z / tx * 0.5, 0.5 - dot(d, u) / z / ty * 0.5, z];
+}
+function basis(c, a) {   // camera-to-world rotation, columns: right, up, back (Blender camera looks down -Z)
+  const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
+  return new Float32Array([r[0], r[1], r[2], u[0], u[1], u[2], -f[0], -f[1], -f[2]]);
+}
+function norm(v) { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
+function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function drawDust(now, dt, verts) {
+  for (const m of motes) {
+    m.p[0] += (Math.sin(now * 0.21 * m.sp + m.ph) * 0.004 - 0.0015) * dt; m.p[1] += Math.cos(now * 0.17 * m.sp + m.ph * 1.3) * 0.004 * dt;
+    m.p[2] += (Math.sin(now * 0.13 * m.sp + m.ph * 0.7) * 0.003 - 0.001) * dt;
+    const q = project(m.p); if (!q) continue;
+    const s = toScreen([q[0], q[1]]); if (s[0] < -0.02 || s[0] > 1.02 || s[1] < -0.02 || s[1] > 1.02) continue;
+    const x = s[0] * W, y = s[1] * H, R = Math.max(0.7, H / 900 * 1.6 * m.s / q[2] * 2.2);
+    const tw = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(now * (0.8 + m.sp) + m.ph * 3.0), 3.0), a = 0.55 * tw;
+    for (let k = 0; k < 6; k++) { const a0 = k / 6 * 6.283, a1 = (k + 1) / 6 * 6.283;
+      verts.push(x / W * 2 - 1, 1 - y / H * 2, 1, 0.9, 0.72, a, (x + Math.cos(a0) * R) / W * 2 - 1, 1 - (y + Math.sin(a0) * R) / H * 2, 1, 0.9, 0.72, 0,
+                 (x + Math.cos(a1) * R) / W * 2 - 1, 1 - (y + Math.sin(a1) * R) / H * 2, 1, 0.9, 0.72, 0); }
+  }
+}
+
+
+function hull(pts) {   // convex hull (monotone chain) of screen points
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); if (p.length < 3) return p;
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function drawTV(now) {
+  const pts = [0, 1, 2, 3, 4, 5, 6, 7].map(i => A('tv' + i)).filter(Boolean); if (pts.length < 4) return;
+  const h = hull(pts.map(p => [p[0] * W, p[1] * H])); if (h.length < 3) return;
+  const cx = h.reduce((a, p) => a + p[0], 0) / h.length, cy = h.reduce((a, p) => a + p[1], 0) / h.length;
+  // pull the hull in a touch so the glow stays on the glass
+  const v = []; const sh = (p) => [cx + (p[0] - cx) * 0.9, cy + (p[1] - cy) * 0.9];
+  for (let i = 0; i < h.length; i++) { const a = sh(h[i]), b = sh(h[(i + 1) % h.length]);
+    v.push(cx / W * 2 - 1, 1 - cy / H * 2, 0, 0, a[0] / W * 2 - 1, 1 - a[1] / H * 2, 0, 0, b[0] / W * 2 - 1, 1 - b[1] / H * 2, 0, 0); }
+  const ys = h.map(p => p[1]), top = Math.min(...ys), bot = Math.max(...ys);
+  const band = top + ((now * 0.23) % 1.3) * (bot - top) / 1.0;
+  const pr = P.tv; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, tvBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
+  const la = gl.getAttribLocation(pr.p, 'a'); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0);
+  gl.uniform1f(pr.u.bandY, H - band); gl.uniform1f(pr.u.bandH, (bot - top) * 0.09);
+  gl.uniform1f(pr.u.amp, 0.028 * (0.8 + 0.2 * Math.sin(now * 120.0)) * (0.9 + 0.1 * Math.random()));
+  gl.drawArrays(gl.TRIANGLES, 0, v.length / 4); gl.disableVertexAttribArray(la);
+}
+
+// ---------- the man in the kitchen doorway (seen only in the mirror) ----------
+// walker3.json (scene/WALKER3.md; director 09-30: "start over. He should glitch / fade in, framed in the doorway, watching.
+// 100 % silhouette"): a still man, square to the room, hands at his buckle, head bowed: a premultiplied black matte
+// (alpha = coverage) at walker2's frame size and metre scale, `loop` [first, count] = a breathing cycle, `glitch` = three
+// micro-pose frames (head lifted, a hand dropped, a look aside). Nothing for the first W3_START s; then he glitches in over
+// W3_IN s (hard cuts between the micro-poses with step-printed ghosts, dropouts, a torn horizontal band on the alpha for a
+// few frames), then stands, breathing, watching; every W3_GAP s a short blip (a dropout and a micro-pose swap). He never walks.
+// Fallback: walker2.json + walker2_sheet.png (the lit walking sprite; per-frame pelvis x along a path behind the doorway, one
+// pass in, a linger, out, then back the other way; step-printed while he moves), then walker.json (the old silhouette walk).
+const MIRROR_Y = 4.35, GLASS = [[1.09, 1.86], [2.91, 1.86], [2.91, 1.19], [1.09, 1.19]], DOORWAY = [[0.55, 2.05], [1.45, 2.05], [1.45, 0.0], [0.55, 0.0]];
+const WALK_START = 4.0, WALK_GAP = 6.0;
+const WALK_HOLD = 3, WALK_GHOST = [0.45, 0.2], WALK_EASE = 0.3, WALK_K = 0.92, WALK_TINT = [1.0, 0.975, 0.93];
+const WALK_STEP = !/[#&]step=0/.test(location.hash);     // QA hook: #step=0 turns the step-printing (and the glitch ghosts) off (A/B screenshots)
+const W3_START = 6.0, W3_IN = 1.2, W3_GAP = [25, 40], W3_BLIP_LEN = 0.45, W3_K = 0.97;
+// the glitch-in script: [t0, t1, frame, k, ghost, ghostK, tear]; frame 'L' = the breathing loop, 0..2 = a glitch pose,
+// null = a dropout; tear = [v0, v1, dx] a band of the sprite (fractions from the top) drawn dx metres aside
+const W3_SCRIPT = [[0.00, 0.07, 0, 0.35, null, 0, [0.36, 0.48, 0.05]], [0.07, 0.12, null], [0.12, 0.22, 'L', 0.7, 0, 0.3, null],
+  [0.22, 0.28, 1, 0.9, null, 0, [0.55, 0.63, -0.07]], [0.28, 0.33, null], [0.33, 0.50, 'L', 1.0, 1, 0.45, null],
+  [0.50, 0.55, 2, 1.0, null, 0, [0.10, 0.19, 0.04]], [0.55, 0.58, null], [0.58, 0.80, 'L', 1.0, 2, 0.3, null], [0.80, 0.85, null], [0.85, 1.20, 'L', 1.0, null, 0, null]];
+const W3_BLIP = [[0.00, 0.05, null], [0.05, 0.09, 'G', 1.0, null, 0, [0.30, 0.40, 0.05]], [0.09, 0.25, 'G', 1.0, null, 0, null], [0.25, 0.45, 'L', 1.0, 'G', 0.4, null]];
+let walker = null, walkTex = null;
+function loadWalker(j, sheet) {
+  const im = new Image();
+  im.onload = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);   // the PNG is already premultiplied
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im);
+    if (j.still) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }   // the matte is drawn at ~1/4 size: mipmaps keep the edge clean
+    else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // beat windows in seconds (from the json's beats), for the step-printing: the linger is the sharp one
+    let acc = 0; j.beatAt = {}; for (const [nm, len] of (j.beats || [])) { j.beatAt[nm] = [acc, acc + len]; acc += len; }
+    walkTex = t; walker = j; };
+  im.src = sheet;
+}
+const sheetOf = (j, base) => SMALL && j.sheet_m ? 'frames/' + j.sheet_m.split(' ')[0] : 'frames/' + base;
+const W3_RIM = /[#&]rim=1/.test(location.hash);        // audition hook: #rim=1 draws the B sheet (a hair of rim light on his edges) if the json names one
+// Josiah, 2026-09-30 16:06 PT: "let's lose the cowboy in the doorway". Nothing is loaded unless the URL says #cowboy=1
+// (kept for a later audition); the mirror shows the empty sunlit kitchen as rendered.
+const COWBOY = /[#&]cowboy=1/.test(location.hash);
+(COWBOY ? fetch('frames/walker3.json') : Promise.resolve({ ok: false })).then(r => r.ok ? r.json() : null).then(j => {
+  if (!COWBOY) return;
+  if (j && j.still) { loadWalker(j, W3_RIM && j.sheet_rim && !SMALL ? 'frames/' + j.sheet_rim : sheetOf(j, 'walker3_sheet.png')); return; }
+  return fetch('frames/walker2.json').then(r => r.ok ? r.json() : null).then(j => {
+    if (j) { loadWalker(j, sheetOf(j, 'walker2_sheet.png')); return; }
+    return fetch('frames/walker.json').then(r => r.ok ? r.json() : null).then(j => { if (j) { j.sil = true; loadWalker(j, 'frames/walker_sheet.png'); } });
+  });
+}).catch(() => {});
+const T0 = performance.now() / 1000;
+const WALK_FIX = /[#&]wt=([\d.]+)/.exec(location.hash);   // QA hook: #wt=<seconds> freezes his clock at that moment
+window.__walker = { get json() { return walker; }, get tex() { return !!walkTex; }, state: () => walkerState(performance.now() / 1000),   // for headless QA
+  glass: () => GLASS.map(([x, z]) => { const q = project([x, MIRROR_Y, z]); if (!q) return null; const s = toScreen([q[0], q[1]]); return [s[0] * W, s[1] * H]; }),
+  debug: () => { const px = p => { const q = project(p); if (!q) return null; const s = toScreen([q[0], q[1]]); return [s[0] * W, s[1] * H]; };
+    const refl = p => [p[0], 2 * MIRROR_Y - p[1], p[2]]; const w = walkerState(performance.now() / 1000); const J = walker;
+    return { W, H, zoom, w, door: DOORWAY.map(([x, z]) => px(refl([x, -1.5, z]))), quad: w && [[w.x - J.mw / 2, J.y_path, J.mh], [w.x + J.mw / 2, J.y_path, 0]].map(p => px(refl(p))) }; } };
+function walkerState(now) {
+  if (!walker) return null;
+  if (walker.still) return standState(now);
+  const J = walker, P = J.frames / J.fps, L = 2 * (P + WALK_GAP);
+  let t = WALK_FIX ? parseFloat(WALK_FIX[1]) : now - T0 - WALK_START; if (t < 0) return null; t %= L;
+  let dir = 1; if (t >= P + WALK_GAP) { t -= P + WALK_GAP; dir = -1; }
+  if (t >= P) return null;
+  const i = Math.min(J.frames - 1, Math.floor(t * J.fps));
+  // step weight: 1 while he moves, 0 through the linger, eased over WALK_EASE s at its edges
+  let step = 0;
+  if (WALK_STEP && !J.sil) { const lg = J.beatAt && J.beatAt.linger; step = lg ? Math.min(1, Math.max(0, lg[0] - t, t - lg[1]) / WALK_EASE) : 1; }
+  const held = step >= 0.5 ? Math.floor(i / WALK_HOLD) * WALK_HOLD : i;      // the frame on screen (held while stepping)
+  const blur = J.blur ? J.blur[held] : 1;
+  const frames = [[held, 1]];                                                 // [frame, weight], drawn last = on top
+  if (step > 0) for (let g = 0; g < WALK_GHOST.length; g++) { const f = held - (g + 1) * WALK_HOLD; if (f >= 0) frames.unshift([f, WALK_GHOST[g] * step * blur]); }
+  return { i: held, dir, x: dir > 0 ? J.x[held] : 2 * J.x_stop - J.x[held], frames, mode: 'walk' };
+}
+// walker3: the standing man. A deterministic clock (so #wt= reproduces any moment): the glitch-in at t = 0..W3_IN, then the
+// breathing loop with a blip every 25-40 s (gaps from a hash of the blip's index).
+const w3hash = k => { const v = Math.sin(k * 12.9898 + 4.1) * 43758.5453; return v - Math.floor(v); };
+function standState(now) {
+  const J = walker, [L0, LN] = J.loop, G = J.glitch || [];
+  const t = (WALK_FIX ? parseFloat(WALK_FIX[1]) : now - T0) - W3_START; if (t < 0) return null;   // #wt= is page time here (5 = nothing yet, 6.4 = mid glitch-in, 7.5 = standing)
+  const loopF = L0 + (Math.floor(t * J.fps) % LN);
+  const play = (script, tau, gf) => {                                        // the frames [f, k, tear] for a script at tau
+    for (const seg of script) {
+      if (tau < seg[0] || tau >= seg[1]) continue;
+      if (seg[2] === null) return { frames: [], seg };
+      const pick = f => f === 'L' ? loopF : f === 'G' ? gf : (G[f] !== undefined ? G[f] : loopF);
+      const frames = [];
+      if (seg[4] !== null && seg[4] !== undefined && WALK_STEP) frames.push([pick(seg[4]), seg[5] * (1 - (tau - seg[0]) / (seg[1] - seg[0])), null]);   // the ghost, fading
+      frames.push([pick(seg[2]), seg[3], WALK_STEP ? seg[6] : null]);
+      return { frames, seg };
+    }
+    return null;
+  };
+  let mode = 'stand', frames = [[loopF, 1, null]];
+  if (t < W3_IN) { const r = play(W3_SCRIPT, t, null); if (r) { frames = r.frames; mode = 'in'; } }
+  else if (G.length) {
+    let e = W3_IN + W3_GAP[0] + (W3_GAP[1] - W3_GAP[0]) * w3hash(0), k = 0;
+    while (e + W3_BLIP_LEN <= t) { k++; e += W3_BLIP_LEN + W3_GAP[0] + (W3_GAP[1] - W3_GAP[0]) * w3hash(k); }
+    if (t >= e) { const r = play(W3_BLIP, t - e, G[k % G.length]); if (r) { frames = r.frames; mode = 'blip'; } }
+  }
+  return { i: frames.length ? frames[frames.length - 1][0] : loopF, dir: 1, x: J.x_stop, frames, mode, t };
+}
+function drawWalker(now) {
+  const w = walkerState(now); if (!w || !walkTex) return;
+  const J = walker, hw = J.mw / 2, y = J.y_path;
+  const refl = p => [p[0], 2 * MIRROR_Y - p[1], p[2]];
+  const px = p => { const q = project(p); if (!q) return null; const s = toScreen([q[0], q[1]]); return [s[0] * W, s[1] * H]; };
+  const glass = GLASS.map(([x, z]) => px([x, MIRROR_Y, z]));
+  const door = DOORWAY.map(([x, z]) => px(refl([x, -1.5, z])));
+  if ([...glass, ...door].some(v => !v)) return;
+  const pr = P.walk; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, walkBuf);
+  const la = gl.getAttribLocation(pr.p, 'a'), lq = gl.getAttribLocation(pr.p, 'q');
+  gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0);
+  gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 2, gl.FLOAT, false, 16, 8);
+  const fc = pts => new Float32Array(pts.flatMap(p => [p[0], H - p[1]]));    // to gl_FragCoord space (y up)
+  gl.uniform2fv(pr.u.g, fc(glass)); gl.uniform2fv(pr.u.d, fc(door));
+  gl.uniform1f(pr.u.sil, J.sil ? 1 : 0); gl.uniform3fv(pr.u.tint, WALK_TINT);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, walkTex); gl.uniform1i(pr.u.s, 0);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);         // premultiplied "over" (the silhouette outputs black × a, same result)
+  const rows = Math.ceil(J.frames / J.cols);
+  const kBase = J.sil ? 0.9 : J.still ? W3_K : WALK_K;
+  // one piece of a frame: the band va..vb of the cell (fractions from the top), its quad shifted dx metres along the doorway
+  const piece = (f, x, va, vb, dx) => {
+    const zt = J.mh * (1 - va), zb = J.mh * (1 - vb);
+    const quad = [[x + dx - hw, y, zt], [x + dx + hw, y, zt], [x + dx + hw, y, zb], [x + dx - hw, y, zb]].map(p => px(refl(p)));
+    if (quad.some(v => !v)) return;
+    const c = f % J.cols, r = Math.floor(f / J.cols);
+    let u0 = c / J.cols, u1 = (c + 1) / J.cols; const v0 = (r + va) / rows, v1 = (r + vb) / rows;
+    if (w.dir < 0) [u0, u1] = [u1, u0];                                       // the return pass walks the other way
+    const P4 = [[quad[0], u0, v0], [quad[3], u0, v1], [quad[1], u1, v0], [quad[2], u1, v1]];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(P4.flatMap(([p, u, v]) => [p[0] / W * 2 - 1, 1 - p[1] / H * 2, u, v])), gl.DYNAMIC_DRAW);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  };
+  for (const [f, wt, tear] of w.frames) {                                    // ghosts first, then the frame on screen
+    const x = w.dir > 0 ? J.x[f] : 2 * J.x_stop - J.x[f];
+    gl.uniform1f(pr.u.k, kBase * wt);
+    if (tear) { piece(f, x, 0, tear[0], 0); piece(f, x, tear[0], tear[1], tear[2]); piece(f, x, tear[1], 1, 0); }
+    else piece(f, x, 0, 1, 0);
+  }
+  gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lq);
+  gl.disable(gl.BLEND);
+}
+
+// ---------- close-ups: click a prop, the camera pushes toward it and dissolves into its close-up still ----------
+const CLOSE = {
+  c_watch: { hint: 'The watch · listen', sound: 'tick', at: [1.083, 3.175, 0.01], from: [35, 0], fl: 'watch' },
+  c_ashtray: { hint: 'Back to the room · Esc', at: [2.25, 3.06, 0.47], from: [0, 6], fl: 'ashtray' },
+  c_case: { hint: 'Click the crucifix, or the clipping in the lid', at: [1.95, 3.72, 0.56], from: [0, 0], fl: 'case' },
+  c_tv: { hint: 'Turn the knob · ← →', at: [3.21, 2.96, 0.87], from: [0, 0], fl: 'tv' },
+  c_bible: { hint: 'Click the Bible', at: [2.415, 2.815, 0.45], from: [0, 0], fl: 'bible' },
+};
+let cuMeta = {}; fetch('frames/closeups.json').then(r => r.ok ? r.json() : {}).then(j => { cuMeta = j || {}; }).catch(() => {});
+const cuTex = {};
+function loadCU(name) { if (name in cuTex) return; cuTex[name] = null; const im = new Image(); im.onload = () => { cuTex[name] = tex(im); }; im.src = (SMALL ? 'frames/m/' : 'frames/') + name + '.jpg'; }
+let cu = null;        // { name, phase: 'approach'|'fly'|'still'|'return', sub: null | 'crux', subT }
+// the flights: a rendered camera move from a fixed grid view into each close-up (fl_<name>.mp4), and the same move
+// reversed (fl_<name>_back.mp4) for the way out. No cross-fades: frame 0 is the grid view, the last frame is the still.
+const flights = {};
+function flightVid(name, back) {
+  const key = name + (back ? '_back' : ''); if (flights[key]) return flights[key];
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = QA_WEBM ? 'frames/_fl_' + key + '.webm' : 'frames/fl_' + key + '.mp4';
+  const e = { v, ok: false, tex: null }; v.addEventListener('loadeddata', () => { e.ok = true; }); v.addEventListener('error', () => { e.ok = false; e.err = true; });
+  flights[key] = e; return e;
+}
+function flightTex(e) {
+  if (!e.tex) { e.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, e.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+  gl.bindTexture(gl.TEXTURE_2D, e.tex); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  if (e.v.readyState >= 2) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, e.v);
+  return e.tex;
+}
+// thread D: the crucifix is a live glTF (crucifix.js, loaded on demand) over the case still; the c_crucifix still is only a fallback
+let cruxLoad = null, cruxOK = false;
+function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
+function mountCrux() {
+  const m = cuMeta.c_case; if (!m) return;
+  loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
+    if (!cu) return;
+    if (st === 'held') $('#cuHint').textContent = 'Drag to turn it · Back to the case · Esc';
+    if (st === 'rest') { cu.sub = null; $('#cuHint').textContent = CLOSE.c_case.hint; }
+  } })).then(() => { cruxOK = true; if (cu && cu.name === 'c_case' && cu.shown) window.crux.show(); }).catch(() => { cruxOK = false; loadCU('c_crucifix'); });
+}
+// ---------- page thread: the ash-fall (PHASE2.md "Page contract for the ash-fall") ----------
+// 2 s after the ashtray still lands, fl_ashfall.mp4 (the same camera; frame 0 == c_ashtray, the last frame == c_ashtray2) plays
+// where the still is, then the still becomes c_ashtray2 for the rest of the session. Smoke and the ember keep drawing.
+let ashFallen = false;
+function ashFall(dt, still) {
+  if (!cu || cu.name !== 'c_ashtray' || ashFallen || !FEATURES.ashfall) return null;
+  const af = flightVid('ashfall');
+  if (cu.ashPlaying) {
+    if (af.v.ended || (af.v.duration && af.v.currentTime >= af.v.duration - 0.02)) { ashFallen = true; cu.ashPlaying = false; return null; }
+    return { alt: af.v.readyState >= 2 ? flightTex(af) : still, altMix: 1, zoom: 1 };
+  }
+  const now = performance.now() / 1000; if (!cu.landAt) cu.landAt = now; cu.landT = now - cu.landAt;   // wall clock: the ash falls 2 s after the still lands
+  if (cu.landT >= ASH_DELAY && af.ok && cuTex.c_ashtray2) { cu.ashPlaying = true; af.v.currentTime = 0; af.v.play().catch(() => {}); }
+  else if (af.err) ashFallen = false;
+  return null;
+}
+let ASH_DELAY = 2.0;
+window.__ash = { get fallen() { return ashFallen; }, get playing() { return !!(cu && cu.ashPlaying); }, get landT() { return cu && cu.landT; }, set delay(v) { ASH_DELAY = v; }, reset() { ashFallen = false; } };   // for headless QA
+
+// ---------- page thread: the family Bible (bible.js, loaded on demand) over the Bible close-up (scene/BIBLE2.md) ----------
+let bibleLoad = null, bibleOK = false, bibleMeta = null;
+function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js'), fetch('frames/bible.json').then(r => r.ok ? r.json() : {}).catch(() => ({})), fetch('frames/bible_pages.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([, , bj, pj]) => { bibleMeta = { rest: bj.rest, boxes: pj, urls: { imdb_box: pj.imdb_url, site_line: pj.site_url } }; })); }
+function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
+function mountBible() {
+  const m = cuMeta.c_bible; if (!m) return;
+  loadBible().then(() => window.bible.mount($('#bible3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, rest: bibleMeta.rest, boxes: bibleMeta.boxes, urls: bibleMeta.urls, small: SMALL,
+    onHover: (label, x, y) => { const tip = $('#tip'); tip.hidden = !label; if (label) { tip.textContent = label; tip.style.left = x + 'px'; tip.style.top = y + 'px'; } },
+    onState: (st) => {
+      if (!cu || cu.name !== 'c_bible') return;
+      const hints = { lifting: 'Back to the room · Esc', opening: 'Back to the room · Esc', leafing: 'Back to the room · Esc', open: 'Turn the pages · ← → · Back to the room · Esc', closing: 'Back to the room', returning: 'Back to the room' };
+      if (hints[st]) $('#cuHint').textContent = hints[st];
+      $('#bibleStrip').hidden = st !== 'open';
+      if (st === 'rest') { cu.sub = null; cu.hideBible = true; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_bible.hint; }   // the canvas hides one frame after the still is back (closeupState)
+    } })).then(() => { bibleOK = true; }).catch(() => { bibleOK = false; });
+}
+document.querySelectorAll('#bibleStrip button').forEach(b => b.addEventListener('click', () => { if (!window.bible) return; if (b.dataset.turn) window.bible.turn(+b.dataset.turn); else window.bible.focus(+b.dataset.focus); }));
+window.__bible = { get ok() { return bibleOK; }, get state() { return window.bible && window.bible.state; }, lift: () => cu && cu.name === 'c_bible' && cuClick({ key: 'bible' }), release: () => window.bible && window.bible.release(), turn: (d) => window.bible && window.bible.turn(d) };   // for headless QA
+
+// ---------- page thread: the Indie Short Fest article as a page-flip viewer (article.js, loaded on demand; BRIEFCASE2.md) ----------
+let articleLoad = null;
+function loadArticle() { if (!FEATURES.clipping) return; return articleLoad || (articleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('article.js')]).then(() => window.article.init({ small: SMALL })).catch(() => {})); }
+window.__case = { get hotspots() { return cuMeta.c_case; }, open: () => cuClick({ key: 'clipping' }), get article() { return window.article; } };   // for headless QA
+
+function enterCloseup(name, world) {
+  if (mode !== 'room') return;
+  loadCU(name); if (name === 'c_case') { mountCrux(); loadArticle(); }
+  if (name === 'c_bible') { loadCU('c_bible_empty'); mountBible(); }
+  if (name === 'c_ashtray' && FEATURES.ashfall) { loadCU('c_ashtray2'); flightVid('ashfall'); }
+  if (name === 'c_tv') { for (const ch of TV.chans) if (cuMeta['c_tv_' + ch]) loadCU('c_tv_' + ch); tvTrailerInit(); }
+  const fl = CLOSE[name].fl; flightVid(fl); flightVid(fl, true);
+  cu = { name, phase: 'approach', sub: null, subT: 0, t: 0 };
+  gt = CLOSE[name].from[0]; gtilt = CLOSE[name].from[1];          // the camera eases to the grid view the flight starts from
+  mode = 'closeup'; document.body.classList.add('away'); stage.classList.remove('hot'); $('#tip').hidden = true;
+  $('#back').hidden = false; $('#hint').textContent = CLOSE[name].hint;
+  $('#cuLayer').hidden = false; $('#cuHint').textContent = CLOSE[name].hint;
+}
+function leaveCloseup() {
+  if (!cu || cu.phase === 'return' || cu.phase === 'closing') return;
+  if (cu.sub === 'crux') { cu.sub = null; cu.subT = 0; }          // back always goes straight to the room
+  if (cruxOK) window.crux.hide();                                  // thread D
+  stopTicking(); $('#psa').classList.remove('on'); $('#cruxCap').classList.remove('on');
+  if (cu.phase === 'approach') { endCloseup(); return; }          // never got airborne: just let go of the target
+  if (cu.sub === 'bible' && bibleOK && window.bible.state !== 'rest') {   // page thread: the Bible closes and drops back first, then the flight out
+    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; window.bible.release(); return;
+  }
+  startReturn();
+}
+function startReturn() {
+  const back = flightVid(CLOSE[cu.name].fl, true);
+  cu.phase = 'return'; cu.t = 0;
+  if (back.ok) { back.v.currentTime = 0; back.v.play().catch(() => {}); }
+}
+function closeupState(now, dt) {
+  window.__cu = cu;   // QA
+  const spec = CLOSE[cu.name], fwd = flightVid(spec.fl), back = flightVid(spec.fl, true);
+  let still = (cu.name === 'c_tv' && cu.phase === 'still' && cuTex['c_tv_' + TV.ch]) || cuTex[cu.name];
+  if (cu.name === 'c_bible' && cu.sub === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;   // the live Bible draws over the empty plate
+  if (cu.hideBible) { cu.hideBible = false; requestAnimationFrame(() => { if (window.bible) window.bible.hide(); }); }
+  if (cu.name === 'c_ashtray' && ashFallen && cuTex.c_ashtray2) still = cuTex.c_ashtray2;                // once fallen it stays fallen for the session
+  zc = [0.5, 0.5];
+  if (cu.phase === 'approach') {
+    // wait until the camera has settled on the flight's first frame (a rendered grid view) and the clip is ready
+    const there = Math.abs(t - spec.from[0]) < 0.05 && Math.abs(tilt - spec.from[1]) < 0.05;
+    if (there && (fwd.ok || fwd.err)) {
+      if (fwd.ok) { cu.phase = 'fly'; fwd.v.currentTime = 0; fwd.v.play().catch(() => {}); }
+      else { cu.phase = 'still'; cu.shown = true; onCloseupShown(); }       // no clip: land on the still directly
+    }
+    return { alt: null, altMix: 0, zoom: 1 };
+  }
+  if (cu.phase === 'fly') {
+    if (fwd.v.ended || (fwd.v.duration && fwd.v.currentTime >= fwd.v.duration - 0.02)) { cu.phase = 'still'; cu.shown = true; onCloseupShown(); }
+    else return { alt: flightTex(fwd), altMix: fwd.v.readyState >= 2 ? 1 : 0, zoom: 1 };
+  }
+  if (cu.phase === 'still') {
+    if (cu.sub === 'crux') cu.subT = Math.min(1, cu.subT + dt / 0.9);
+    const af = ashFall(dt, still); if (af) return af;
+    return { alt: still || flightTex(fwd), altMix: 1, zoom: 1 };
+  }
+  if (cu.phase === 'closing') return { alt: still || flightTex(fwd), altMix: 1, zoom: 1 };   // the Bible is on its way back to the table
+  if (cu.phase === 'return') {
+    cu.t += dt;
+    if (back.ok && !(back.v.ended || (back.v.duration && back.v.currentTime >= back.v.duration - 0.02))) return { alt: flightTex(back), altMix: back.v.readyState >= 2 ? 1 : 0, zoom: 1 };
+    if (!back.ok && cu.t < 0.6) return { alt: still || null, altMix: still ? 1 - cu.t / 0.6 : 0, zoom: 1 };   // no reversed clip: short dissolve
+    endCloseup(); return { alt: null, altMix: 0, zoom: 1 };
+  }
+  return { alt: null, altMix: 0, zoom: 1 };
+}
+function onCloseupShown() {
+  if (cu.name === 'c_case' && cruxOK) window.crux.show();          // thread D
+  if (cu.name === 'c_ashtray') { $('#psa').hidden = false; requestAnimationFrame(() => $('#psa').classList.add('on')); }
+  if (CLOSE[cu.name].sound === 'tick') startTicking();              // the watch is heard once we're on it
+  if (cu.name === 'c_tv') tvOn(performance.now() / 1000);
+}
+function endCloseup() {
+  tvOff();
+  if (window.crux) window.crux.unmount();                          // thread D
+  if (window.bible) window.bible.unmount();                        // page thread
+  cu = null; mode = 'room'; document.body.classList.remove('away');
+  $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true;
+  $('#hint').textContent = 'Drag to look around · Click the window · Click the TV';
+}
+function cuHotspot(x, y) {                 // screen 0..1 -> which hotspot of the current close-up
+  if (cu && cu.name === 'c_tv') return tvHotspot(x, y);
+  if (!cu || cu.sub || cu.phase !== 'still') return null;
+  if (cu.name === 'c_bible') {                                      // page thread: the Bible itself
+    const poly = (cuMeta.c_bible || {}).bible; if (poly && poly.length >= 3 && inPoly(x, y, poly.map(p => toScreen(p)))) return { key: 'bible', label: 'Open the Bible' };
+    return null;
+  }
+  if (cu.name !== 'c_case') return null;
+  const m = cuMeta.c_case || {};
+  // info: a label only, nothing to click (BRIEFCASE2.md: the leaflets and the sales book have nothing behind them yet)
+  for (const [key, label, info] of [['crucifix', 'Lift the crucifix'], ['clipping', 'Read the write-up · Indie Short Fest'], ['leaflets', '“Bless Your Home, Buy A Bible!” · Spurgeon Gold Leaf Editions', true], ['receipts', 'The salesman\u2019s sales book', true]]) {
+    const poly = m[key]; if (!poly || poly.length < 3) continue;
+    if (inPoly(x, y, poly.map(p => toScreen(p)))) return { key, label, info };
+  }
+  return null;
+}
+function cuClick(h) {
+  $('#tip').hidden = true; stage.classList.remove('hot');
+  if (h.act) { h.act(); return; }
+  if (h.key === 'crucifix' && cruxOK && window.crux.ready) {          // thread D: the live crucifix lifts on its own
+    cu.sub = 'crux'; window.crux.lift();
+    $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
+    $('#cuHint').textContent = 'Back to the case · Esc';
+  } else if (h.key === 'crucifix' && cuTex.c_crucifix) {                 // fallback if the glTF could not load: the old still
+    const poly = cuMeta.c_case.crucifix; const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length, cy = poly.reduce((a, p) => a + p[1], 0) / poly.length;
+    cu.sub = 'crux'; cu.subT = 0; cu.a2h = [cx, cy];
+    $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
+    $('#cuHint').textContent = 'Back to the case · Esc';
+  } else if (h.key === 'clipping') { if (window.article && FEATURES.clipping) window.article.open(); else openPanel($('#clippanel')); }
+  else if (h.key === 'bible' && bibleOK && window.bible.ready) {   // page thread: the Bible lifts, opens and leafs to the bio
+    cu.sub = 'bible'; window.bible.lift(); $('#cuHint').textContent = 'Back to the room · Esc';
+  } else if (h.key === 'bible') { openPanel($('#about')); }          // the glTF could not load: the About sheet instead
+}
+// the watch: a mechanical movement at 18,000 beats an hour (five ticks a second), tick and tock slightly different
+let tickTimer = null, tickCtx = null, tickGain = null;
+function startTicking() {
+  try {
+    if (!actx) initAudio(); actx.resume(); tickCtx = actx;
+    tickGain = actx.createGain(); tickGain.gain.value = 0.0; tickGain.connect(actx.destination);
+    tickGain.gain.setTargetAtTime(0.55, actx.currentTime, 0.4);
+    let next = actx.currentTime + 0.05, n = 0;
+    const sched = () => { while (next < actx.currentTime + 0.3) { tickAt(next, n++ % 2); next += 0.2; } };
+    sched(); tickTimer = setInterval(sched, 100);
+  } catch (e) {}
+}
+function tickAt(t, tock) {
+  const s = actx.createBufferSource(); s.buffer = noiseBuf(0.03);
+  const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = tock ? 3100 : 3900; f.Q.value = 6;
+  const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(tock ? 0.7 : 0.9, t + 0.0008); g.gain.exponentialRampToValueAtTime(0.001, t + 0.022);
+  s.connect(f).connect(g).connect(tickGain); s.start(t); s.stop(t + 0.03);
+  const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = tock ? 5200 : 6100;
+  og.gain.setValueAtTime(0, t); og.gain.linearRampToValueAtTime(0.05, t + 0.0005); og.gain.exponentialRampToValueAtTime(0.0005, t + 0.012);
+  o.connect(og).connect(tickGain); o.start(t); o.stop(t + 0.015);
+}
+function stopTicking() {
+  if (tickTimer) clearInterval(tickTimer); tickTimer = null;
+  if (tickGain && actx) { const g = tickGain; g.gain.setTargetAtTime(0, actx.currentTime, 0.15); setTimeout(() => g.disconnect(), 800); tickGain = null; }
+}
+
+// ---------- the television: six channels drawn live onto the dark tube of the c_tv still ----------
+const TV_FS2 = `#version 300 es
+precision highp float; in vec2 lq; out vec4 o; uniform sampler2D s; uniform float t, bw, snow, roll, gain, on_;
+float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+  vec2 uv = lq;
+  vec2 c = uv - 0.5; float r2 = dot(c, c);
+  uv = 0.5 + c * (1.0 + 0.06 * r2);                       // the picture bulges with the glass
+  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { o = vec4(0.0); return; }
+  uv.y = fract(uv.y + roll);                                // vertical hold slipping between channels
+  vec3 p = texture(s, uv).rgb;
+  float y = dot(p, vec3(0.299, 0.587, 0.114)); p = mix(p, vec3(y) * vec3(0.93, 0.98, 1.05), bw);
+  float sl = 0.82 + 0.18 * (0.5 + 0.5 * sin(uv.y * 700.0));  // scan lines
+  p *= sl;
+  float n = h(floor(uv * vec2(320.0, 240.0)) + floor(t * 30.0)); p = mix(p, vec3(n) * vec3(0.8, 0.85, 0.9), snow);
+  p *= 1.0 - 0.55 * pow(clamp(r2 * 2.2, 0.0, 1.0), 1.4);       // the tube's dark corners
+  p *= on_ * gain;
+  o = vec4(p, 1.0);
+}`;
+P.tv2 = prog(SMOKE_VS, TV_FS2); const tvQuad = gl.createBuffer();
+const TV = { ch: 2, chans: [2, 3, 4, 5, 6, 7], on: 0, snow: 0, roll: 0, rollV: 0, bw: 1, bwT: 1, dirty: true, t0: 0, tex: null, cv: null, ctx: null, still: null, poster: null, trailer: null, nextRoll: 4 };
+TV.cv = document.createElement('canvas'); TV.cv.width = 800; TV.cv.height = 600; TV.ctx = TV.cv.getContext('2d');
+const TVTEXT = {
+  2: { title: 'Trailer', kicker: 'CHANNEL 2', body: 'Watch the trailer', guide: '<h3>Channel 2 · Trailer</h3><p>The trailer plays on the set. <a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch it on Vimeo ↗</a></p>' },
+  3: { title: 'Synopsis', kicker: 'CHANNEL 3', body: '1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.', guide: '<h3>Channel 3 · Synopsis</h3><p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p><p><i>What gain has man from all his toil?</i></p>' },
+  4: { title: 'Stills', kicker: 'CHANNEL 4', body: '[Stills to come]', guide: '<h3>Channel 4 · Stills</h3><p>[Hi-res stills to come]</p>' },
+  5: { title: 'Cast & Crew', kicker: 'CHANNEL 5', body: 'Dustin Ingram · Scott Subiono · Tim DeZarn · David Sullivan · Sharon Sharth · Zarah Mahler · Tanner Hagen · Larry Cedar', body2: 'Directed by Josiah Walker · Written by Joshua Oakley and Josiah Walker · Produced by Tommy Koponen and Dominic Koponen', guide: '<h3>Channel 5 · Cast &amp; Crew</h3><p>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar.</p><p>Directed by Josiah Walker. Written by Joshua Oakley and Josiah Walker. Produced by Tommy Koponen and Dominic Koponen. Walker Motion Pictures presents a Render Social production.</p>' },
+  6: { title: 'Press', kicker: 'CHANNEL 6', body: '“Feature-caliber filmmaking in every frame.”', body2: 'Indie Short Fest jury · Best Short, June–July 2026', guide: '<h3>Channel 6 · Press</h3><p>“Feature-caliber filmmaking in every frame.” — Indie Short Fest jury, July 2026. <a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">Read the write-up ↗</a></p><p>Audience Choice Award, Screamfest 2025 · Official Selection, Raindance 2026 · Official Selection, FilmQuest 2025.</p>' },
+  7: { title: 'Screenings', kicker: 'CHANNEL 7', body: '[Upcoming screenings and release to come]', guide: '<h3>Channel 7 · Screenings</h3><p>[Upcoming screenings and release to come]</p>' },
+};
+function tvLoadImg(key, src) { const im = new Image(); im.onload = () => { TV[key] = im; TV.dirty = true; }; im.src = src; }
+tvLoadImg('still', 'frames/tv_screen.jpg'); tvLoadImg('poster', 'frames/poster.jpg');
+// the trailer (Josiah's file, 720p for laptops, 480p for phones) plays on channel 2 in its proper colour; every other channel is black-and-white
+function tvTrailerInit() {   // called when the TV close-up opens (FEATURES arrives with views.json)
+  if (TV.trailerEl || !FEATURES.trailer) return; const tv_ = document.createElement('video'); tv_.playsInline = true; tv_.preload = 'auto'; tv_.loop = true;
+  tv_.src = QA_WEBM ? 'frames/_trailer_test.webm' : SMALL ? 'frames/trailer_480.mp4' : 'frames/trailer.mp4'; tv_.addEventListener('loadeddata', () => { TV.trailer = tv_; TV.dirty = true; if (cu && cu.name === 'c_tv' && cu.phase === 'still' && TV.ch === 2) { TV.bwT = 0; tv_.muted = !soundOn; tv_.play().catch(() => {}); } });
+  tv_.addEventListener('error', () => { TV.trailer = null; }); TV.trailerEl = tv_; tv_.load();
+}
+function tvWrap(ctx, text, x, y, maxW, lh, font, color, align) {
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align || 'center';
+  const words = text.split(' '); let line = '', lines = [];
+  for (const w of words) { const test = line ? line + ' ' + w : w; if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; } else line = test; }
+  if (line) lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh)); return y + lines.length * lh;
+}
+function tvTexInit() { TV.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, TV.tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+function tvDraw(now) {   // the channel card, 800x600, broadcast-style
+  const c = TV.ctx, W2 = 800, H2 = 600, ch = TV.ch, T_ = TVTEXT[ch];
+  c.fillStyle = '#0e0e10'; c.fillRect(0, 0, W2, H2);
+  if (ch === 2 || ch === 4) {   // picture channels: the still / the poster art, full frame, with a lower-third
+    const im = ch === 2 ? (TV.trailer && TV.trailer.readyState >= 2 ? TV.trailer : TV.still) : TV.poster;
+    if (im === TV.trailer) { const vw = im.videoWidth || 16, vh = im.videoHeight || 9, s_ = Math.min(W2 / vw, H2 / vh); const w = vw * s_, h = vh * s_; c.drawImage(im, (W2 - w) / 2, (H2 - h) / 2, w, h); }
+    else if (im) { const s_ = Math.max(W2 / im.width, H2 / im.height); const w = im.width * s_, h = im.height * s_; c.drawImage(im, (W2 - w) / 2, ch === 4 ? -h * 0.18 : (H2 - h) / 2, w, h); }
+    if (im === TV.trailer) { if (!TV.tex) tvTexInit(); gl.bindTexture(gl.TEXTURE_2D, TV.tex); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TV.cv); TV.dirty = false; return; }
+    c.fillStyle = 'rgba(0,0,0,0.72)'; c.fillRect(0, H2 - 150, W2, 150);
+    c.fillStyle = '#e8e8e8'; c.font = '600 22px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText(T_.kicker, W2 / 2, H2 - 108);
+    c.font = '600 44px "Newsreader", Georgia, serif'; c.fillText(ch === 2 ? 'Very Prosperous Men' : 'Stills', W2 / 2, H2 - 58);
+    if (ch === 2) { c.font = '500 20px "IBM Plex Mono", monospace'; c.fillStyle = '#bdbdbd'; c.fillText(TV.trailer ? '' : '▶  Watch the trailer', W2 / 2, H2 - 22); }
+    if (ch === 4) { c.font = '500 20px "IBM Plex Mono", monospace'; c.fillStyle = '#bdbdbd'; c.fillText(T_.body, W2 / 2, H2 - 22); }
+  } else {
+    c.fillStyle = '#c8c8c8'; c.font = '500 22px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText('VERY PROSPEROUS MEN', W2 / 2, 84);
+    c.fillStyle = '#ececec'; c.font = '600 66px "Newsreader", Georgia, serif'; c.fillText(T_.title, W2 / 2, 176);
+    let y = tvWrap(c, T_.body, W2 / 2, 262, 640, 40, '500 30px "Newsreader", Georgia, serif', '#d8d8d8');
+    if (T_.body2) tvWrap(c, T_.body2, W2 / 2, y + 34, 640, 32, '500 24px "Newsreader", Georgia, serif', '#b8b8b8');
+    c.fillStyle = '#9a9a9a'; c.font = '400 20px "IBM Plex Mono", monospace'; c.fillText(T_.kicker + '   ·   turn the knob', W2 / 2, H2 - 44);
+  }
+  if (!TV.tex) tvTexInit();
+  gl.bindTexture(gl.TEXTURE_2D, TV.tex); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TV.cv); TV.dirty = false;
+}
+function tvSetChannel(ch, now) {
+  if (!TV.chans.includes(ch) || ch === TV.ch) return;
+  TV.ch = ch; TV.dirty = true; TV.snow = 1.0; TV.rollV = 1.2; TV.nextRoll = now + 3; TV.bwT = (ch === 2 && TV.trailer) ? 0 : 1;
+  if (cuMeta['c_tv_' + ch]) loadCU('c_tv_' + ch);                    // the still with the selector turned to this channel
+  document.querySelectorAll('.tv-chan button').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.ch === ch)));
+  $('#tvGuide').innerHTML = TVTEXT[ch].guide; tvClick();
+  if (ch === 2 && TV.trailer) { TV.trailer.currentTime = 0; TV.trailer.muted = !soundOn; TV.trailer.play().catch(() => {}); } else if (TV.trailer) TV.trailer.pause();
+}
+function tvStep(d, now) { const i = TV.chans.indexOf(TV.ch); tvSetChannel(TV.chans[(i + d + TV.chans.length) % TV.chans.length], now); }
+function tvClick() {   // the knob's detent
+  if (!soundOn || !actx) return; const t = actx.currentTime, s = actx.createBufferSource(); s.buffer = noiseBuf(0.02);
+  const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 3;
+  const g = actx.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 0.06);
+}
+function tvOn(now) { document.body.classList.add('tv'); TV.on = 0; TV.t0 = now; TV.snow = 0.8; TV.dirty = true; TV.bw = 1; $('#tvStrip').hidden = false; tvSetChannel(TV.ch === 2 ? 3 : 2, now); tvSetChannel(2, now); TV.snow = 0.8;
+  document.querySelectorAll('.tv-chan button').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.ch === TV.ch))); $('#tvGuide').innerHTML = TVTEXT[TV.ch].guide; }
+function tvOff() { document.body.classList.remove('tv'); $('#tvStrip').hidden = true; TV.bw = 1; TV.bwT = 1; if (TV.trailer) TV.trailer.pause(); }
+document.querySelectorAll('.tv-chan button').forEach(b => b.addEventListener('click', () => tvSetChannel(+b.dataset.ch, performance.now() / 1000)));
+function tvHotspot(x, y) {
+  if (!cu || cu.name !== 'c_tv' || cu.phase !== 'still') return null; const m = cuMeta.c_tv || {};
+  for (const [key, label, d] of [['knob0', 'Next channel', 1], ['knob1', 'Previous channel', -1]]) { const poly = m[key]; if (poly && poly.length >= 3 && inPoly(x, y, poly.map(p => toScreen(p)))) return { key, label, act: () => tvStep(d, performance.now() / 1000) }; }
+  if (m.screen && inPoly(x, y, m.screen.map(p => toScreen(p)))) return { key: 'screen', label: TV.ch === 2 && !TV.trailer ? 'Watch the trailer' : 'Next channel', act: () => { if (TV.ch === 2 && !TV.trailer) window.open('https://vimeo.com/891711371', '_blank', 'noopener'); else tvStep(1, performance.now() / 1000); } };
+  return null;
+}
+function drawTVChannel(now, dt) {
+  if (!cu || cu.name !== 'c_tv' || cu.phase !== 'still' || !cuMeta.c_tv || !cuMeta.c_tv.screen) return;
+  TV.on = Math.min(1, TV.on + dt / 0.9);                       // the tube warms up
+  TV.snow = Math.max(0, TV.snow - dt / 0.35); TV.roll += TV.rollV * dt; TV.rollV *= Math.exp(-dt / 0.25); if (TV.rollV < 0.02) { TV.rollV = 0; TV.roll = Math.round(TV.roll); }
+  // no idle roll: the picture holds steady (Josiah, 17:10); the vertical hold only slips for a moment when the knob turns
+  TV.bw += Math.max(-dt / 0.8, Math.min(dt / 0.8, TV.bwT - TV.bw));            // the picture finds its colour as the trailer comes in
+  if (TV.ch === 2 && TV.trailer) { TV.trailer.muted = !soundOn; if (TV.trailer.paused && TV.on > 0.5) TV.trailer.play().catch(() => {}); }
+  if (TV.dirty || (TV.ch === 2 && TV.trailer)) tvDraw(now);
+  const q = cuMeta.c_tv.screen.map(p => { const s_ = toScreen(p); return [s_[0] * W * 2 / W - 1, 1 - s_[1] * H * 2 / H]; });   // TL TR BR BL in clip space
+  const verts = new Float32Array([q[0][0], q[0][1], 0, 0, q[3][0], q[3][1], 0, 1, q[1][0], q[1][1], 1, 0, q[2][0], q[2][1], 1, 1]);
+  const pr = P.tv2; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, tvQuad); gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
+  const la = gl.getAttribLocation(pr.p, 'a'), lq = gl.getAttribLocation(pr.p, 'q');
+  gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0); gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 2, gl.FLOAT, false, 16, 8);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, TV.tex); gl.uniform1i(pr.u.s, 0);
+  gl.uniform1f(pr.u.t, now); gl.uniform1f(pr.u.bw, TV.bw); gl.uniform1f(pr.u.snow, TV.snow); gl.uniform1f(pr.u.roll, TV.roll); gl.uniform1f(pr.u.gain, 0.9); gl.uniform1f(pr.u.on_, TV.on * TV.on);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disable(gl.BLEND);
+  gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lq);
+}
+window.__tv = { TV, tvSetChannel, tvStep, enterWindow, leaveWindow, enterCloseup, leaveCloseup, get FEATURES() { return FEATURES; }, get mode() { return mode; } };   // for headless QA
+addEventListener('keydown', e => { if (cu && cu.name === 'c_tv' && cu.phase === 'still' && !e.target.closest('input,textarea')) { if (e.key === 'ArrowRight' || e.key === 'ArrowUp') tvStep(1, performance.now() / 1000); if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') tvStep(-1, performance.now() / 1000); }
+  if (cu && cu.name === 'c_bible' && cu.sub === 'bible' && bibleOK && window.bible.state === 'open') { if (e.key === 'ArrowRight') window.bible.turn(1); if (e.key === 'ArrowLeft') window.bible.turn(-1); } });
+
+// ---------- window close-up (click the window) ----------
+// Preferred: a pre-rendered flight to the window (swoop.mp4, 24 fps: 30 frames of flight, then 20 of the sheer sliding open).
+// Fallback: zoom toward the window and dissolve to the two close-up stills.
+let winTex = { closed: null, open: null }, winT = 0, winFrom = 0, zoom = 1, zc = [0.5, 0.5], altMix = 0, slide = 0;
+const vid = document.createElement('video'); vid.muted = true; vid.playsInline = true; vid.preload = 'auto'; vid.src = QA_WEBM ? 'frames/_swoop.webm' : 'frames/swoop.mp4';
+let vidOK = false, vidTex = null, curtainPlayed = false;
+const loopVid = document.createElement('video'); loopVid.muted = true; loopVid.playsInline = true; loopVid.loop = true; loopVid.preload = 'auto'; loopVid.src = QA_WEBM ? 'frames/_loop.webm' : 'frames/loop.mp4';
+let loopOK = false, loopTex = null, looping = false;
+loopVid.addEventListener('loadeddata', () => { loopOK = true; });
+vid.addEventListener('loadeddata', () => { vidOK = true; });
+vid.addEventListener('error', () => { vidOK = false; });
+function loadWin() { if (winTex.closed !== null) return; winTex.closed = false;
+  const a = new Image(), b = new Image(); a.onload = () => winTex.closed = tex(a); b.onload = () => winTex.open = tex(b);
+  a.src = 'frames/w_closed.jpg'; b.src = 'frames/w_open.jpg'; }
+function enterWindow() {
+  loadWin(); mode = 'toWindow'; document.body.classList.add('away'); winT = 0; curtainPlayed = false; gt = 0; gtilt = 0;
+  $('#back').hidden = false; $('#hint').textContent = 'The view past the fence'; stage.classList.remove('hot');
+  const w = [0, 1, 2, 3].map(i => cur.anchors['win' + i]).filter(Boolean);
+  zc = w.length ? [w.reduce((s, p) => s + p[0], 0) / w.length, 1 - w.reduce((s, p) => s + p[1], 0) / w.length] : [0.8, 0.8];
+}
+function leaveWindow() { if (mode === 'room') return; mode = 'leaving'; document.body.classList.remove('away'); winFrom = performance.now() / 1000; vid.pause();
+  $('#back').hidden = true; $('#hint').textContent = 'Drag to look around · Click the window · Click the TV'; }
+$('#back').addEventListener('click', () => { if (cu) leaveCloseup(); else leaveWindow(); });
+function openTV() { if (FEATURES.tv) enterCloseup('c_tv', CLOSE.c_tv.at); else openPanel($('#tvpanel')); }
+function loopFrameTex() {
+  if (!loopTex) { loopTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, loopTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+  gl.bindTexture(gl.TEXTURE_2D, loopTex);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  if (loopVid.readyState >= 2) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, loopVid);
+  return loopTex;
+}
+function videoFrameTex() {
+  if (!vidTex) { vidTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, vidTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+  gl.bindTexture(gl.TEXTURE_2D, vidTex);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
+  if (vid.readyState >= 2) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, vid);
+  return vidTex;
+}
+function windowState(now, dt) {
+  // returns { alt: texture or null, altMix, zoom }
+  if (cu) return closeupState(now, dt);
+  if (mode === 'toWindow') {                     // settle back to the load view first, then start the move
+    if (Math.abs(t) < 0.4 && tilt < 0.4) { mode = 'window'; winT = 0; if (vidOK) { vid.currentTime = 0; vid.play().catch(() => {}); } }
+    return { alt: null, altMix: 0, zoom: 1 };
+  }
+  if (mode === 'window') {
+    winT += dt;
+    if (vidOK) {
+      if (!curtainPlayed && vid.currentTime > 30 / 24) { curtainPlayed = true; curtainSound(); }
+      if (vid.ended && loopOK) { if (!looping) { looping = true; loopVid.currentTime = 0; loopVid.play().catch(() => {}); extLoopStart(); } if (loopVid.readyState >= 2) return { alt: loopFrameTex(), altMix: 1, zoom: 1 }; }
+      return { alt: videoFrameTex(), altMix: vid.readyState >= 2 ? 1 : 0, zoom: 1 };
+    }
+    const z = Math.min(1, winT / 1.3), e = z * z * (3 - 2 * z), have = winTex.closed && winTex.open;
+    const sl = Math.max(0, Math.min(1, (winT - 1.5) / 1.2)); if (!curtainPlayed && sl > 0 && have) { curtainPlayed = true; curtainSound(); }
+    return { alt: have ? (sl > 0.5 ? winTex.open : winTex.closed) : null, altMix: have ? Math.max(0, Math.min(1, (e - 0.55) / 0.45)) : 0, zoom: 1 + e * 1.6 };
+  }
+  if (mode === 'leaving') {
+    const k = Math.max(0, 1 - (now - winFrom) / 0.7); if (k === 0) mode = 'room';
+    if (k === 0) { looping = false; loopVid.pause(); extLoopStop(); }
+    return { alt: looping && loopOK ? loopFrameTex() : (vidOK ? videoFrameTex() : (winTex.open || null)), altMix: k * k, zoom: 1 };
+  }
+  return { alt: null, altMix: 0, zoom: 1 };
+}
+
+// ---- thread C: exterior sounds + car passes ----
+// Heard while the window view is up (loop.mp4: 30 s, 24 fps; the near pumpjacks make one stroke every PJ_PERIOD s, a
+// sedan passes left to right at CAR_PASSES[0].t and right to left at CAR_PASSES[1].t, both baked into the video).
+// Pumpjacks: each of the four near units creaks on its upstroke and clanks at the top, low-passed and quiet as heard
+// from across the road, panned to where it stands. Cars: filtered noise and a low engine hum with a Doppler pitch drop
+// and a stereo pan in the direction of travel, timed to the clip. Everything is scheduled off loopVid.currentTime, so it
+// stays in step with the picture; nothing is scheduled unless soundOn, and it all runs through one bus that fades out
+// when the view leaves the window.
+const PJ_PERIOD = 6, PJ = [                              // crank phase at loop time 0 (from the render log) and pan from each unit's yard position
+  { ph: 5.14, pan: 0.10, d: 22 }, { ph: 2.17, pan: -0.35, d: 36 }, { ph: 1.10, pan: 0.30, d: 52 }, { ph: 6.01, pan: -0.40, d: 71 }];
+// Josiah's pass-by recordings: `snd` file, `peak` = the loudest moment in the file (the car crossing the camera), `from` = where
+// playback starts (a little before the peak, faded in), `lead` = peak - from = how long before the crossing the clip starts
+const CAR_PASSES = [{ t: 2.0, dur: 38 / 24, dir: 1, fired: false, snd: 'car_a', peak: 15.97, from: 13.2, to: 23.5 },
+                    { t: 10.0, dur: 38 / 24, dir: -1, fired: false, snd: 'car_b', peak: 3.95, from: 0.3, to: 8.0 }];
+const CAR_LEAD = 1.8;                                    // the car is heard this long before it enters the frame
+let extBus = null, extTimer = null, extLastE = [null, null, null, null];
+function extBusNode() {
+  if (!actx) return null;
+  if (!extBus || extBus.context !== actx) { extBus = actx.createGain(); extBus.gain.value = 1.0; extBus.connect(master); }
+  return extBus;
+}
+function extPan(node, pan) {                             // stereo position, or a pass-through where StereoPanner is missing
+  if (!actx.createStereoPanner) return node;
+  const p = actx.createStereoPanner(); p.pan.value = pan; node.connect(p); return p;
+}
+function pumpjackStroke(j, at) {                         // one stroke of unit j: `at` = horsehead at the bottom, up for 3 s, down for 3 s
+  const bus = extBusNode(), k = 22 / j.d, lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+  extPan(lp, j.pan).connect(bus);
+  // creak: a slow-bending sawtooth through a narrow bandpass, rising through the upstroke
+  const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(96 + 18 * Math.sin(j.ph), at + 0.2); o.frequency.linearRampToValueAtTime(128 + 18 * Math.sin(j.ph), at + 2.7);
+  const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 7; bp.frequency.setValueAtTime(380, at + 0.2); bp.frequency.linearRampToValueAtTime(640, at + 2.7);
+  const cg = actx.createGain(); cg.gain.setValueAtTime(0, at + 0.2); cg.gain.linearRampToValueAtTime(0.11 * k, at + 0.9); cg.gain.linearRampToValueAtTime(0.14 * k, at + 2.2); cg.gain.linearRampToValueAtTime(0, at + 2.85);
+  o.connect(bp).connect(cg).connect(lp); o.start(at + 0.2); o.stop(at + 2.9);
+  // clank at the top of the stroke, and a duller one at the bottom
+  for (const [tt, f, g] of [[at + 2.95, 620, 0.16], [at + 2.99, 940, 0.09], [at + 5.85, 410, 0.08]]) {
+    const c = actx.createOscillator(); c.type = 'triangle'; c.frequency.value = f * (0.97 + 0.06 * Math.random());
+    const g2 = actx.createGain(); g2.gain.setValueAtTime(0, tt); g2.gain.linearRampToValueAtTime(g * k, tt + 0.006); g2.gain.exponentialRampToValueAtTime(0.0005, tt + 0.28);
+    c.connect(g2).connect(lp); c.start(tt); c.stop(tt + 0.3);
+  }
+}
+const __carLog = []; window.__carLog = __carLog;
+function carSample(p, tc, late) {
+  __carLog.push({ snd: p.snd, tc: +tc.toFixed(2), late: +late.toFixed(2), now: +actx.currentTime.toFixed(2), loopT: +loopVid.currentTime.toFixed(2) });                         // Josiah's recording, its peak at tc (the crossing); `late` s of the approach already gone
+  const b = SND.buf[p.snd]; if (!b) return false;
+  const bus = extBusNode(), dir = p.dir, from = p.from + Math.max(0, late), start = tc - (p.peak - from), len = p.to - from, now = actx.currentTime;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;          // through the open window
+  const pan = actx.createStereoPanner ? actx.createStereoPanner() : null;
+  if (pan) { pan.pan.setValueAtTime(-0.9 * dir, now); pan.pan.setValueAtTime(-0.9 * dir, tc - 1.6); pan.pan.linearRampToValueAtTime(-0.5 * dir, tc - 0.45); pan.pan.linearRampToValueAtTime(0.5 * dir, tc + 0.45); pan.pan.linearRampToValueAtTime(0.9 * dir, tc + 1.8); lp.connect(pan).connect(bus); }
+  else lp.connect(bus);
+  const g = actx.createGain(); g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(0.7, start + 0.6); g.gain.setValueAtTime(0.7, start + len - 0.8); g.gain.linearRampToValueAtTime(0, start + len);
+  const src = actx.createBufferSource(); src.buffer = b; src.connect(g).connect(lp); src.start(Math.max(now, start), from, len); return true;
+}
+function carPassSound(p, t0) {                           // generated fallback (no recording yet): t0 = audio time the car is first heard; the frame entry is t0 + CAR_LEAD
+  const bus = extBusNode(), tc = t0 + CAR_LEAD + p.dur / 2, tEnd = t0 + CAR_LEAD + p.dur + 2.6, dir = p.dir;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;      // through the open window
+  const pan = actx.createStereoPanner ? actx.createStereoPanner() : null;
+  if (pan) { pan.pan.setValueAtTime(-0.9 * dir, t0); pan.pan.linearRampToValueAtTime(-0.6 * dir, tc - 0.45); pan.pan.linearRampToValueAtTime(0.6 * dir, tc + 0.45); pan.pan.linearRampToValueAtTime(0.9 * dir, tEnd); lp.connect(pan).connect(bus); }
+  else lp.connect(bus);
+  const env = (g, peak) => { g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(peak * 0.25, t0 + 1.0); g.gain.linearRampToValueAtTime(peak * 0.6, tc - 0.5);
+    g.gain.linearRampToValueAtTime(peak, tc); g.gain.linearRampToValueAtTime(peak * 0.55, tc + 0.6); g.gain.linearRampToValueAtTime(peak * 0.2, tc + 1.6); g.gain.linearRampToValueAtTime(0, tEnd); };
+  const dop = (param, f) => { param.setValueAtTime(f * 1.07, t0); param.linearRampToValueAtTime(f * 1.05, tc - 0.5); param.linearRampToValueAtTime(f * 0.95, tc + 0.5); param.linearRampToValueAtTime(f * 0.93, tEnd); };
+  // road and wind: broadband noise through a swept bandpass
+  const n = actx.createBufferSource(); n.buffer = noiseBuf(Math.ceil(tEnd - t0) + 1);
+  const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.6; dop(bp.frequency, 1100);
+  const ng = actx.createGain(); env(ng, 0.30); n.connect(bp).connect(ng).connect(lp); n.start(t0); n.stop(tEnd + 0.1);
+  // engine: two sawtooths an octave apart through a low-pass, the same Doppler drop
+  for (const [f, g] of [[54, 0.16], [108, 0.09]]) {
+    const o = actx.createOscillator(); o.type = 'sawtooth'; dop(o.frequency, f);
+    const f2 = actx.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 320;
+    const og = actx.createGain(); env(og, g); o.connect(f2).connect(og).connect(lp); o.start(t0); o.stop(tEnd + 0.1);
+  }
+}
+function extTick() {
+  if (!looping || !actx || !soundOn || loopVid.paused) return;
+  const tv = loopVid.currentTime, now = actx.currentTime, L = loopVid.duration || 30;
+  if (!SND.pump) for (let i = 0; i < PJ.length; i++) {   // generated strokes only until Josiah's pumpjack recording is in (then pumpStart loops it)
+    const off = PJ_PERIOD * ((1 - (PJ[i].ph - Math.PI / 2) / (2 * Math.PI)) % 1), e = Math.ceil((tv - off - 0.05) / PJ_PERIOD) * PJ_PERIOD + off;   // bottom of the stroke: crank phase pi/2
+    const key = Math.round(((e % L) + L) % L * 100);       // the same stroke seen across the loop's wrap
+    if (e - tv < 2.5 && extLastE[i] !== key) { extLastE[i] = key; pumpjackStroke(PJ[i], now + Math.max(0, e - tv)); }
+  }
+  if (loopVid.duration > 20) for (const p of CAR_PASSES) {          // the 6 s fallback loop has no cars
+    const tc_ = p.t + p.dur / 2, leadS = SND.buf[p.snd] ? (p.peak - p.from) : CAR_LEAD + p.dur / 2;   // clip start relative to the crossing
+    const lead = tv - (tc_ - leadS);
+    if (lead < -0.6 || tv > p.t + p.dur + 2.6) p.fired = false;
+    else if (lead >= 0 && lead < 2.5 && !p.fired) { p.fired = true; if (!carSample(p, now + (tc_ - tv), lead)) carPassSound(p, now - lead); }   // a late tick still lands the pass on the picture
+  }
+}
+function pumpStart() {                                  // Josiah's oil-pump recording, seamless loop, low-passed through the glass
+  if (SND.pump || !SND.buf.pumpjack || !actx) return;
+  const bus = extBusNode(); if (!bus) return;
+  const s = actx.createBufferSource(); s.buffer = SND.buf.pumpjack; s.loop = true;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; const g = actx.createGain(); g.gain.value = 0;
+  s.connect(lp).connect(g).connect(bus); s.start(actx.currentTime, Math.random() * SND.buf.pumpjack.duration); g.gain.setTargetAtTime(0.55, actx.currentTime, 0.8); SND.pump = { s, g };
+}
+function pumpStop() { if (!SND.pump) return; const { s, g } = SND.pump; SND.pump = null; g.gain.setTargetAtTime(0, actx.currentTime, 0.3); setTimeout(() => { try { s.stop(); } catch (e) {} }, 1500); }
+function extLoopStart() {
+  extLastE = [null, null, null, null]; for (const p of CAR_PASSES) p.fired = false;
+  if (actx && soundOn) { sndLoad('pumpjack', 3.0); sndLoad('car_a'); sndLoad('car_b'); pumpStart(); }
+  if (extTimer) clearInterval(extTimer); extTimer = setInterval(extTick, 100);
+  if (actx && extBusNode()) extBus.gain.setTargetAtTime(1.0, actx.currentTime, 0.05);
+}
+function extLoopStop() {
+  if (extTimer) clearInterval(extTimer); extTimer = null; pumpStop();
+  if (actx && extBus) extBus.gain.setTargetAtTime(0.0, actx.currentTime, 0.25);
+}
+// ---- end thread C ----
+
+// ---------- frame loop ----------
+let last = performance.now() / 1000, grainT = 0, weave = [0, 0], firstShown = false;
+function frame() {
+  requestAnimationFrame(frame);
+  if (lite) return;
+  const now = performance.now() / 1000, dt = Math.min(0.05, now - last); last = now;
+  if (!vmap) vmap = VIEWMAP();
+  resize();
+  // released: the camera stays where it was left (settled on the nearest rendered view); it follows the hand with a damped lag
+  // while the hand rests, settle on the nearest rendered view so nothing is shown double
+  let st = gt, stilt = gtilt;
+  if (drag && TS.length && performance.now() - (drag.last || 0) > 140) {
+    st = TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]);
+    stilt = TILTS.reduce((a, b) => Math.abs(b - gtilt) < Math.abs(a - gtilt) ? b : a, TILTS[0]);
+  }
+  { const k = reduce ? 1 : 1 - Math.exp(-dt * 7.0); t += (st - t) * k; tilt += (stilt - tilt) * k; if (Math.abs(t - st) < 0.005) t = st; if (Math.abs(tilt - stilt) < 0.005) tilt = stilt; }
+  // the four nearest views and their weights
+  const bi = (arr, x) => { if (arr.length < 2) return [0, 0]; let i = 0; while (i < arr.length - 2 && arr[i + 1] < x) i++; const f = arr.length > 1 ? (x - arr[i]) / (arr[i + 1] - arr[i]) : 0; return [i, Math.max(0, Math.min(1, f))]; };
+  const [it, ft] = bi(TS, t), [ij, fj] = bi(TILTS, tilt);
+  const cand = [[it, ij, (1 - ft) * (1 - fj)], [it + 1, ij, ft * (1 - fj)], [it, ij + 1, (1 - ft) * fj], [it + 1, ij + 1, ft * fj]];
+  const use = []; let wsum = 0;
+  for (const [a, b, w] of cand) {
+    const ta = TS[Math.min(a, TS.length - 1)], tb = TILTS[Math.min(b, TILTS.length - 1)]; const nm = vname(ta, tb);
+    const e = loadView(nm); if (e.b && w > 0) { use.push([e, w, vmap.get(nm)]); wsum += w; }
+  }
+  if (!use.length) { const e = cache.get(vname(0, 0)); if (e && e.b) { use.push([e, 1, vmap.get(vname(0, 0))]); wsum = 1; } else return; }
+  // blended anchors
+  const an = {}; for (const [, w, v] of use) for (const k in v.anchors) { const p = v.anchors[k]; if (!an[k]) an[k] = [0, 0]; an[k][0] += p[0] * w / wsum; an[k][1] += p[1] * w / wsum; }
+  cur.anchors = an;
+  const cam = [0, 0, 0], aim = [0, 0, 0]; for (const [, w, v] of use) for (let i = 0; i < 3; i++) { cam[i] += (v.cam ? v.cam[i] : 0) * w / wsum; aim[i] += (v.aim ? v.aim[i] : 0) * w / wsum; }
+  cur.cam = cam; cur.aim = aim;
+  if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true;
+    const q = /[#&]cu=(c_\w+)/.exec(location.hash);                  // QA hook: #cu=c_case opens that close-up
+    if (q && CLOSE[q[1]]) setTimeout(() => enterCloseup(q[1], CLOSE[q[1]].at), 300); }
+
+  updateSurge(now, dt);
+  const ws_ = windowState(now, dt); zoom = ws_.zoom; altMix = ws_.altMix;
+
+  // pass 1: composite into the offscreen target
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, W, H); gl.disable(gl.BLEND);
+  const pc = P.comp; gl.useProgram(pc.p);
+  const hd = [0, 0, 0, 0];
+  for (let i = 0; i < 4; i++) { const u = use[Math.min(i, use.length - 1)];
+    gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].b); gl.uniform1i(pc.u['b' + i], i);
+    gl.activeTexture(gl.TEXTURE4 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].l || black); gl.uniform1i(pc.u['l' + i], 4 + i);
+    gl.activeTexture(gl.TEXTURE9 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].d || black); gl.uniform1i(pc.u['d' + i], 9 + i);
+    const v = u[2]; if (u[0].d && v && v.cam && cur.cam) { hd[i] = 1; gl.uniform3fv(pc.u['cp' + i], v.cam); gl.uniformMatrix3fv(pc.u['vr' + i], false, basis(v.cam, v.aim)); } }
+  gl.uniform4fv(pc.u.hasD, hd);
+  if (cur.cam) { gl.uniform3fv(pc.u.cc, cur.cam); gl.uniformMatrix3fv(pc.u.cr, false, basis(cur.cam, cur.aim)); }
+  gl.uniform1f(pc.u.tx, 18 / 31); gl.uniform1f(pc.u.ty, 18 / 31 / FA);
+  const ws = [0, 1, 2, 3].map(i => i < use.length ? use[i][1] / wsum : 0);
+  gl.uniform4f(pc.u.w, ws[0], ws[1], ws[2], ws[3]);
+  const fr = framing(); gl.uniform2f(pc.u.sc, fr.sc[0], fr.sc[1]); gl.uniform2f(pc.u.fc, fr.fc[0], fr.fc[1]); gl.uniform2f(pc.u.vc, fr.vc[0], fr.vc[1]);
+  gl.uniform2f(pc.u.zc, zc[0], zc[1]); gl.uniform1f(pc.u.zoom, zoom);
+  gl.uniform1f(pc.u.head, headI); gl.uniform1f(pc.u.spark, Math.min(2.2, sparkE));
+  gl.uniform1f(pc.u.fade, 1.0);
+  gl.activeTexture(gl.TEXTURE8); gl.bindTexture(gl.TEXTURE_2D, ws_.alt || black); gl.uniform1i(pc.u.alt, 8);
+  gl.uniform1f(pc.u.altMix, altMix);
+  const a2 = cu && cu.sub === 'crux' && !cruxOK && cuTex.c_crucifix ? cu : null;   // thread D: only the fallback still uses alt2
+  gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, a2 ? cuTex.c_crucifix : black); gl.uniform1i(pc.u.alt2, 13);
+  { const k = a2 ? a2.subT : 0, e = k * k * (3 - 2 * k); gl.uniform1f(pc.u.alt2Mix, Math.min(1, e * 1.6)); gl.uniform1f(pc.u.a2s, 0.25 + 0.75 * e);
+    gl.uniform2f(pc.u.a2h, a2 ? a2.a2h[0] : 0.5, a2 ? a2.a2h[1] : 0.5); }
+  fsq(pc);
+  // pass 2: live elements (additive), only while in the room
+  if (altMix < 0.99) {
+    if (zoom < 1.02) drawWalker(now);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    if (zoom < 1.02) { drawTV(now); drawSmoke(now); drawParticles(now, dt); }
+    gl.disable(gl.BLEND);
+  }
+  drawTVChannel(now, dt);
+  // the cigarette's close-up: its smoke and the ember breathing, live over the still
+  if (cu && cu.name === 'c_ashtray' && cu.phase === 'still' && cuMeta.c_ashtray) {
+    const m = cuMeta.c_ashtray, sb = m.smoke_base && toScreen(m.smoke_base), su = m.smoke_up && toScreen(m.smoke_up);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    if (sb && su) drawSmoke(now, sb, su, 0.5 * altMix);
+    if (m.ember) { const e = toScreen(m.ember), v = [], R = H * 0.022, a = altMix * (0.55 + 0.25 * Math.sin(now * 2.1) + 0.12 * Math.sin(now * 7.3));
+      for (let i = 0; i < 18; i++) { const a0 = i / 18 * 6.283, a1 = (i + 1) / 18 * 6.283, cx = e[0] * W, cy = e[1] * H;
+        v.push(cx / W * 2 - 1, 1 - cy / H * 2, 1, 0.45, 0.12, a, (cx + Math.cos(a0) * R) / W * 2 - 1, 1 - (cy + Math.sin(a0) * R) / H * 2, 1, 0.3, 0.05, 0,
+               (cx + Math.cos(a1) * R) / W * 2 - 1, 1 - (cy + Math.sin(a1) * R) / H * 2, 1, 0.3, 0.05, 0); }
+      const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
+      const la = gl.getAttribLocation(pr.p, 'a'), lc = gl.getAttribLocation(pr.p, 'c');
+      gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 24, 8);
+      gl.drawArrays(gl.TRIANGLES, 0, v.length / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc); }
+    gl.disable(gl.BLEND);
+  }
+  // pass 3: lens and print to the screen
+  gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.generateMipmap(gl.TEXTURE_2D);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
+  const pf = P.film, L = LOOKS[look]; gl.useProgram(pf.p);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.uniform1i(pf.u.s, 0);
+  gl.uniform2f(pf.u.res, W, H);
+  grainT += dt; if (grainT > 1 / 24) { grainT = 0; weave = [(Math.random() - 0.5) * L.weave, (Math.random() - 0.5) * L.weave * 1.6]; }
+  gl.uniform1f(pf.u.t, Math.floor(now * 24) % 997);
+  gl.uniform2f(pf.u.weave, weave[0], weave[1]);
+  for (const k of ['distort', 'fringe', 'edge', 'vig', 'bloom', 'hal', 'sat', 'con', 'grain']) gl.uniform1f(pf.u[k], L[k]);
+  gl.uniform3fv(pf.u.halc, L.halc); gl.uniform3fv(pf.u.lift, L.lift); gl.uniform3fv(pf.u.gam, L.gam); gl.uniform3fv(pf.u.gain, L.gain);
+  fsq(pf);
+}
+})();
+</script>
+</body></html>

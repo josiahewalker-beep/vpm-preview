@@ -1,0 +1,22 @@
+{
+ "imdb_box": [
+  0.1786,
+  0.755,
+  0.8214,
+  0.795
+ ],
+ "imdb_url": "https://www.imdb.com/name/nm9711704/",
+ "site_line": [
+  0.1429,
+  0.815,
+  0.8571,
+  0.838
+ ],
+ "site_url": "https://www.josiahwalker.com/",
+ "bio_source": "content/bio/josiahwalker-bio.md",
+ "plates": {
+  "creation_of_light": "File:Creation of Light (89392244).jpg",
+  "moses_tables": "File:041A.Moses Breaks the Tables of the Law.jpg",
+  "crucifixion": "File:Gustave Dor\u00e9 - Crucifixion of Jesus.jpg"
+ }
+}

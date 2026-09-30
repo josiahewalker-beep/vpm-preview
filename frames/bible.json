@@ -1,0 +1,1 @@
+{"size":[0.23,0.29,0.06],"board":0.0055,"pillow":0.0045,"hinge":[-0.113,0.0,0.0545],"hinge_axis":[0,1,0],"open_sign":-1,"rest":{"translation":[2.415,2.815,0.436],"rotation_z_deg":322,"note":"hero.py: grouped(family_bible, (tx + 0.415, ty - 0.035, top), 322) with tx, ty, top = 2.0, 2.85, 0.436"},"materials":["bb_cover","bb_brass","bb_gilt","bb_endpaper","bb_ribbon"],"tris":12932}

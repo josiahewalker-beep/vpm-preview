@@ -1,0 +1,26 @@
+{
+ "pages": [
+  "clipping_p1.png",
+  "clipping_p2.png",
+  "clipping_p3.png"
+ ],
+ "size": [
+  1600,
+  2000
+ ],
+ "url": "https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/",
+ "p3_url_box": [
+  0.09,
+  0.515,
+  0.91,
+  0.705
+ ],
+ "p1_headline_box": [
+  0.0525,
+  0.103,
+  0.9475,
+  0.34
+ ],
+ "lid_visible_fraction": 0.44,
+ "source": "content/press/indieshortfest-2026-07-12.md"
+}
