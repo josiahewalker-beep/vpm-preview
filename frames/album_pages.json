@@ -4,18 +4,18 @@
    "file": "album_page_01.png",
    "prints": [
     {
-     "kind": "L",
-     "cx_mm": 66,
-     "cy_mm": 58,
-     "rot": -2.2,
-     "src": "bts_03.jpg"
+     "kind": "M",
+     "cx_mm": 67,
+     "cy_mm": 44,
+     "rot": -1.4,
+     "src": "bts_02.jpg"
     },
     {
-     "kind": "M",
-     "cx_mm": 54,
-     "cy_mm": 160,
-     "rot": 2.6,
-     "src": "bts_14.jpg"
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 149,
+     "rot": 2.1,
+     "src": "bts_01.jpg"
     }
    ]
   },
@@ -23,11 +23,11 @@
    "file": "album_page_02.png",
    "prints": [
     {
-     "kind": "P",
-     "cx_mm": 70,
-     "cy_mm": 100,
-     "rot": 1.6,
-     "src": "bts_10.jpg"
+     "kind": "L",
+     "cx_mm": 71,
+     "cy_mm": 112,
+     "rot": 0.2,
+     "src": "bts_03.jpg"
     }
    ]
   },
@@ -36,17 +36,24 @@
    "prints": [
     {
      "kind": "L",
-     "cx_mm": 68,
-     "cy_mm": 60,
-     "rot": 1.2,
-     "src": "bts_06.jpg"
+     "cx_mm": 67,
+     "cy_mm": 51,
+     "rot": -0.2,
+     "src": "bts_04.jpg"
     },
     {
-     "kind": "L",
-     "cx_mm": 70,
-     "cy_mm": 166,
-     "rot": -1.8,
-     "src": "bts_11.jpg"
+     "kind": "M",
+     "cx_mm": 68,
+     "cy_mm": 128,
+     "rot": -1.3,
+     "src": "bts_05.jpg"
+    },
+    {
+     "kind": "M",
+     "cx_mm": 67,
+     "cy_mm": 189,
+     "rot": 2.3,
+     "src": "bts_06.jpg"
     }
    ]
   },
@@ -54,18 +61,18 @@
    "file": "album_page_04.png",
    "prints": [
     {
-     "kind": "M",
-     "cx_mm": 50,
-     "cy_mm": 50,
-     "rot": -1.5,
-     "src": "bts_45.jpg"
+     "kind": "Q",
+     "cx_mm": 71,
+     "cy_mm": 65,
+     "rot": 1.9,
+     "src": "bts_08.jpg"
     },
     {
      "kind": "L",
-     "cx_mm": 70,
-     "cy_mm": 158,
-     "rot": 2.0,
-     "src": "bts_44.jpg"
+     "cx_mm": 68,
+     "cy_mm": 162,
+     "rot": 1.5,
+     "src": "bts_07.jpg"
     }
    ]
   },
@@ -73,11 +80,11 @@
    "file": "album_page_05.png",
    "prints": [
     {
-     "kind": "P",
-     "cx_mm": 66,
-     "cy_mm": 104,
+     "kind": "L",
+     "cx_mm": 69,
+     "cy_mm": 115,
      "rot": -1.6,
-     "src": "bts_32.jpg"
+     "src": "bts_09.jpg"
     }
    ]
   },
@@ -85,18 +92,18 @@
    "file": "album_page_06.png",
    "prints": [
     {
-     "kind": "L",
-     "cx_mm": 70,
-     "cy_mm": 62,
-     "rot": 2.4,
-     "src": "bts_12.jpg"
+     "kind": "Q",
+     "cx_mm": 71,
+     "cy_mm": 50,
+     "rot": 0.5,
+     "src": "bts_11.jpg"
     },
     {
-     "kind": "S",
-     "cx_mm": 60,
-     "cy_mm": 168,
-     "rot": -2.2,
-     "src": "bts_34.jpg"
+     "kind": "P",
+     "cx_mm": 68,
+     "cy_mm": 156,
+     "rot": -1.7,
+     "src": "bts_10.jpg"
     }
    ]
   },
@@ -104,18 +111,25 @@
    "file": "album_page_07.png",
    "prints": [
     {
+     "kind": "M",
+     "cx_mm": 71,
+     "cy_mm": 40,
+     "rot": 0.5,
+     "src": "bts_12.jpg"
+    },
+    {
      "kind": "L",
-     "cx_mm": 68,
-     "cy_mm": 62,
-     "rot": -1.0,
-     "src": "bts_33.jpg"
+     "cx_mm": 70,
+     "cy_mm": 114,
+     "rot": 0.3,
+     "src": "bts_13.jpg"
     },
     {
      "kind": "M",
-     "cx_mm": 58,
-     "cy_mm": 168,
-     "rot": 1.8,
-     "src": "bts_07.jpg"
+     "cx_mm": 71,
+     "cy_mm": 187,
+     "rot": -1.4,
+     "src": "bts_14.jpg"
     }
    ]
   },
@@ -124,10 +138,10 @@
    "prints": [
     {
      "kind": "P",
-     "cx_mm": 68,
-     "cy_mm": 98,
-     "rot": 1.4,
-     "src": "bts_47.jpg"
+     "cx_mm": 71,
+     "cy_mm": 115,
+     "rot": -0.1,
+     "src": "bts_15.jpg"
     }
    ]
   },
@@ -136,17 +150,17 @@
    "prints": [
     {
      "kind": "L",
-     "cx_mm": 68,
-     "cy_mm": 58,
-     "rot": 1.0,
-     "src": "bts_28.jpg"
+     "cx_mm": 66,
+     "cy_mm": 66,
+     "rot": 0.0,
+     "src": "bts_16.jpg"
     },
     {
      "kind": "L",
-     "cx_mm": 70,
-     "cy_mm": 170,
-     "rot": -2.4,
-     "src": "bts_21.jpg"
+     "cx_mm": 68,
+     "cy_mm": 164,
+     "rot": 0.6,
+     "src": "bts_17.jpg"
     }
    ]
   },
@@ -156,9 +170,16 @@
     {
      "kind": "P",
      "cx_mm": 70,
-     "cy_mm": 104,
-     "rot": -2.0,
-     "src": "bts_08.jpg"
+     "cy_mm": 75,
+     "rot": -0.5,
+     "src": "bts_18.jpg"
+    },
+    {
+     "kind": "M",
+     "cx_mm": 70,
+     "cy_mm": 184,
+     "rot": 2.4,
+     "src": "bts_19.jpg"
     }
    ]
   },
@@ -166,11 +187,11 @@
    "file": "album_page_11.png",
    "prints": [
     {
-     "kind": "L",
-     "cx_mm": 68,
-     "cy_mm": 108,
-     "rot": 2.2,
-     "src": "bts_17.jpg"
+     "kind": "P",
+     "cx_mm": 67,
+     "cy_mm": 115,
+     "rot": 1.0,
+     "src": "bts_20.jpg"
     }
    ]
   },
@@ -179,10 +200,324 @@
    "prints": [
     {
      "kind": "P",
-     "cx_mm": 66,
-     "cy_mm": 100,
-     "rot": -1.6,
+     "cx_mm": 67,
+     "cy_mm": 69,
+     "rot": -2.2,
+     "src": "bts_21.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 35,
+     "cy_mm": 175,
+     "rot": 0.6,
+     "src": "bts_22.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 102,
+     "cy_mm": 178,
+     "rot": 0.6,
+     "src": "bts_23.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_13.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 67,
+     "cy_mm": 66,
+     "rot": -1.8,
+     "src": "bts_24.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 69,
+     "cy_mm": 161,
+     "rot": -2.0,
+     "src": "bts_25.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_14.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 115,
+     "rot": -0.2,
+     "src": "bts_26.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_15.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 76,
+     "rot": -1.8,
+     "src": "bts_27.jpg"
+    },
+    {
+     "kind": "M",
+     "cx_mm": 67,
+     "cy_mm": 180,
+     "rot": -2.2,
+     "src": "bts_28.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_16.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 115,
+     "rot": -2.3,
      "src": "bts_29.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_17.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 64,
+     "rot": 1.0,
+     "src": "bts_30.jpg"
+    },
+    {
+     "kind": "L",
+     "cx_mm": 67,
+     "cy_mm": 164,
+     "rot": -1.6,
+     "src": "bts_31.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_18.png",
+   "prints": [
+    {
+     "kind": "M",
+     "cx_mm": 67,
+     "cy_mm": 43,
+     "rot": -2.5,
+     "src": "bts_33.jpg"
+    },
+    {
+     "kind": "P",
+     "cx_mm": 66,
+     "cy_mm": 152,
+     "rot": 1.0,
+     "src": "bts_32.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_19.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 112,
+     "rot": 1.7,
+     "src": "bts_34.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_20.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 66,
+     "cy_mm": 69,
+     "rot": 1.5,
+     "src": "bts_35.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 67,
+     "cy_mm": 174,
+     "rot": -0.5,
+     "src": "bts_36.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_21.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 67,
+     "cy_mm": 71,
+     "rot": -0.2,
+     "src": "bts_37.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 35,
+     "cy_mm": 173,
+     "rot": -0.7,
+     "src": "bts_38.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 102,
+     "cy_mm": 175,
+     "rot": 0.9,
+     "src": "bts_40.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_22.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 68,
+     "cy_mm": 113,
+     "rot": 2.0,
+     "src": "bts_41.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_23.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 66,
+     "cy_mm": 69,
+     "rot": -1.4,
+     "src": "bts_42.jpg"
+    },
+    {
+     "kind": "Q",
+     "cx_mm": 66,
+     "cy_mm": 176,
+     "rot": 0.4,
+     "src": "bts_43.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_24.png",
+   "prints": [
+    {
+     "kind": "Q",
+     "cx_mm": 68,
+     "cy_mm": 53,
+     "rot": -2.4,
+     "src": "bts_45.jpg"
+    },
+    {
+     "kind": "P",
+     "cx_mm": 69,
+     "cy_mm": 158,
+     "rot": -1.5,
+     "src": "bts_44.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_25.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 67,
+     "cy_mm": 112,
+     "rot": 0.3,
+     "src": "bts_46.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_26.png",
+   "prints": [
+    {
+     "kind": "Q",
+     "cx_mm": 67,
+     "cy_mm": 53,
+     "rot": 0.6,
+     "src": "bts_48.jpg"
+    },
+    {
+     "kind": "P",
+     "cx_mm": 68,
+     "cy_mm": 157,
+     "rot": 0.4,
+     "src": "bts_47.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_27.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 67,
+     "cy_mm": 62,
+     "rot": -1.6,
+     "src": "bts_50.jpg"
+    },
+    {
+     "kind": "L",
+     "cx_mm": 69,
+     "cy_mm": 162,
+     "rot": 1.7,
+     "src": "bts_49.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_28.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 71,
+     "cy_mm": 112,
+     "rot": 1.6,
+     "src": "bts_51.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_29.png",
+   "prints": [
+    {
+     "kind": "Q",
+     "cx_mm": 70,
+     "cy_mm": 51,
+     "rot": -1.6,
+     "src": "bts_53.jpg"
+    },
+    {
+     "kind": "P",
+     "cx_mm": 67,
+     "cy_mm": 159,
+     "rot": -0.1,
+     "src": "bts_52.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_30.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 68,
+     "cy_mm": 115,
+     "rot": 1.9,
+     "src": "bts_54.jpg"
     }
    ]
   }
@@ -196,5 +531,9 @@
   0.227
  ],
  "photo_dir": "/home/claude/vpm-render-relay/scene/art/bts",
- "prints": []
+ "dropped": [
+  39,
+  55
+ ],
+ "note": "one entry per leaf FACE in order (01 = the top of the block, 02 its back, ...); two faces per card leaf"
 }

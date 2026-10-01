@@ -62,12 +62,11 @@ nav.site a:hover { color: var(--paper); }
 .btn.primary:hover { background: var(--green); border-color: var(--green); color: var(--ink); }
 
 .controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
-.hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; }
-.looks { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; transition: opacity 0.6s ease; }   /* round 4 note 12: the room's hint lines fade in and out */
+/* round 4 note 11: the film look is "Clean" only; the look chips are gone. Lite view (a still of the room, for low-power devices) lives in the About sheet. */
 .chip { font: inherit; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); background: transparent;
         border: 1px solid transparent; padding: 6px 8px; cursor: pointer; }
 .chip[aria-pressed="true"] { color: var(--paper); border-color: var(--rule); }
-.chip kbd { font: inherit; opacity: 0.6; margin-right: 4px; }
 
 .panel { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: var(--scrim); padding: 16px; }
 .sheet { background: var(--ink); border: 1px solid var(--rule); max-width: 46rem; width: 100%; max-height: 86vh; overflow: auto; padding: clamp(18px, 3vw, 36px);
@@ -91,7 +90,13 @@ nav.site a:hover { color: var(--paper); }
 body.away .bottom .card { opacity: 0; pointer-events: none; }
 body.tv .controls { opacity: 0; pointer-events: none; }
 @media (max-width: 900px) { body.tv #cuHint { display: none; } }   /* the channel strip takes the bottom edge while the set is on */
-#back { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 64px); left: max(16px, 2.2vw); z-index: 6; }
+/* round 4 note 8: one close-up chrome everywhere (as the article's): "× Close · Esc" top right under the site nav, a phone-sized target;
+   Esc and a click/tap outside the subject go back one level (the open book / lifted cross settles first, then the room). */
+#back { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 64px); right: max(16px, 2.2vw); z-index: 6; min-height: 44px; min-width: 44px; padding: 10px 16px; font-size: 12px; gap: 10px;
+        background: rgba(13, 11, 9, 0.7); border-color: rgba(239, 230, 212, 0.45); }
+#back b { font-size: 20px; line-height: 1; font-weight: 400; }
+#back:hover, #back:focus-visible { background: var(--paper); color: var(--ink); }
+@media (max-width: 640px) { #back { min-height: 52px; height: 52px; min-width: 52px; padding: 12px 16px; } #back span { display: none; } }
 #loading { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); z-index: 4; }
 
 #cuLayer { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
@@ -137,7 +142,7 @@ body:not(.tv) #cuHint { display: none; }
 @media (max-width: 640px) {
   nav.site { gap: 12px; }
   .controls { align-items: flex-start; }
-  .hint, .looks { text-align: left; justify-content: flex-start; }
+  .hint { text-align: left; }
   .bottom { flex-direction: column; align-items: stretch; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
@@ -147,7 +152,6 @@ body:not(.tv) #cuHint { display: none; }
   .card .year, .card p, .hint { display: none; }
   .card h1 { font-size: 26px; }
   .btn { min-height: 34px; padding: 6px 10px; }
-  .looks .chip { padding: 4px 6px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -171,7 +175,7 @@ body:not(.tv) #cuHint { display: none; }
   </nav>
 </header>
 
-<button id="back" class="btn" hidden>Back to the room · Esc</button>
+<button id="back" class="btn" hidden aria-label="Close · Esc"><b>×</b><span>Close · Esc</span></button>
 
 <footer class="bar bottom">
   <div class="card">
@@ -185,14 +189,7 @@ body:not(.tv) #cuHint { display: none; }
     </div>
   </div>
   <div class="controls">
-    <div class="hint" id="hint">Drag to look around · Click the window · Click the TV</div>
-    <div class="looks" role="group" aria-label="Film look">
-      <button class="chip" type="button" data-look="print62" aria-pressed="false"><kbd>1</kbd>1962 print</button>
-      <button class="chip" type="button" data-look="faded16" aria-pressed="false"><kbd>2</kbd>Faded 16mm</button>
-      <button class="chip" type="button" data-look="oldglass" aria-pressed="true"><kbd>3</kbd>Old glass</button>
-      <button class="chip" type="button" data-look="clean" aria-pressed="false"><kbd>4</kbd>Clean</button>
-      <button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button>
-    </div>
+    <div class="hint" id="hint">Drag to look around</div>
   </div>
 </footer>
 
@@ -229,6 +226,8 @@ body:not(.tv) #cuHint { display: none; }
       <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm ↗</a></li>
       <li><a href="https://www.josiahwalker.com/bio" target="_blank" rel="noopener">Josiah Walker, bio ↗</a></li>
     </ul>
+    <h3>Low-power devices</h3>
+    <p class="row"><span>A still of the room instead of the live view.</span><button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button></p>
   </div>
 </div>
 
@@ -302,37 +301,42 @@ $('#aboutBtn').addEventListener('click', () => openPanel($('#about')));
 $('#posterBtn').addEventListener('click', () => { $('#about').hidden = true; openPanel($('#posterpanel')); });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') { const open = [...document.querySelectorAll('.panel')].some(p => !p.hidden); document.querySelectorAll('.panel').forEach(p => p.hidden = true); if (!open) { if (cu) leaveCloseup(); else if (mode === 'window') leaveWindow(); } }
-  const k = { '1': 'print62', '2': 'faded16', '3': 'oldglass', '4': 'clean' }[e.key];
-  if (k && !e.target.closest('input,textarea')) setLook(k);
 });
 
-// ---------- film looks (same parameters as the still-image prototype) ----------
+// ---------- film look: "Clean" only (round 4 note 11; the 1962 print / faded 16mm / old glass grades and their menu are gone) ----------
 const LOOKS = {
-  print62: { distort: 0.018, fringe: 0.0022, edge: 0.45, vig: 0.32, bloom: 0.10, hal: 0.30, halc: [1.0, 0.36, 0.14], lift: [0.030, 0.022, 0.018], gam: [0.97, 1.0, 1.06], gain: [1.03, 1.0, 0.93], sat: 0.88, con: 1.06, grain: 0.030, weave: 0.35 },
-  faded16: { distort: 0.03, fringe: 0.0035, edge: 0.7, vig: 0.48, bloom: 0.14, hal: 0.42, halc: [1.0, 0.42, 0.18], lift: [0.045, 0.06, 0.06], gam: [1.0, 0.98, 1.0], gain: [0.98, 0.97, 0.9], sat: 0.72, con: 0.94, grain: 0.06, weave: 0.7 },
-  oldglass: { distort: 0.045, fringe: 0.006, edge: 1.0, vig: 0.42, bloom: 0.26, hal: 0.55, halc: [1.0, 0.5, 0.25], lift: [0.02, 0.018, 0.02], gam: [0.98, 1.0, 1.03], gain: [1.02, 1.0, 0.95], sat: 0.9, con: 1.02, grain: 0.036, weave: 0.3 },
   clean: { distort: 0, fringe: 0, edge: 0, vig: 0, bloom: 0, hal: 0, halc: [1, 1, 1], lift: [0, 0, 0], gam: [1, 1, 1], gain: [1, 1, 1], sat: 1, con: 1, grain: 0.008, weave: 0 },
 };
-let look = 'oldglass';
-function setLook(k) {
-  look = k;
-  document.querySelectorAll('.chip[data-look]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.look === k)));
-  try { localStorage.setItem('vpm-look', k); } catch (e) {}
-}
-try { const s = localStorage.getItem('vpm-look'); if (s && LOOKS[s]) setLook(s); } catch (e) {}
-document.querySelectorAll('.chip[data-look]').forEach(b => b.addEventListener('click', () => setLook(b.dataset.look)));
+const look = 'clean';
+try { localStorage.removeItem('vpm-look'); } catch (e) {}
 
-// ---------- lite view ----------
+// ---------- the hint line (round 4 note 12) ----------
+// In the room: "Drag to look around" first, then the lines below take turns, each fading in and out (0.6 s) and holding 3 s, round and
+// round. Any close-up / window / lite hint stops the cycle and prints at once; back in the room it starts over from "Drag to look around".
+const HINTS = ['Drag to look around', 'Did you find the dead body?', 'Click the window', 'Did you see the vacuum?', 'Click the TV', 'Check out that cigarette'];
+const HINT_HOLD = 3000, HINT_FIRST = 5000, HINT_FADE = 600;
+let hintI = 0, hintTimer = 0, hintCycling = false;
+function hintPrint(txt) { $('#hint').textContent = txt; $('#hint').style.opacity = 1; }
+function hintStop() { hintCycling = false; clearTimeout(hintTimer); hintTimer = 0; $('#hint').style.opacity = 1; }
+function hintCycle() {
+  hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0]);
+  const next = () => { if (!hintCycling) return; $('#hint').style.opacity = 0;
+    hintTimer = setTimeout(() => { if (!hintCycling) return; hintI = (hintI + 1) % HINTS.length; hintPrint(HINTS[hintI]); hintTimer = setTimeout(next, HINT_HOLD); }, reduce ? 0 : HINT_FADE); };
+  hintTimer = setTimeout(next, HINT_FIRST);
+}
+function setHint(txt) { hintStop(); hintPrint(txt); }                                     // a fixed line (close-ups, the window, lite)
+window.__hint = { get cycling() { return hintCycling; }, get i() { return hintI; }, get lines() { return HINTS; } };   // QA
+function cuHint(txt) { $('#cuHint').textContent = txt; setHint(txt); }   // one text, printed in the bar (and by #cuHint while the set is on)
+
+// ---------- lite view (a still of the room; from the About sheet, for low-power devices) ----------
 let lite = false;
-const ROOM_HINT = 'Drag to look around · Click the window · Click the TV';
-function cuHint(txt) { $('#cuHint').textContent = txt; $('#hint').textContent = txt; }   // one text, printed in the bar (and by #cuHint while the set is on)
 function setLite(v) {
-  lite = v; $('#liteBtn').setAttribute('aria-pressed', String(v));
+  lite = v; $('#liteBtn').setAttribute('aria-pressed', String(v)); $('#liteBtn').textContent = v ? 'Live view' : 'Lite view';
   canvas.hidden = v; poster.hidden = false;
-  $('#hint').textContent = v ? 'Lite view: a still of the room' : ROOM_HINT;
+  if (v) setHint('Lite view: a still of the room'); else hintCycle();
   if (v && window.__tv) liteCleanup();   // QA v26: switched on mid close-up / window: the frame loop stops, so leave them now rather than freeze there
 }
-$('#liteBtn').addEventListener('click', () => setLite(!lite));
+$('#liteBtn').addEventListener('click', () => { setLite(!lite); $('#about').hidden = true; });
 
 // ---------- sound (Web Audio, generated; starts on load where the browser allows it, else at the first gesture) ----------
 const QA_WEBM = /webmtest/.test(location.hash);   // headless Chromium has no H.264/AAC: QA runs against VP9/Vorbis copies (frames/_*.webm, _*.ogg)
@@ -493,7 +497,7 @@ window.__snd = SND; window.__sound = { sparkSound, autoSound, get soundOn() { re
 
 // ---------- WebGL ----------
 const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
-if (!gl) { setLite(true); $('#liteBtn').hidden = true; document.querySelectorAll('.chip[data-look]').forEach(b => b.hidden = true); loading.hidden = true; return; }   // no WebGL: the still, the text and the links; the look chips would do nothing
+if (!gl) { setLite(true); $('#liteBtn').hidden = true; loading.hidden = true; return; }   // no WebGL: the still, the text and the links
 
 function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
   if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
@@ -721,11 +725,39 @@ function endDrag(e) {
   drag = null;
 }
 stage.addEventListener('pointerup', endDrag);
+let downAt = null; stage.addEventListener('pointerdown', e => { downAt = [e.clientX, e.clientY]; }, true);
 stage.addEventListener('click', e => {
+  if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 8) return;   // a drag (the room, the held cross), not a tap
+  if (mode === 'window') { if (winShown()) leaveWindow(); return; }                       // round 4 note 8: a tap on the window view goes back
   if (mode !== 'closeup' || !cu) return;
-  const r = stage.getBoundingClientRect(), h = cuHotspot((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-  if (h) cuClick(h);
+  const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height, h = cuHotspot(x, y);
+  if (h) { cuClick(h); return; }
+  outsideClick(x, y, e);
 });
+// round 4 note 8: a click / tap outside the subject goes back one level, like the article's: the lifted cross or the open book settles
+// (a click on the cross / a leaf never gets here: the live canvases take those), else the close-up is left (the hop: back to the hub).
+// Not before the still has been on screen 0.4 s (the second click of a double click), not during a flight, lift or leaf run.
+function outsideClick(x, y, e) {
+  if (cu.phase !== 'still' || !cu.shownAt || performance.now() / 1000 - cu.shownAt < 0.4) return;
+  if (cu.sub === 'crux') { if (!cruxOK || (window.crux.state === 'held' && !window.crux.hitAt(e.clientX, e.clientY))) leaveCloseup(); return; }
+  const bk = book(); if (bk) { if (bk.state === 'open') leaveCloseup(); return; }
+  if (cuSubject(x, y)) return;
+  leaveCloseup();
+}
+// the subject of each close-up on screen (0..1): a tap inside it does nothing, outside it goes back
+function cuSubject(x, y) {
+  const m = cuMeta[cu.name] || {};
+  const grow = (polys, k) => { const P = []; for (const q of polys) if (q && q.length >= 3) for (const p of q) P.push(toScreen(p)); if (P.length < 3) return null;
+    const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length; return hull(P.map(p => [cx + (p[0] - cx) * k, cy + (p[1] - cy) * k])); };
+  let poly = null;
+  if (cu.name === 'c_case') poly = grow([m.crucifix, m.clipping, m.leaflets, m.receipts], 1.15);           // the case and its lid
+  else if (cu.name === 'c_tv') poly = grow([m.screen, m.knob0, m.knob1], 1.3);                              // the whole cabinet, roughly
+  else if (cu.name === 'c_ashtray') { const K = m.cam ? { cam: m.cam, aim: m.aim, lens: m.lens || 30 } : null; const b = K && boxPoly({ lo: [2.10, 2.93, 0.43], hi: [2.36, 3.18, 0.50] }, K); poly = b ? grow([b], 1.12) : null; }
+  else if (cu.name === 'c_bible') return false;                                                             // the hub: the three hotspots are the subject
+  else return false;                                                                                        // the watch fills the frame: anywhere goes back
+  return !!(poly && inPoly(x, y, poly));
+}
+window.__chrome = { subject: (x, y) => cu ? cuSubject(x, y) : null, outside: (x, y) => { const r = stage.getBoundingClientRect(); outsideClick(x, y, { clientX: r.left + x * r.width, clientY: r.top + y * r.height }); } };   // QA
 stage.addEventListener('pointerleave', () => { $('#tip').hidden = true; }); stage.addEventListener('pointercancel', endDrag);
 
 // ---------- where things are on screen ----------
@@ -759,6 +791,7 @@ function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < 
 const PROPS = [
   { id: 'poster', label: 'The poster', lo: [1.583, 2.497, 0.342], hi: [2.057, 3.017, 0.438], act: () => openPanel($('#posterpanel')) },
   { id: 'fam', get label() { return FEATURES.bible ? 'About Josiah & The Film' : 'About · Josiah Walker'; }, lo: [2.235, 2.63, 0.436], hi: [2.6, 3.0, 0.50], act: () => { if (FEATURES.bible) enterCloseup('c_bible', [2.415, 2.815, 0.45]); else linkPanel('Josiah Walker', 'Writer and director of Very Prosperous Men.', [['Read the bio', 'https://www.josiahwalker.com/bio'], ['IMDb', 'https://www.imdb.com/name/nm9711704/']]); } },
+  { id: 'album', needs: 'album', label: 'Behind The Scenes', lo: [2.08, 2.69, 0.436], hi: [2.23, 2.91, 0.482], act: () => enterCloseup('c_bible', [2.415, 2.815, 0.45]) },   // round 4 note 10: the album in the room opens the hub (the same flight as the Bible's); the album itself is the next click
   { id: 'watch', needs: 'closeups', label: 'The watch', lo: [0.97, 3.06, 0.0], hi: [1.2, 3.29, 0.05], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'hand', needs: 'closeups', label: 'The watch', lo: [0.72, 2.95, 0.0], hi: [1.06, 3.2, 0.09], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'ashtray', needs: 'closeups', label: 'The cigarette', lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49], act: () => enterCloseup('c_ashtray', [2.25, 3.06, 0.47]) },
@@ -1060,11 +1093,11 @@ function drawWalker(now) {
 
 // ---------- close-ups: click a prop, the camera flies toward it (a rendered clip) and lands on its close-up still ----------
 const CLOSE = {
-  c_watch: { hint: 'The watch · listen', sound: 'tick', at: [1.083, 3.175, 0.01], from: [35, 0], fl: 'watch' },
-  c_ashtray: { hint: 'Back to the room · Esc', at: [2.25, 3.06, 0.47], from: [0, 6], fl: 'ashtray' },
-  c_case: { hint: 'Click the crucifix, or the clipping in the lid', at: [1.95, 3.72, 0.56], from: [0, 0], fl: 'case' },
-  c_tv: { hint: 'Turn the knob · ← →', at: [3.21, 2.96, 0.87], from: [0, 0], fl: 'tv' },
-  c_bible: { hint: 'The Bible, the album or the ashtray · Back to the room · Esc', at: [2.415, 2.815, 0.45], from: [0, 0], fl: 'bible' },
+  c_watch: { hint: 'The watch · listen · Click to go back · Esc', sound: 'tick', at: [1.083, 3.175, 0.01], from: [35, 0], fl: 'watch' },
+  c_ashtray: { hint: 'Click outside the ashtray to go back · Esc', at: [2.25, 3.06, 0.47], from: [0, 6], fl: 'ashtray' },
+  c_case: { hint: 'Click the crucifix, or the clipping in the lid · Outside the case to go back · Esc', at: [1.95, 3.72, 0.56], from: [0, 0], fl: 'case' },
+  c_tv: { hint: 'Turn the knob · ← → · Click outside the set to go back · Esc', at: [3.21, 2.96, 0.87], from: [0, 0], fl: 'tv' },
+  c_bible: { hint: 'The Bible, the album or the ashtray · Click outside them to go back · Esc', at: [2.415, 2.815, 0.45], from: [0, 0], fl: 'bible' },
 };
 // Round 3: the flights' camera paths, the same maths as scene/flights.py, so the live cigarette smoke and ember can be projected
 // through the moving camera and never vanish for the length of a clip. At clip fraction k: u = ease(k); cam = lerp(c0, c1, u) lifted
@@ -1127,7 +1160,7 @@ function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
     if (!cu) return;
-    if (st === 'held') cuHint('Drag to turn it · Back to the case · Esc');
+    if (st === 'held') cuHint('Drag to turn it · Click beside it to put it back · Esc');
     if (st === 'rest') { cu.sub = null; settled(); }   // QA v26: Esc while held puts the cross back and stays on the case (one step); Esc again (or twice, fast) leaves
   } })).then(() => { cruxOK = true; if (cu && cu.name === 'c_case' && cu.shown && !cu.holdFly) window.crux.show(); }).catch(() => { cruxOK = false; loadCU('c_crucifix'); });
 }
@@ -1139,7 +1172,7 @@ function ashFall(dt, still) {
   if (!cu || cu.name !== 'c_ashtray' || cu.ashFallen || !FEATURES.ashfall) return null;
   const af = flightVid('ashfall');
   if (cu.ashPlaying) {
-    if (vdone(af)) { cu.ashFallen = true; cu.ashPlaying = false; return null; }
+    if (vdone(af)) { if (af.v.readyState >= 2) flightTex(af); cu.ashFallen = true; cu.ashPlaying = false; return { alt: af.up ? flightTex(af, true) : still, altMix: 1, zoom: 1 }; }   // the last frame, uploaded, and held from here on
     return { alt: af.v.readyState >= 2 ? flightTex(af) : still, altMix: 1, zoom: 1 };
   }
   const now = performance.now() / 1000; if (!cu.landAt) cu.landAt = now; cu.landT = now - cu.landAt;   // wall clock: the ash falls 2 s after the still lands
@@ -1157,7 +1190,7 @@ function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript(
   pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
   bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
 function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
-const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Back to the table · Esc', closing: 'Back to the table', returning: 'Back to the table' };
+const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Click beside the book to put it back · Esc', closing: 'Back to the table', returning: 'Back to the table' };
 function mountBooks() {
   const m = cuMeta.c_bible; if (!m) return;
   const common = { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, small: SMALL,
@@ -1174,7 +1207,7 @@ function bookState(which, st) {
   if (!cu || cu.name !== 'c_bible' || cu.sub !== which) return;
   if (bookHints[st]) cuHint(bookHints[st]);
   $('#bibleStrip').hidden = st !== 'open';
-  if (st === 'rest') { cu.sub = null; cu.hideBook = which; settled(); }   // the canvas hides one frame after the still is back (closeupState)
+  if (st === 'rest') { cu.sub = null; if (window[which] && window[which].state === 'rest') window[which].hide(); settled(); }   // round 4 note 4: the rendered still is back on the landing frame itself (the drop lands at speed; the live book is never seen at rest)
 }
 // QA v26: a book or the cross has dropped back. Esc was one step (back to the hub / the case still); only a second Esc pressed while it was
 // still settling (cu.leaveAfter) carries on out to the room, so hammering Esc twice still leaves.
@@ -1218,7 +1251,7 @@ function hopToAshtray() {
   if (e.err) { cu.next = () => enterCloseup('c_ashtray', CLOSE.c_ashtray.at); leaveCloseup(); return; }
   loadCU('c_ashtray'); loadCU('c_ashtray2'); flightVid('ashfall');
   cu = { name: 'c_ashtray', fl: 'bible_ashtray', via: 'c_bible', phase: 'approach', sub: null, subT: 0, t: 0, hopFrom: cuTex.c_bible };
-  $('#tip').hidden = true; stage.classList.remove('hot'); cuHint('Back to the Bible · Esc');
+  $('#tip').hidden = true; stage.classList.remove('hot'); cuHint('Click outside the ashtray to go back to the Bible · Esc');
 }
 function leaveCloseup() {
   if (!cu || cu.phase === 'return') return;
@@ -1250,11 +1283,10 @@ function closeupState(now, dt) {
   hubStrip();
   const spec = CLOSE[cu.name], fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
   let still = (cu.name === 'c_tv' && cuTex['c_tv_' + TV.stillOf(TV.ch)]) || cuTex[cu.name];
-  const bk_ = cu.sub || cu.hideBook;                                                                              // (hideBook: the book is at rest, drawn live for this one last frame)
+  const bk_ = cu.sub;
   if (cu.name === 'c_bible' && bk_ === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;             // the live Bible draws over the plate without it
   if (cu.name === 'c_bible' && bk_ === 'album' && cuTex.c_bible_noalbum) still = cuTex.c_bible_noalbum;         // the live album over the plate without it (099zza07; until then the plain still)
-  if (cu.hideBook) { const w = cu.hideBook; cu.hideBook = false; requestAnimationFrame(() => { if (window[w] && window[w].state === 'rest') window[w].hide(); }); }   // (QA v26: unless it was lifted again in between, which left it stuck in 'closing' for good)
-  if (cu.name === 'c_ashtray' && cu.ashFallen && cuTex.c_ashtray2) still = cuTex.c_ashtray2;                   // fallen for the rest of this visit
+  if (cu.name === 'c_ashtray' && cu.ashFallen) { const af = flightVid('ashfall'); still = (af.up && af.tex) ? flightTex(af, true) : (cuTex.c_ashtray2 || still); }   // fallen for the rest of this visit: the clip's own last frame stays (round 4 note 5: c_ashtray2 differs from it by compression + spp noise, a visible frame-wide pop); c_ashtray2 only if no frame was ever drawn
   if (cu.name === 'c_case' && cu.holdFly && (cu.holdImg || fwd.up)) still = cu.holdImg || flightTex(fwd);        // round 3 note 6: the rendered cross (the clip's last frame, re-read each frame: it is paused) stays until the click lifts the live one
   zc = [0.5, 0.5];
   const out = (r) => { if (cu) cu.lastTex = r.altMix >= 1 ? r.alt : null; return r; };
@@ -1268,12 +1300,13 @@ function closeupState(now, dt) {
     const there = Math.abs(t - spec.from[0]) < 0.05 && Math.abs(tilt - spec.from[1]) < 0.05;
     if (there && (fwd.ok || fwd.err)) {
       if (fwd.ok) { cu.phase = 'fly'; vplay(fwd, 0); }
-      else { cu.phase = 'still'; cu.shown = true; onCloseupShown(); }       // no clip: land on the still directly
+      else { cu.phase = 'still'; cu.shown = true; cu.shownAt = now; onCloseupShown(); }       // no clip: land on the still directly
     }
     return out({ alt: null, altMix: 0, zoom: 1 });
   }
   if (cu.phase === 'fly') {
-    if (vdone(fwd)) { if (fwd.v.readyState >= 2) flightTex(fwd); cu.phase = 'still'; cu.shown = true; cu.holdFly = cu.name === 'c_case' && fwd.up > 0; onCloseupShown(); }
+    if (vdone(fwd)) { if (fwd.v.readyState >= 2) flightTex(fwd); cu.phase = 'still'; cu.shown = true; cu.shownAt = now; cu.holdFly = cu.name === 'c_case' && fwd.up > 0; onCloseupShown();
+      if (cu.holdFly) still = flightTex(fwd, true); }   // round 4 note 7: the held frame from this very frame (the cross-less c_case still used to show for one frame on landing)
     else if (fwd.v.readyState >= 2) return out({ alt: flightTex(fwd), altMix: 1, zoom: 1 });
     else return out(cu.via ? { alt: cu.hopFrom || still, altMix: 1, zoom: 1 } : { alt: null, altMix: 0, zoom: 1 });
   }
@@ -1295,7 +1328,7 @@ function closeupState(now, dt) {
     if (!back.ok && !back.err && cu.t < 4) return out({ alt: cu.holdTex || still, altMix: 1, zoom: 1 });   // the reversed clip is still loading: hold
     if (!back.ok && cu.t < 0.6) return out({ alt: still || null, altMix: still ? 1 - cu.t / 0.6 : 0, zoom: 1 });   // no reversed clip at all: short dissolve
     if (cu.via) {                                                      // back at the hub: land on its still
-      const via = cu.via; cu = { name: via, fl: CLOSE[via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true };
+      const via = cu.via; cu = { name: via, fl: CLOSE[via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true, shownAt: now };
       $('#psa').hidden = true; cuHint(CLOSE[via].hint);
       return out({ alt: cuTex[via] || null, altMix: cuTex[via] ? 1 : 0, zoom: 1 });
     }
@@ -1317,7 +1350,7 @@ function endCloseup() {
   const next = cu && cu.next;
   cu = null; mode = 'room'; document.body.classList.remove('away');
   $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true; $('#hubStrip').hidden = true;
-  $('#hint').textContent = ROOM_HINT;
+  hintCycle();
   if (next) next();
 }
 // a world box projected through a close-up's camera: the hub's hotspots (the album and the ashtray have no polygon in closeups.json)
@@ -1526,17 +1559,18 @@ function loadWin() { if (winTex.closed !== null) return; winTex.closed = false;
   a.src = 'frames/w_closed.jpg'; b.src = 'frames/w_open.jpg'; }
 function enterWindow() {
   loadWin(); mode = 'toWindow'; document.body.classList.add('away'); winT = 0; curtainPlayed = false; gt = 0; gtilt = 0;
-  $('#back').hidden = false; $('#hint').textContent = 'The view past the fence'; stage.classList.remove('hot');
+  $('#back').hidden = false; setHint('The view past the fence · Click to go back · Esc'); stage.classList.remove('hot');
   const w = [0, 1, 2, 3].map(i => cur.anchors['win' + i]).filter(Boolean);
   zc = w.length ? [w.reduce((s, p) => s + p[0], 0) / w.length, 1 - w.reduce((s, p) => s + p[1], 0) / w.length] : [0.8, 0.8];
 }
+function winShown() { return mode === 'window' && (vidOK ? (vid.ended || looping) : winT > 2.8); }   // the swoop has landed on the view
 function leaveWindow() { if (mode === 'room') return; mode = mode === 'toWindow' ? 'room' : 'leaving'; document.body.classList.remove('away'); winFrom = performance.now() / 1000; vid.pause();   // QA v26: Esc while still settling toward the window: nothing was shown yet, so no dissolve (it flashed the clip's first frame)
-  $('#back').hidden = true; $('#hint').textContent = ROOM_HINT; }
+  $('#back').hidden = true; hintCycle(); }
 function liteCleanup() {   // QA v26: Lite view switched on away from the room: the frame loop stops, so end the close-up / window view first
   if (window.article && window.article.isOpen) window.article.close();
   if (cu) { stopTicking(); $('#psa').classList.remove('on'); $('#cruxCap').classList.remove('on'); endCloseup(); }
   if (mode !== 'room') { mode = 'room'; document.body.classList.remove('away'); vid.pause(); looping = false; loopVid.pause(); extLoopStop(); $('#back').hidden = true; }
-  $('#hint').textContent = 'Lite view: a still of the room';
+  setHint('Lite view: a still of the room');
 }
 $('#back').addEventListener('click', () => { if (cu) leaveCloseup(); else leaveWindow(); });
 function openTV() { if (FEATURES.tv) enterCloseup('c_tv', CLOSE.c_tv.at); else openPanel($('#tvpanel')); }
@@ -1709,10 +1743,20 @@ function drawOverlays() {
 }
 // ---------- the live cigarette (smoke + ember) outside the room view ----------
 // Which camera is looking at the ashtray right now: the close-up's own, a flight's at its current clip time, or none (the room draws its own).
+// Round 4 note 9: every flight and every close-up still (the case, the TV, the watch too: the projection decides whether the tray is in frame;
+// drawLiveAsh draws nothing when it is not), and the window swoop (scene/swoop.py's bezier: the tray is near the centre as it starts and
+// passes behind the camera before the sheer slides). In the room the room view draws its own.
+const SWOOP = { A: [1.15, 1.2, 1.78], Alook: [2.464, 3.101, 0.48], Alens: 31, W: [3.95, 3.55, 1.7], Wlook: [6.0, 3.55, 1.42], Wlens: 20, mid: [2.9, 2.2, 1.95], fly: 30, total: 50 };
+function swoopCam(k) {                                   // k = clip fraction 0..1 (50 frames: 30 of flight, 20 of the sheer)
+  const i = Math.min(SWOOP.total - 1, Math.max(0, k * SWOOP.total)); if (i >= SWOOP.fly - 1) return { cam: SWOOP.W, aim: SWOOP.Wlook, lens: SWOOP.Wlens };
+  const u = ease3(i / (SWOOP.fly - 1)), ua = ease3(Math.min(1, u * 1.15));
+  const cam = [0, 1, 2].map(j => SWOOP.A[j] * (1 - u) * (1 - u) + SWOOP.mid[j] * 2 * u * (1 - u) + SWOOP.W[j] * u * u);
+  const aim = [0, 1, 2].map(j => SWOOP.Alook[j] + (SWOOP.Wlook[j] - SWOOP.Alook[j]) * ua);
+  return { cam, aim, lens: SWOOP.Alens + (SWOOP.Wlens - SWOOP.Alens) * u };
+}
 function liveAshCam() {
-  if (!cu) return null;
+  if (!cu) { if (mode === 'window' && vidOK && vid.readyState >= 2 && vid.duration) return swoopCam(vid.ended ? 1 : vid.currentTime / vid.duration); return null; }
   const camOf = n => { const C = cuMeta[n]; return C && C.cam ? { cam: C.cam, aim: C.aim, lens: C.lens || 30 } : null; };
-  if (!(cu.name === 'c_ashtray' || cu.name === 'c_bible')) return null;
   const K = camOf(cu.name); if (!K) return null;
   if (cu.phase === 'approach') return cu.via ? camOf(cu.via) : null;                       // in the room the room draws its own smoke
   if (cu.phase === 'still' || cu.phase === 'closing') return K;
@@ -1781,7 +1825,7 @@ function frame() {
   cur.anchors = an;
   const cam = [0, 0, 0], aim = [0, 0, 0]; for (const [, w, v] of use) for (let i = 0; i < 3; i++) { cam[i] += (v.cam ? v.cam[i] : 0) * w / wsum; aim[i] += (v.aim ? v.aim[i] : 0) * w / wsum; }
   cur.cam = cam; cur.aim = aim;
-  if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true;
+  if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true; if (!cu && mode === 'room') hintCycle();
     const q = /[#&]cu=(c_\w+)/.exec(location.hash);                  // QA hook: #cu=c_case opens that close-up
     if (q && CLOSE[q[1]]) setTimeout(() => enterCloseup(q[1], CLOSE[q[1]].at), 300); }
 

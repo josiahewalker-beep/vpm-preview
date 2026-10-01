@@ -65,7 +65,7 @@ async function loadGLB(url) {
         clearcoat: cc ? (cc.clearcoatFactor ?? 0) : (wood ? 0.4 : 0), clearcoatRoughness: cc ? (cc.clearcoatRoughnessFactor ?? 0.2) : 0.2,
         anisotropy: an ? (an.anisotropyStrength ?? 0) : (wood && !end ? 0.35 : 0), anisotropyRotation: an ? (an.anisotropyRotation ?? 0) : 0,
         specularIntensity: 0.7, envMapIntensity: 0.22 });
-      if (wood) mat.color.setRGB(1.025, 0.875, 0.53);     // matched to the Cycles flight frame (round 3 note 6: mean RGB of the cross region within ~2 %, measured headless with __case.holdFrame)
+      if (wood) mat.color.setRGB(1.035, 0.873, 0.512);   // matched to the Cycles flight frame (round 3 note 6; round 4: re-checked against 099zzd00 fl_case_035, -1.6 / +0.3 / +3.5 % -> -1.7 / +0.1 / +3.0 %, lum -0.3 %; measured headless with __case.holdFrame, page4/cruxmatch.py)
     }
     if (p.metallicRoughnessTexture) { const t = texture(p.metallicRoughnessTexture.index, false); mat.metalnessMap = t; mat.roughnessMap = t; }
     if (m.normalTexture) { mat.normalMap = texture(m.normalTexture.index, false); const sc = m.normalTexture.scale ?? 1; mat.normalScale = new THREE.Vector2(sc, -sc); }   // glTF's flipped V, as GLTFLoader does
@@ -244,6 +244,13 @@ window.crux = {
     }).catch(err => { S.failed = true; console.warn('crucifix: not available', err); throw err; });
   },
   get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
+  /** round 4 note 8: is the screen point (client px) on the cross? (a click beside it puts the cross back) */
+  hitAt(clientX, clientY) {
+    if (!S.ready || !S.visible) return false;
+    const r = S.canvas.getBoundingClientRect(); const ptr = new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    const ray = new THREE.Raycaster(); ray.setFromCamera(ptr, S.cam); const meshes = []; S.model.traverse(o => { if (o.isMesh && o !== S.shadow) meshes.push(o); });
+    return ray.intersectObjects(meshes, false).length > 0;
+  },
   show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps the rendered frame for the still + this canvas on the same frame
   hide() { S.visible = false; if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; } },
   lift() { if (!S.ready || S.state === 'lifting' || S.state === 'held') return false; S.state = 'lifting'; S.p0 = S.p; S.t0 = performance.now() / 1000; emit(); return true; },

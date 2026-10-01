@@ -34,15 +34,25 @@ const BIBLE_CFG = {
           { leaf: 5, face: 'recto', key: 'about_press', label: 'Read the write-up · Indie Short Fest' }, { leaf: 5, face: 'recto', key: 'about_poster', label: 'See the poster' },
           { leaf: 5, face: 'recto', key: 'about_vimeo', label: 'The trailer on Vimeo' }, { leaf: 5, face: 'recto', key: 'about_insta', label: '@veryprosperousmenfilm on Instagram' },
           { leaf: 5, face: 'recto', key: 'about_bio', label: 'Josiah Walker · bio' }],
-  lift_s: 1.3, open_s: 1.15, turn_s: 0.2, turn_gap: 0.12, run_delay: 0.15, close_s: 0.62, drop_s: 0.95, back_turn_s: 0.34, hand_turn_s: 0.72,
+  lift_s: 1.3, open_s: 1.15, turn_s: 0.2, turn_gap: 0.12, run_delay: 0.15, close_s: 0.62, drop_s: 0.8, back_turn_s: 0.34, hand_turn_s: 0.72,
   cover: 'cover', paper: '#efe6d2', sound: 'leaf',
+  // round 4 note 6: the leaf corners are chamfered (m along each edge from the corner) so they sit inside the board's brass corner
+  // protectors (bible.glb: the inner triangles' hypotenuse at x + y = 0.2144 from the board centre; the block's corner is at (0.109, 0.139))
+  chamfer: 0.0375,
+  // the live lights, matched to the Cycles still (round 3 note 6 for the cross, round 4 note 4 for the books): key / hemisphere sky, ground / fill / rim
+  // intensities, the environment's strength on the cover, the renderer's exposure; the shadow catcher's darkness
+  // (tint: a multiplier on every light's colour, envTint on the room reflection.) Round 4 note 4, tuned against c_bible's Bible region as the album's
+  // (page4/tune.py): live vs still mean RGB -0.3 / +2.1 / -2.2 %, luminance 0.0 % (was +3.1 / +8.2 / +15.2 %, +7.9 %). coverTint tints the cover's map only.
+  lights: { key: 1.05, sky: 0xf2e4d0, ground: 0x6b4a30, hemi: 0.45, fill: 0.22, rim: 0.2, exposure: 0.9, shadow: 0.38, env: 0.55, tint: [1, 1, 1], coverTint: [1.03, 0.98, 0.92], envTint: [1.0, 1.0, 0.78] },
 };
 function makeBook(CFG0) {
 const CFG = Object.assign({}, CFG0);
 let LIFT_S = CFG.lift_s, OPEN_S = CFG.open_s, TURN_S = CFG.turn_s, TURN_GAP = CFG.turn_gap, RUN_DELAY = CFG.run_delay, CLOSE_S = CFG.close_s, DROP_S = CFG.drop_s, BACK_TURN_S = CFG.back_turn_s;
 const FILL = 0.8;
-let XS = CFG.block.xs, XF = CFG.block.xf, H = CFG.block.h, ZT = CFG.block.zt, LEAF_DZ = 0.00025, L = XF - XS;
-const NX = 30, NY = 10;                                   // leaf mesh grid
+let XS = CFG.block.xs, XF = CFG.block.xf, H = CFG.block.h, ZT = CFG.block.zt, L = XF - XS;
+let LEAF_DZ = 0.00025;                                    // the stack's leaf spacing: 0.25 mm, less when there are many leaves (the whole stack stays inside the closed board's thickness)
+function setLeafDZ() { LEAF_DZ = Math.min(0.00025, 0.0012 / Math.max(1, LEAVES.length - 1)); }
+const NX = 30, NY = 12;                                   // leaf mesh grid (12 rows: the first and last rows are exactly the chamfered corners' height)
 let LEAVES = CFG.leaves, BIO_LEAF = CFG.stopAt;
 const GLB_URL = () => CFG.glb;
 
@@ -84,7 +94,9 @@ async function loadGLB(url) {
     const side = m.doubleSided ? THREE.DoubleSide : THREE.FrontSide;
     let mat;
     if (/cover/.test(name)) {         // white pebble leatherette with gold foil (or the album's dark leather): the glb's maps under a light coat (Cycles: coat 0.12)
-      mat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(c[0], c[1], c[2]), metalness: 1, roughness: 1, side, clearcoat: 0.12, clearcoatRoughness: 0.35, envMapIntensity: 0.55, specularIntensity: 0.6 });
+      const ct = CFG.lights.coverTint || [1, 1, 1];   // a colour multiplier on the cover's map alone (the lights stay neutral for the pages and prints)
+      mat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(c[0] * ct[0], c[1] * ct[1], c[2] * ct[2]), metalness: 1, roughness: 1, side, clearcoat: 0.12, clearcoatRoughness: 0.35, envMapIntensity: CFG.lights.env, specularIntensity: 0.6 });
+      mat.userData.base = [c[0], c[1], c[2]]; S.coverMats.push(mat);
     } else if (/ribbon/.test(name)) { // red satin: sheen
       mat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(c[0], c[1], c[2]), metalness: 0, roughness: p.roughnessFactor ?? 0.3, side, sheen: 0.6, sheenColor: new THREE.Color(1, 0.6, 0.55), sheenRoughness: 0.5, envMapIntensity: 0.4 });
     } else if (/brass|gilt/.test(name)) {   // brushed brass corners, gilt page edges: metal from the ORM map
@@ -122,7 +134,7 @@ async function loadGLB(url) {
 // ---------- state ----------
 const S = { canvas: null, meta: null, renderer: null, scene: null, cam: null, model: null, hinge: null, shadow: null, key: null, raf: 0, ready: false, failed: false,
             state: 'rest', p: 0, p0: 0, t0: 0, cover: 0, open: 0, visible: false, onState: null, leaves: [], turning: [], queue: [], runT: 0,
-            focus: 1, hover: null, pagesLoaded: false, small: false, urls: {}, boxes: null, idle: 0 };
+            focus: 1, hover: null, pagesLoaded: false, small: false, urls: {}, boxes: null, idle: 0, coverMats: [], hemi: null, fill: null, rim: null };
 const rest = { pos: null, quat: null };
 function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
 function easeInOut(k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
@@ -175,18 +187,21 @@ function setup() {
   restPose();
   // light: the sun through the right-wall window (elevation 20 deg, azimuth -20 deg: index.html's SUN_D), warm; the room's bounce as fill
   const sun = new THREE.Vector3(Math.cos(0.349) * Math.cos(-0.349), -Math.cos(0.349) * Math.sin(-0.349), Math.sin(0.349)).normalize();
-  const key = new THREE.DirectionalLight(0xfff1de, 1.05); S.key = key; S.sun = sun;
+  const LG = CFG.lights;
+  S.renderer.toneMappingExposure = LG.exposure;
+  const tinted = (hex) => { const c = new THREE.Color(hex), t = LG.tint || [1, 1, 1]; c.r *= t[0]; c.g *= t[1]; c.b *= t[2]; return c; }; S.tinted = tinted;
+  const key = new THREE.DirectionalLight(tinted(0xfff1de), LG.key); S.key = key; S.sun = sun;
   key.position.copy(rest.pos).addScaledVector(sun, 1.6); key.target.position.copy(rest.pos); S.scene.add(key.target);
   key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.camera.near = 0.2; key.shadow.camera.far = 4;
   key.shadow.camera.left = key.shadow.camera.bottom = -0.42; key.shadow.camera.right = key.shadow.camera.top = 0.42; key.shadow.bias = -0.0003; key.shadow.radius = 3;
   S.scene.add(key);
-  const hemi = new THREE.HemisphereLight(0xf2e4d0, 0x6b4a30, 0.45); S.scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(tinted(LG.sky), tinted(LG.ground), LG.hemi); S.scene.add(hemi); S.hemi = hemi;
   S.scene.environment = roomEnvironment();
-  const fill = new THREE.DirectionalLight(0xffe6d0, 0.22); fill.position.copy(rest.pos).add(new THREE.Vector3(-0.7, -0.8, 0.9)); fill.target.position.copy(rest.pos); S.scene.add(fill, fill.target);
-  const read = new THREE.DirectionalLight(0xfff6ea, 0.0); S.read = read; S.scene.add(read, read.target);
-  const rim = new THREE.DirectionalLight(0xfff3e4, 0.2); rim.position.copy(rest.pos).add(new THREE.Vector3(0.2, 1.0, 0.3)); rim.target.position.copy(rest.pos); S.scene.add(rim, rim.target);
+  const fill = new THREE.DirectionalLight(tinted(0xffe6d0), LG.fill); fill.position.copy(rest.pos).add(new THREE.Vector3(-0.7, -0.8, 0.9)); fill.target.position.copy(rest.pos); S.scene.add(fill, fill.target); S.fill = fill;
+  const read = new THREE.DirectionalLight(tinted(0xfff6ea), 0.0); S.read = read; S.scene.add(read, read.target);
+  const rim = new THREE.DirectionalLight(tinted(0xfff3e4), LG.rim); rim.position.copy(rest.pos).add(new THREE.Vector3(0.2, 1.0, 0.3)); rim.target.position.copy(rest.pos); S.scene.add(rim, rim.target); S.rim = rim;
   // a shadow catcher on the table top under the Bible
-  const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.ShadowMaterial({ opacity: 0.38, transparent: true, depthWrite: false }));
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7), new THREE.ShadowMaterial({ opacity: LG.shadow, transparent: true, depthWrite: false }));
   sh.receiveShadow = true; sh.position.copy(rest.pos).addScaledVector(new THREE.Vector3(0, 0, 1), -0.0004); sh.quaternion.copy(rest.quat); S.scene.add(sh); S.shadow = sh;
   S.model = new THREE.Group(); S.scene.add(S.model);
 }
@@ -205,7 +220,8 @@ function roomEnvironment() {
       const win = Math.exp(-Math.pow(d / 0.42, 4)) * Math.exp(-Math.pow((el - kel + 0.05) / 0.30, 4));
       const sun = Math.exp(-Math.pow(d / 0.10, 2)) * Math.exp(-Math.pow((el - kel) / 0.08, 2));
       r += 3.2 * win + 5.0 * sun; g += 3.0 * win + 4.4 * sun; b += 2.6 * win + 3.6 * sun;
-      const k = (j * W + i) * 4; data[k] = r; data[k + 1] = g; data[k + 2] = b; data[k + 3] = 1;
+      const et = CFG.lights.envTint || [1, 1, 1];
+      const k = (j * W + i) * 4; data[k] = r * et[0]; data[k + 1] = g * et[1]; data[k + 2] = b * et[2]; data[k + 3] = 1;
     }
   }
   const tex = new THREE.DataTexture(data, W, Hh, THREE.RGBAFormat, THREE.FloatType); tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
@@ -225,25 +241,35 @@ function resize() {
 // Each leaf is a grid hinged at the spine (x = XS) that turns about the spine's y axis from the right stack (theta 0) to the
 // left stack (theta pi). While it turns it bows: the fore-edge leads, the near (tail) corner most of all, and it lays down
 // from the corner in like a real leaf. Two meshes share each grid: the recto (front side) and the verso (back side, u mirrored).
+// The rows (y) and, per row, the span of the leaf along x: a chamfer of CFG.chamfer cuts each corner at 45 deg (round 4 note 6), so the
+// first and last rows are exactly one chamfer high and the rows between share the rest. u (the art) follows the true distance from the spine.
+function rowY(j) { const c = Math.min(CFG.chamfer || 0, H / 2 - 0.001); if (!c) return -H / 2 + H * j / NY; if (j === 0) return -H / 2; if (j === NY) return H / 2; return -H / 2 + c + (H - 2 * c) * (j - 1) / (NY - 2); }
+function rowSpan(y) { const c = CFG.chamfer || 0, cut = Math.max(0, c - (H / 2 - Math.abs(y))); return [cut, L - cut]; }   // [s0, s1] along the leaf from the spine
 function leafGeometry() {
   const geo = new THREE.BufferGeometry(); const n = (NX + 1) * (NY + 1);
   const pos = new Float32Array(n * 3), uv = new Float32Array(n * 2), uv2 = new Float32Array(n * 2), idx = [];
-  for (let j = 0; j <= NY; j++) for (let i = 0; i <= NX; i++) { const k = j * (NX + 1) + i; uv[k * 2] = i / NX; uv[k * 2 + 1] = 1 - j / NY; uv2[k * 2] = 1 - i / NX; uv2[k * 2 + 1] = 1 - j / NY; }
+  for (let j = 0; j <= NY; j++) { const [s0, s1] = rowSpan(rowY(j)); for (let i = 0; i <= NX; i++) { const k = j * (NX + 1) + i, u = (s0 + (s1 - s0) * i / NX) / L; uv[k * 2] = u; uv[k * 2 + 1] = 1 - j / NY; uv2[k * 2] = 1 - u; uv2[k * 2 + 1] = 1 - j / NY; } }
   for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = j * (NX + 1) + i, b = a + 1, c = a + NX + 1, d = c + 1; idx.push(a, b, c, b, d, c); }   // wound so the recto faces +z (up out of the book)
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx);
   const back = geo.clone(); back.setAttribute('uv', new THREE.BufferAttribute(uv2, 2)); back.setAttribute('position', geo.attributes.position);   // shared positions
   return { geo, back };
 }
+const FINE = NX * 2, curveX = new Float64Array(FINE + 1), curveZ = new Float64Array(FINE + 1);
 function shapeLeaf(leaf, theta, z0) {
   const P = leaf.geo.attributes.position.array; const bend = (CFG.card ? 0.35 : 1.15) * Math.sin(theta) * (theta < Math.PI / 2 ? 1 : 0.8);   // card leaves (the album) stay nearly flat
-  const ds = L / NX;
+  const ds = L / FINE;
   for (let j = 0; j <= NY; j++) {
-    const y = -H / 2 + H * j / NY, lead = 1 + 0.35 * (0.5 - j / NY);         // the tail corner leads
-    let x = XS, z = z0;
-    for (let i = 0; i <= NX; i++) {
-      const k = (j * (NX + 1) + i) * 3; P[k] = x; P[k + 1] = y; P[k + 2] = z;
-      const s1 = (i + 0.5) / NX; let phi = theta + bend * lead * s1; phi = Math.max(0, Math.min(Math.PI, phi));
+    const y = rowY(j), lead = 1 + 0.35 * (0.5 - j / NY);         // the tail corner leads
+    let x = XS, z = z0;                                          // the row's curve from the spine, at a fine step; the vertices sample it
+    for (let i = 0; i <= FINE; i++) {
+      curveX[i] = x; curveZ[i] = z;
+      const s1 = (i + 0.5) / FINE; let phi = theta + bend * lead * s1; phi = Math.max(0, Math.min(Math.PI, phi));
       x += Math.cos(phi) * ds; z += Math.sin(phi) * ds;
+    }
+    const [sa, sb] = rowSpan(y);
+    for (let i = 0; i <= NX; i++) {
+      const sIdx = (sa + (sb - sa) * i / NX) / ds, i0 = Math.min(FINE - 1, Math.floor(sIdx)), f = sIdx - i0;
+      const k = (j * (NX + 1) + i) * 3; P[k] = curveX[i0] + (curveX[i0 + 1] - curveX[i0]) * f; P[k + 1] = y; P[k + 2] = curveZ[i0] + (curveZ[i0 + 1] - curveZ[i0]) * f;
     }
   }
   leaf.geo.attributes.position.needsUpdate = true; leaf.geo.computeVertexNormals();
@@ -261,9 +287,9 @@ function pageTexture(cv) { const t = new THREE.CanvasTexture(cv); t.flipY = fals
 function leafMaterial(tex) { return new THREE.MeshStandardMaterial({ map: tex, color: 0xfffaf0, roughness: 0.93, metalness: 0, envMapIntensity: 0.15 }); }
 function buildLeaves() {
   const ch = S.small ? 720 : 1440, cw = Math.round(ch * L / H);
-  const blank = pageTexture(creamCanvas(S.small ? 256 : 512, Math.round((S.small ? 256 : 512) * H / L)));
+  const blank = pageTexture(creamCanvas(S.small ? 256 : 512, Math.round((S.small ? 256 : 512) * H / L))); S.blank = blank;
   LEAVES.forEach((names, k) => {
-    const g = leafGeometry(); const leaf = { k, geo: g.geo, back: g.back, theta: k < 0 ? Math.PI : 0, side: 'right', front: null, backMesh: null, names, cw, ch, iw: 0, ih: 0 };
+    const g = leafGeometry(); const leaf = { k, geo: g.geo, back: g.back, theta: k < 0 ? Math.PI : 0, side: 'right', front: null, backMesh: null, names, cw, ch, iw: 0, ih: 0, img: [null, null], tex: [null, null] };
     leaf.front = new THREE.Mesh(g.geo, leafMaterial(blank)); leaf.front.material.side = THREE.FrontSide; leaf.front.castShadow = true; leaf.front.receiveShadow = true;
     leaf.backMesh = new THREE.Mesh(g.back, leafMaterial(blank)); leaf.backMesh.material.side = THREE.BackSide; leaf.backMesh.receiveShadow = true;
     leaf.front.userData.leaf = leaf; leaf.backMesh.userData.leaf = leaf; leaf.front.userData.face = 'recto'; leaf.backMesh.userData.face = 'verso';
@@ -271,22 +297,38 @@ function buildLeaves() {
     shapeLeaf(leaf, 0, ZT + 0.0003 + LEAF_DZ * (LEAVES.length - 1 - k));
   });
 }
+// The page art: every face's JPEG is fetched when the close-up opens, but a leaf's textures (1440 px tall on desktop, ~10 MB each on
+// the GPU) exist only while the leaf is within PAGE_WIN leaves of the opening (round 4: the album has 16 leaves / 30 faces; all at
+// once would be ~300 MB). updatePageTex() runs every frame and builds at most one texture a frame, two leaves ahead of the reader.
+const PAGE_WIN = 2;
 function loadPages() {
   if (S.pagesLoaded) return; S.pagesLoaded = true;
   const base = S.small ? 'frames/m/' : 'frames/';
   for (const leaf of S.leaves) for (const [fi, name] of [[0, leaf.names[0]], [1, leaf.names[1]]]) {
     if (!name) continue;
     const im = new Image(); im.decoding = 'async';
-    im.onload = () => {
-      // the leaf is a little wider than the page art (0.79 vs 0.7): the art sits centred on a cream leaf, the margins in the art's own paper colour
-      const cv = document.createElement('canvas'); cv.width = leaf.cw; cv.height = leaf.ch; const c = cv.getContext('2d');
-      const ih = leaf.ch, iw = Math.round(im.naturalWidth * ih / im.naturalHeight), mx = Math.round((leaf.cw - iw) / 2);
-      c.drawImage(im, mx, 0, iw, ih);
-      const px = c.getImageData(mx + 3, 3, 1, 1).data; c.fillStyle = `rgb(${px[0]},${px[1]},${px[2]})`; c.fillRect(0, 0, mx, ih); c.fillRect(mx + iw, 0, leaf.cw - mx - iw, ih);
-      const mesh = fi === 0 ? leaf.front : leaf.backMesh; const t = pageTexture(cv); mesh.material.map = t; mesh.material.needsUpdate = true;
-      if (fi === 0) { leaf.iw = iw; leaf.mx = mx; }
-    };
+    im.onload = () => { leaf.img[fi] = im; if (fi === 0) { leaf.iw = Math.round(im.naturalWidth * leaf.ch / im.naturalHeight); leaf.mx = Math.round((leaf.cw - leaf.iw) / 2); } };
     im.src = base + name + '.jpg';
+  }
+}
+function leafTexture(leaf, fi) {
+  // the leaf is a little wider than the page art (0.79 vs 0.7): the art sits centred on a cream leaf, the margins in the art's own paper colour
+  const im = leaf.img[fi]; const cv = document.createElement('canvas'); cv.width = leaf.cw; cv.height = leaf.ch; const c = cv.getContext('2d');
+  const ih = leaf.ch, iw = Math.round(im.naturalWidth * ih / im.naturalHeight), mx = Math.round((leaf.cw - iw) / 2);
+  c.drawImage(im, mx, 0, iw, ih);
+  const px = c.getImageData(mx + 3, 3, 1, 1).data; c.fillStyle = `rgb(${px[0]},${px[1]},${px[2]})`; c.fillRect(0, 0, mx, ih); c.fillRect(mx + iw, 0, leaf.cw - mx - iw, ih);
+  return pageTexture(cv);
+}
+function updatePageTex(all) {
+  let n = turnedCount(); for (const t of S.turning) if (t.dir > 0 && t.leaf.theta <= 1) n = Math.max(n, t.leaf.k + 1);   // the opening: between leaf n-1 (left) and n (right)
+  let built = 0;
+  for (const leaf of S.leaves) {
+    const near = all || (leaf.k >= n - 1 - PAGE_WIN && leaf.k <= n + PAGE_WIN);
+    for (let fi = 0; fi < 2; fi++) {
+      const mesh = fi === 0 ? leaf.front : leaf.backMesh;
+      if (near && leaf.img[fi] && !leaf.tex[fi] && built < 1) { leaf.tex[fi] = leafTexture(leaf, fi); mesh.material.map = leaf.tex[fi]; mesh.material.needsUpdate = true; built++; }
+      else if (!near && leaf.tex[fi]) { leaf.tex[fi].dispose(); leaf.tex[fi] = null; mesh.material.map = S.blank; mesh.material.needsUpdate = true; }
+    }
   }
 }
 // leaf turns: `turning` holds { leaf, t0, dur, dir } (dir +1 right -> left, -1 back)
@@ -296,11 +338,19 @@ function startTurn(leaf, dir, dur, now, snd) {
   if (snd && window.pageSnd) window.pageSnd.leaf(0, dur);
 }
 function stackZ(leaf) { return ZT + 0.0003 + LEAF_DZ * (leaf.theta > 1 ? leaf.k : (LEAVES.length - 1 - leaf.k)); }
+// a turning leaf's height at the spine: its place on the right stack while it rises off it, its place on the left stack as it lays down there
+// (blended while it stands upright, where the shift cannot be seen). Round 4 note 2: it used to turn at mid-stack height, so for the first
+// frames the leaves still above that height drew over it (the next spread's prints popped through the page about to turn).
+function turnZ(leaf, theta) {
+  const zr = ZT + 0.0003 + LEAF_DZ * (LEAVES.length - 1 - leaf.k), zl = ZT + 0.0003 + LEAF_DZ * leaf.k;
+  const u = Math.max(0, Math.min(1, (theta - 0.35 * Math.PI) / (0.3 * Math.PI))), e = u * u * (3 - 2 * u);
+  return zr + (zl - zr) * e + 0.00012;
+}
 function updateLeaves(now) {
   for (let i = S.turning.length - 1; i >= 0; i--) {
     const tr = S.turning[i], k = Math.max(0, Math.min(1, (now - tr.t0) / tr.dur)), e = easeQuad(k);
     tr.leaf.theta = tr.dir > 0 ? tr.from + (Math.PI - tr.from) * e : tr.from * (1 - e);
-    shapeLeaf(tr.leaf, tr.leaf.theta, ZT + 0.0003 + LEAF_DZ * (LEAVES.length - 1) * 0.5);
+    shapeLeaf(tr.leaf, tr.leaf.theta, turnZ(tr.leaf, tr.leaf.theta));
     if (k >= 1) { tr.leaf.theta = tr.dir > 0 ? Math.PI : 0; shapeLeaf(tr.leaf, tr.leaf.theta, stackZ(tr.leaf)); S.turning.splice(i, 1); }
   }
 }
@@ -310,7 +360,7 @@ function turnedCount() { return S.leaves.filter(l => l.theta > 1).length; }
 function frame(now) { S.raf = requestAnimationFrame(frame); tick(now); }
 function tick(now) {
   if (!S.ready || !S.visible) return;
-  resize();
+  resize(); updatePageTex(false);
   const t = now / 1000;
   // the lift p: 0 on the table, 1 in front of the camera; the cover angle; the open blend
   if (S.state === 'lifting' || S.state === 'opening' || S.state === 'leafing' || S.state === 'open') { const k = Math.min(1, (t - S.tLift) / LIFT_S); S.p = S.p0 + (1 - S.p0) * easeOut(k); }
@@ -330,7 +380,8 @@ function tick(now) {
     if (S.closeStep === 2) { const k = Math.min(1, (t - S.t0) / (CLOSE_S * Math.max(0.05, S.openAt))), e = easeInOut(k); S.cover = -Math.PI * S.openAt * (1 - e); S.open = S.openAt * (1 - e);   // QA v26: from however far it had opened (Esc mid-opening used to snap the board wide first)
       if (k >= 1) { S.closeStep = 3; S.state = 'returning'; S.p0 = S.p; S.t0 = t; emit(); } }
   }
-  if (S.state === 'returning') { const k = Math.min(1, (t - S.t0) / DROP_S); S.p = S.p0 * (1 - easeInOut(k)); if (k >= 1) { S.state = 'rest'; S.p = 0; emit(); } }
+  if (S.state === 'returning') { const k = Math.min(1, (t - S.t0) / DROP_S); S.p = S.p0 * (1 - k * k * (0.55 + 0.45 * k));   // eases in and lands at speed: the rendered still takes over on the landing frame, under motion (round 4 note 4)
+    if (k >= 1) { S.state = 'rest'; S.p = 0; if (window.pageSnd && window.pageSnd.drop) window.pageSnd.drop(0); emit(); } }
   updateLeaves(t);
   if (S.hinge) S.hinge.rotation.set(0, S.cover, 0);
   // the pose: rest -> closed face pose by p, closed -> open by the open blend; a breath of movement while it is held open
@@ -345,8 +396,8 @@ function tick(now) {
   }
   S.model.position.copy(pos); S.model.quaternion.copy(q);
   S.key.target.position.copy(pos); S.key.position.copy(pos).addScaledVector(S.sun, 1.6);
-  { const { c, f, r, u } = camBasis(); S.read.target.position.copy(pos); S.read.position.copy(pos).addScaledVector(f, -1.2).addScaledVector(r, 0.5).addScaledVector(u, 0.9); S.read.intensity = 1.15 * S.open * p; }
-  S.shadow.material.opacity = 0.38 * Math.max(0, 1 - p * 2.5);
+  { const { c, f, r, u } = camBasis(); S.read.target.position.copy(pos); S.read.position.copy(pos).addScaledVector(f, -1.2).addScaledVector(r, 0.5).addScaledVector(u, 0.9); S.read.intensity = 1.3 * S.open * p; }   // (1.3: the pages keep their cream at exposure 0.9)
+  S.shadow.material.opacity = CFG.lights.shadow * Math.max(0, 1 - p * 2.5);
   S.renderer.render(S.scene, S.cam);
 }
 
@@ -397,9 +448,10 @@ const API = {
   /** canvasEl: the #bible3d / #album3d canvas; meta: { cam, aim, lens, res: [w, h], framing: () => ({ sc, fc, vc }), rest, boxes, urls, small, onState, onHover };
    *  over: config overrides from frames/album.json (glb, rest, hinge, block { xs, xf, h, zt }, pages [names], closed/open poses) */
   mount(canvasEl, meta, over) {
-    if (over) { for (const k of ['glb', 'hinge', 'block', 'closed', 'open', 'links', 'stopAt']) if (over[k] !== undefined) CFG[k] = over[k];
+    if (over) { for (const k of ['glb', 'hinge', 'block', 'closed', 'open', 'links', 'stopAt', 'chamfer', 'lights']) if (over[k] !== undefined) CFG[k] = over[k];
       if (over.rest) CFG.rest = over.rest; if (over.leaves) { LEAVES = over.leaves.map(l => l.slice()); CFG.leaves = LEAVES; }   // [[recto, verso], ...] as CFG.leaves
       XS = CFG.block.xs; XF = CFG.block.xf; H = CFG.block.h; ZT = CFG.block.zt; L = XF - XS; BIO_LEAF = Math.min(CFG.stopAt, LEAVES.length - 1); }
+    setLeafDZ();
     if (!meta.rest) meta.rest = CFG.rest;
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
     S.small = !!meta.small; S.boxes = meta.boxes || null; S.urls = meta.urls || {}; S.focus = 1; S.closeStep = 0;
@@ -434,18 +486,30 @@ const API = {
     startTurn(l, -1, CFG.hand_turn_s, now, true); return true;
   },
   focus(side) { S.focus = side; },
+  debugLights() { return { key: [S.key.intensity, S.key.color.getHexString()], hemi: [S.hemi.intensity, S.hemi.color.getHexString(), S.hemi.groundColor.getHexString()], fill: [S.fill.intensity, S.fill.color.getHexString()], rim: [S.rim.intensity, S.rim.color.getHexString()], exp: S.renderer.toneMappingExposure, env: S.coverMats.map(m => m.envMapIntensity), vis: S.visible, state: S.state }; },
+  /** apply light settings (a partial CFG.lights) to the live scene: used to tune the match against the rendered still (round 4 note 4) */
+  relight(o) {
+    Object.assign(CFG.lights, o || {}); const LG = CFG.lights; if (!S.renderer) return false;
+    S.renderer.toneMappingExposure = LG.exposure; S.key.intensity = LG.key; S.key.color.copy(S.tinted(0xfff1de)); S.hemi.color.copy(S.tinted(LG.sky)); S.hemi.groundColor.copy(S.tinted(LG.ground)); S.hemi.intensity = LG.hemi;
+    S.fill.intensity = LG.fill; S.fill.color.copy(S.tinted(0xffe6d0)); S.rim.intensity = LG.rim; S.rim.color.copy(S.tinted(0xfff3e4)); S.read.color.copy(S.tinted(0xfff6ea)); for (const m of S.coverMats) m.envMapIntensity = LG.env;
+    if (o && o.envTint) { const old = S.scene.environment; S.scene.environment = roomEnvironment(); if (old) old.dispose(); }
+    if (o && o.coverTint) for (const m of S.coverMats) { const b = m.userData.base, ct = LG.coverTint; m.color.setRGB(b[0] * ct[0], b[1] * ct[1], b[2] * ct[2]); }
+    if (S.visible) tick(performance.now()); return true;
+  },
   pickAt(x, y) { const h = pick({ clientX: x, clientY: y }); return h && { k: h.leaf.k, face: h.face, side: h.side, link: h.link && h.link.key, fx: h.fx, fy: h.fy }; },   // QA
   /** QA: jump to a pose without the animation. o = { p (0..1 lift), open (0..1), turned (leaves on the left), theta (deg of the next leaf, mid-turn) } */
   pose(o) {
     if (!S.ready) return false; API.show(); S.turning = []; S.queue = [];
     S.p = o.p ?? 1; S.open = o.open ?? 1; S.cover = -Math.PI * S.open; S.state = o.state || (S.open >= 1 && S.p >= 1 ? 'open' : 'posed'); S.tLift = performance.now() / 1000 - LIFT_S; S.p0 = 0;   // 'posed' = held still, nothing animates
     const n = o.turned ?? 0; S.leaves.forEach((l, k) => { l.theta = k < n ? Math.PI : 0; shapeLeaf(l, l.theta, stackZ(l)); });
-    if (o.theta !== undefined && n < S.leaves.length) { const l = S.leaves[n]; l.theta = o.theta * Math.PI / 180; shapeLeaf(l, l.theta, ZT + 0.0003 + LEAF_DZ * 2); }
+    if (o.theta !== undefined && n < S.leaves.length) { const l = S.leaves[n]; l.theta = o.theta * Math.PI / 180; shapeLeaf(l, l.theta, turnZ(l, l.theta)); }
     if (S.state === 'open') S.canvas.classList.add('live');
+    for (let i = 0; i < 2 * (2 * PAGE_WIN + 3); i++) updatePageTex(false);   // every texture of the window now (QA stills)
     tick(performance.now()); return true;
   },
   unmount() {
     S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
+    if (S.ready) { for (const l of S.leaves) l.theta = 0; updatePageTex(false); }   // keeps only the first leaves' textures
     if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; S.canvas.style.cursor = ''; }
     if (S.raf) { cancelAnimationFrame(S.raf); S.raf = 0; }
     if (S.renderer) S.renderer.clear();

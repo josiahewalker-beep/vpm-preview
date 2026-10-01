@@ -51,6 +51,13 @@ window.pageSnd = {
     for (let i = 0; i < 3; i++) thump(ac, o, at + dur * (0.7 + 0.06 * i), rnd(900, 1500), 0.02, 0.02);               // dry ticks of the fold
     thump(ac, o, at + dur * 0.82, 220, 0.03, 0.06);
   },
+  /** the closed book landing back on the wooden table (round 4 note 4: the drop lands at speed) */
+  drop(t0) {
+    const r = ready(); if (!r) return; const { ac, o } = r; const at = ac.currentTime + Math.max(0, t0 || 0);
+    thump(ac, o, at, 95, 0.14, 0.16);                                                                               // the body of the book
+    thump(ac, o, at + 0.004, 260, 0.05, 0.05);                                                                      // the knock of the boards on the wood
+    stroke(ac, o, at, 0.09, 2200, 900, 0.9, [[0.1, 0.07], [1, 0]], 1.0);                                            // air pushed out from under it
+  },
   /** the padded leatherette board: a leather creak as it swings, a soft drop of the board at the end */
   cover(open, t0, dur) {
     const r = ready(); if (!r) return; const { ac, o } = r; const at = ac.currentTime + Math.max(0, t0 || 0); dur = dur || 1.1;
