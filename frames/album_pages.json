@@ -1,0 +1,200 @@
+{
+ "leaves": [
+  {
+   "file": "album_page_01.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 66,
+     "cy_mm": 58,
+     "rot": -2.2,
+     "src": "bts_03.jpg"
+    },
+    {
+     "kind": "M",
+     "cx_mm": 54,
+     "cy_mm": 160,
+     "rot": 2.6,
+     "src": "bts_14.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_02.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 100,
+     "rot": 1.6,
+     "src": "bts_10.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_03.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 60,
+     "rot": 1.2,
+     "src": "bts_06.jpg"
+    },
+    {
+     "kind": "L",
+     "cx_mm": 70,
+     "cy_mm": 166,
+     "rot": -1.8,
+     "src": "bts_11.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_04.png",
+   "prints": [
+    {
+     "kind": "M",
+     "cx_mm": 50,
+     "cy_mm": 50,
+     "rot": -1.5,
+     "src": "bts_45.jpg"
+    },
+    {
+     "kind": "L",
+     "cx_mm": 70,
+     "cy_mm": 158,
+     "rot": 2.0,
+     "src": "bts_44.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_05.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 66,
+     "cy_mm": 104,
+     "rot": -1.6,
+     "src": "bts_32.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_06.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 70,
+     "cy_mm": 62,
+     "rot": 2.4,
+     "src": "bts_12.jpg"
+    },
+    {
+     "kind": "S",
+     "cx_mm": 60,
+     "cy_mm": 168,
+     "rot": -2.2,
+     "src": "bts_34.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_07.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 62,
+     "rot": -1.0,
+     "src": "bts_33.jpg"
+    },
+    {
+     "kind": "M",
+     "cx_mm": 58,
+     "cy_mm": 168,
+     "rot": 1.8,
+     "src": "bts_07.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_08.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 68,
+     "cy_mm": 98,
+     "rot": 1.4,
+     "src": "bts_47.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_09.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 58,
+     "rot": 1.0,
+     "src": "bts_28.jpg"
+    },
+    {
+     "kind": "L",
+     "cx_mm": 70,
+     "cy_mm": 170,
+     "rot": -2.4,
+     "src": "bts_21.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_10.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 70,
+     "cy_mm": 104,
+     "rot": -2.0,
+     "src": "bts_08.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_11.png",
+   "prints": [
+    {
+     "kind": "L",
+     "cx_mm": 68,
+     "cy_mm": 108,
+     "rot": 2.2,
+     "src": "bts_17.jpg"
+    }
+   ]
+  },
+  {
+   "file": "album_page_12.png",
+   "prints": [
+    {
+     "kind": "P",
+     "cx_mm": 66,
+     "cy_mm": 100,
+     "rot": -1.6,
+     "src": "bts_29.jpg"
+    }
+   ]
+  }
+ ],
+ "leaf_px": [
+  1210,
+  2000
+ ],
+ "leaf_m": [
+  0.137,
+  0.227
+ ],
+ "photo_dir": "/home/claude/vpm-render-relay/scene/art/bts",
+ "prints": []
+}

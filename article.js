@@ -28,23 +28,26 @@ const CSS = `
            font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #b7ab95; }
 .art-bar .btn { min-height: 36px; padding: 8px 12px; }
 .art-bar .art-n { min-width: 8ch; text-align: center; }
-.art-close { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(16px, 2.2vw); }
+.art-close { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 14px); right: max(16px, 2.2vw); z-index: 2; min-height: 44px; min-width: 44px; padding: 10px 16px; font-size: 12px; gap: 10px; background: rgba(13, 11, 9, 0.7); border-color: rgba(239, 230, 212, 0.45); }
+.art-close b { font-size: 20px; line-height: 1; font-weight: 400; }
+.art-close:hover, .art-close:focus-visible { background: #efe6d4; color: #0d0b09; }
+.art-stage { cursor: zoom-out; } .art-page, .art-bar, .art-desk { cursor: auto; }
 .art-mast { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 22px); left: max(16px, 2.2vw); font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #b7ab95; }
 .art-hint { position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%); white-space: nowrap; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #b7ab95; opacity: 0.85; }
 .art-desk { position: absolute; top: 0; left: 0; width: var(--pw); height: var(--ph); display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 0 8% 0 4%; box-sizing: border-box; color: #b7ab95; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.7; z-index: 0; }
 .art-desk b { display: block; font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif; font-weight: 400; font-size: clamp(22px, 2.4vw, 34px); letter-spacing: 0; text-transform: none; line-height: 1.15; color: #efe6d4; margin-bottom: 8px; }
 .art-desk i { font-family: 'Newsreader', Georgia, serif; font-style: italic; text-transform: none; letter-spacing: 0; font-size: 15px; color: #efe6d4; }
 .art-book.one .art-desk { display: none; }
-@media (max-width: 640px) { .art-mast { display: none; } .art-bar { gap: 6px; } }
+@media (max-width: 640px) { .art-mast { display: none; } .art-bar { gap: 6px; } .art-close { min-height: 52px; height: 52px; min-width: 52px; padding: 12px 16px; } .art-close span { display: none; } }
 `;
 function build() {
   if (A.built) return; A.built = true;
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
   const root = document.createElement('div'); root.id = 'artpanel'; root.className = 'panel art'; root.hidden = true; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Indie Short Fest write-up');
   root.innerHTML = `<div class="art-mast">Indie Short Fest · Published July 12, 2026</div>
-    <button class="btn art-close" type="button" data-close>Close · Esc</button>
+    <button class="btn art-close" type="button" data-close aria-label="Close the write-up and go back to the case"><b>×</b><span>Close · Esc</span></button>
     <div class="art-stage"><div class="art-book"><div class="art-desk"><span>From the salesman\u2019s case</span><b>\u201cVery Prosperous Men\u201d named Best Short</b><i>Indie Short Fest, festival news \u00b7 published July 12, 2026</i><span class="art-desk-n"></span></div><div class="art-under"></div><div class="art-hint"></div></div></div>
-    <div class="art-bar"><button class="btn art-prev" type="button" aria-label="Previous page">‹ Back</button><span class="art-n">page 1 of 3</span><button class="btn art-next" type="button" aria-label="Next page">Turn ›</button><a class="btn art-link" target="_blank" rel="noopener">Read it online ↗</a></div>`;
+    <div class="art-bar"><button class="btn art-prev" type="button" aria-label="Previous page">‹ Previous</button><span class="art-n">page 1 of 3</span><button class="btn art-next" type="button" aria-label="Next page">Turn ›</button><a class="btn art-link" target="_blank" rel="noopener">Read it online ↗</a></div>`;
   document.body.appendChild(root); A.root = root; A.book = root.querySelector('.art-book');
   const base = A.small ? 'frames/m/' : 'frames/';
   for (let i = 0; i < N; i++) {
@@ -54,7 +57,12 @@ function build() {
     A.book.insertBefore(pg, A.book.querySelector('.art-hint')); A.pages.push({ el: pg, theta: 0 });
     pg.addEventListener('click', (e) => { e.stopPropagation(); onPage(i, e); });
   }
-  root.addEventListener('click', e => { if (e.target === root || e.target.closest('[data-close]')) window.article.close(); });
+  // round 3 note 8: an obvious way out. The × top right, Esc, a click or tap anywhere outside the sheets and the bar, the phone's
+  // Back button (a history entry is pushed while it is open): each one closes the write-up, one step, back to the case. The page's own
+  // Back / Esc is not reached while it is open (the panel covers the button; the page's Escape handler closes open panels first).
+  root.addEventListener('click', e => { if (e.target.closest('[data-close]') || !e.target.closest('.art-page, .art-bar, .art-desk, .art-mast')) window.article.close(); });
+  addEventListener('keydown', e => { if (!A.root.hidden && e.key === 'Escape') { e.stopImmediatePropagation(); window.article.close(); } }, true);   // the page's Escape must not also leave the case
+  addEventListener('popstate', () => { if (A.root && !A.root.hidden) { A.pushed = false; window.article.close(); } });
   root.querySelector('.art-prev').addEventListener('click', () => window.article.flip(-1));
   root.querySelector('.art-next').addEventListener('click', () => window.article.flip(1));
   root.querySelector('.art-link').href = A.url || '#';
@@ -118,10 +126,14 @@ window.article = {
     A.root.hidden = false; layout(); A.page = 0; A.turning = null;
     A.pages.forEach((p, i) => setPage(i, 0)); updateBar();
     const c = A.root.querySelector('[data-close]'); if (c) c.focus();
+    try { history.pushState({ vpmArticle: 1 }, ''); A.pushed = true; } catch (e) { A.pushed = false; }
   },
   /** QA: hold sheet i at an angle (degrees) without animating */
   pose(i, deg) { if (!A.root) return false; A.turning = null; setPage(i, deg); const under = A.root.querySelector('.art-under'); under.style.opacity = (0.9 * Math.sin(deg * Math.PI / 180) * (deg < 90 ? 1 : 0.5)).toFixed(3); under.style.width = `calc(var(--pw) * ${Math.max(0.15, Math.cos(deg * Math.PI / 180)).toFixed(3)})`; return true; },
-  close() { if (!A.root) return; A.root.hidden = true; if (A.raf) cancelAnimationFrame(A.raf); A.raf = 0; A.turning = null; },
+  close() {
+    if (!A.root || A.root.hidden) return; A.root.hidden = true; if (A.raf) cancelAnimationFrame(A.raf); A.raf = 0; A.turning = null;
+    if (A.pushed) { A.pushed = false; try { history.back(); } catch (e) {} }   // drop the entry pushed on open (the popstate finds the panel already closed)
+  },
   flip(dir) {
     if (!A.root || A.root.hidden || A.turning) return false;
     const i = dir > 0 ? A.page : A.page - 1; if (i < 0 || i >= N - 1) return false;

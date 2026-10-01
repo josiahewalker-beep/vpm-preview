@@ -1,4 +1,8 @@
-// The family Bible, live in the browser (page thread, scene/BIBLE2.md). Loaded by index.html when the Bible close-up opens.
+// The family Bible and the photo album, live in the browser (page thread, scene/BIBLE2.md, scene/ALBUM.md). Loaded by index.html
+// when the Bible close-up opens. One viewer, two configs: `makeBook(CFG)` builds an instance; window.bible is the white Bible,
+// window.album the black BTS photo album (the same lift, open, leaf run and sounds; its glb, rest transform, hinge node, page block
+// and pages come from frames/album.json when the render thread's album lands, and until then it is built on bible.glb at the
+// black book's spot on the table).
 // Draws frames/bible.glb (the white padded Bible, scene/bible3d.py) with Three.js on a transparent canvas (#bible3d) over
 // the page's WebGL canvas, with a camera that reproduces the Blender close-up camera (closeups.json c_bible: 30 mm lens,
 // 1920x1200 frame) and the page's framing, so the model rests exactly where the rendered Bible lies on the table.
@@ -7,21 +11,40 @@
 // leaves turns (Doré plates and KJV text, frames/bible_p01..08.jpg drawn on curling page meshes) -> settled on the bio
 // spread (07 left, 08 right; the IMDb box and the site line on 08 are links) -> release() : the leaves fall back, the
 // board closes, the Bible drops back onto the table -> rest.
-// window.bible = { mount(canvasEl, meta), show(), hide(), lift(), release(), turn(dir), unmount(), get state(), ... }
+// window.bible / window.album = { mount(canvasEl, meta, cfgOverrides), show(), hide(), lift(), release(), turn(dir), unmount(), get state(), ... }
 (() => {
 'use strict';
 const THREE_URL = window.CRUX_THREE_URL || new URL('vendor/three.module.min.js', location.href).href;   // shipped with the site (MIT, vendor/three-LICENSE.txt)
-const GLB_URL = 'frames/bible.glb';                       // the review host can't serve .glb, so it also ships as bible.glb.wasm (same bytes)
-const LIFT_S = 1.3, OPEN_S = 1.15, TURN_S = 0.72, TURN_GAP = 1.0, RUN_DELAY = 0.15, CLOSE_S = 0.62, DROP_S = 0.95, BACK_TURN_S = 0.34;
-const FILL = 0.8;
-// the page block (bb_pages in the glb): spine at XS, fore-edge at XF, head/tail at +-H/2, top face at ZT (BIBLE2.md, measured from the glb)
-const XS = -0.111, XF = 0.109, H = 0.278, ZT = 0.0545, LEAF_DZ = 0.00025, L = XF - XS;
-const NX = 30, NY = 10;                                   // leaf mesh grid
-// the leaves: recto = the face seen on the right before the turn, verso = the face seen on the left after it (null = blank flyleaf)
-const LEAVES = [[null, 'bible_p01'], ['bible_p02', 'bible_p03'], ['bible_p04', 'bible_p05'], ['bible_p06', 'bible_p07'], ['bible_p08', null]];
-const BIO_LEAF = 4;                                       // the leaf whose recto is the bio's right page (08)
 let THREE = null, loading = null;
 function loadThree() { return loading || (loading = import(THREE_URL).then(m => (THREE = m))); }
+// Round 3 note 12: the Bible leafs rapidly to the bio (0.2 s a leaf, 0.12 s apart; the leaf sound is cut to match), then one more spread
+// after the bio: "About the film" (09 | 10), the #about panel's content as page art (scene/art/bible_pages.py).
+const BIBLE_CFG = {
+  name: 'bible', glb: 'frames/bible.glb',                 // the review host can't serve .glb, so it also ships as bible.glb.wasm (same bytes)
+  hinge: 'bb_front_hinge', rest: { translation: [2.415, 2.815, 0.436], rotation_z_deg: 322 },
+  // the page block (bb_pages in the glb): spine at xs, fore-edge at xf, head/tail at +-h/2, top face at zt (BIBLE2.md, measured from the glb)
+  block: { xs: -0.111, xf: 0.109, h: 0.278, zt: 0.0545 },
+  closed: { w: 0.25, h: 0.315, cz: 0.032, pitch: 0.1, dy: 0.03 }, open: { w: 0.47, h: 0.30, pitch: 0.2, dy: 0.025, pw: 0.236, ph: 0.30, ppitch: 0.16, pdy: 0.02 },
+  // the leaves: recto = the face seen on the right before the turn, verso = the face seen on the left after it (null = blank flyleaf)
+  leaves: [[null, 'bible_p01'], ['bible_p02', 'bible_p03'], ['bible_p04', 'bible_p05'], ['bible_p06', 'bible_p07'], ['bible_p08', 'bible_p09'], ['bible_p10', null]],
+  stopAt: 4,                                              // the leaf run turns leaves 0..stopAt-1: the bio spread (07 | 08); one more turn = About the film (09 | 10)
+  // the link boxes (fractions in frames/bible_pages.json): the bio page 08 (the recto of leaf 4) and About the film page 10 (the recto of leaf 5);
+  // url = the json's <key>_url (index.html passes them as `urls`); a key without a url goes to meta.onLink(key) (the poster)
+  links: [{ leaf: 4, face: 'recto', key: 'imdb_box', label: 'Josiah Walker on IMDb' }, { leaf: 4, face: 'recto', key: 'site_line', label: 'josiahwalker.com' },
+          { leaf: 5, face: 'recto', key: 'about_press', label: 'Read the write-up · Indie Short Fest' }, { leaf: 5, face: 'recto', key: 'about_poster', label: 'See the poster' },
+          { leaf: 5, face: 'recto', key: 'about_vimeo', label: 'The trailer on Vimeo' }, { leaf: 5, face: 'recto', key: 'about_insta', label: '@veryprosperousmenfilm on Instagram' },
+          { leaf: 5, face: 'recto', key: 'about_bio', label: 'Josiah Walker · bio' }],
+  lift_s: 1.3, open_s: 1.15, turn_s: 0.2, turn_gap: 0.12, run_delay: 0.15, close_s: 0.62, drop_s: 0.95, back_turn_s: 0.34, hand_turn_s: 0.72,
+  cover: 'cover', paper: '#efe6d2', sound: 'leaf',
+};
+function makeBook(CFG0) {
+const CFG = Object.assign({}, CFG0);
+let LIFT_S = CFG.lift_s, OPEN_S = CFG.open_s, TURN_S = CFG.turn_s, TURN_GAP = CFG.turn_gap, RUN_DELAY = CFG.run_delay, CLOSE_S = CFG.close_s, DROP_S = CFG.drop_s, BACK_TURN_S = CFG.back_turn_s;
+const FILL = 0.8;
+let XS = CFG.block.xs, XF = CFG.block.xf, H = CFG.block.h, ZT = CFG.block.zt, LEAF_DZ = 0.00025, L = XF - XS;
+const NX = 30, NY = 10;                                   // leaf mesh grid
+let LEAVES = CFG.leaves, BIO_LEAF = CFG.stopAt;
+const GLB_URL = () => CFG.glb;
 
 // ---------- a small GLB reader (as crucifix.js: meshes, materials, embedded images; node transforms honoured) ----------
 async function loadGLB(url) {
@@ -60,7 +83,7 @@ async function loadGLB(url) {
     const p = m.pbrMetallicRoughness || {}; const c = p.baseColorFactor || [1, 1, 1, 1]; const name = m.name || '';
     const side = m.doubleSided ? THREE.DoubleSide : THREE.FrontSide;
     let mat;
-    if (/cover/.test(name)) {         // white pebble leatherette with gold foil: the glb's maps under a light coat (Cycles: coat 0.12)
+    if (/cover/.test(name)) {         // white pebble leatherette with gold foil (or the album's dark leather): the glb's maps under a light coat (Cycles: coat 0.12)
       mat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(c[0], c[1], c[2]), metalness: 1, roughness: 1, side, clearcoat: 0.12, clearcoatRoughness: 0.35, envMapIntensity: 0.55, specularIntensity: 0.6 });
     } else if (/ribbon/.test(name)) { // red satin: sheen
       mat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(c[0], c[1], c[2]), metalness: 0, roughness: p.roughnessFactor ?? 0.3, side, sheen: 0.6, sheenColor: new THREE.Color(1, 0.6, 0.55), sheenRoughness: 0.5, envMapIntensity: 0.4 });
@@ -108,7 +131,7 @@ function emit() { if (S.onState) try { S.onState(S.state); } catch (e) {} }
 
 function restPose() {
   // hero.py: grouped(family_bible, (tx + 0.415, ty - 0.035, top), 322) with tx, ty, top = 2.0, 2.85, 0.436  (bible.json `rest`)
-  const r = (S.meta.rest && S.meta.rest.translation) || [2.415, 2.815, 0.436], rz = (S.meta.rest && S.meta.rest.rotation_z_deg) || 322;
+  const r = (S.meta.rest && S.meta.rest.translation) || CFG.rest.translation, rz = (S.meta.rest && S.meta.rest.rotation_z_deg) || CFG.rest.rotation_z_deg;
   const M = new THREE.Matrix4().makeTranslation(r[0], r[1], r[2]).multiply(new THREE.Matrix4().makeRotationZ(rz * Math.PI / 180));
   rest.pos = new THREE.Vector3(); rest.quat = new THREE.Quaternion(); M.decompose(rest.pos, rest.quat, new THREE.Vector3());
 }
@@ -132,16 +155,16 @@ function fitPose(w, h, cx, cz, pitch, dy) {
   const pos = target.sub(new THREE.Vector3(cx, 0, cz).applyQuaternion(q));
   return { pos, quat: q };
 }
-function closedPose() { return fitPose(0.25, 0.315, 0.0, 0.032, 0.1, 0.03); }
+function closedPose() { const c = CFG.closed; return fitPose(c.w, c.h, 0.0, c.cz, c.pitch, c.dy); }
 function openPose() {
-  const portrait = S.canvas.clientWidth < S.canvas.clientHeight;
-  if (portrait) return fitPose(0.236, 0.30, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, 0.16, 0.02);   // one page at a time on a phone
-  return fitPose(0.47, 0.30, XS - 0.002, ZT, 0.2, 0.025);
+  const portrait = S.canvas.clientWidth < S.canvas.clientHeight, o = CFG.open;
+  if (portrait) return fitPose(o.pw, o.ph, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, o.ppitch, o.pdy);   // one page at a time on a phone
+  return fitPose(o.w, o.h, XS - 0.002, ZT, o.pitch, o.dy);
 }
 
 function setup() {
   const m = S.meta;
-  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass
   S.renderer.setClearColor(0x000000, 0); S.renderer.outputColorSpace = THREE.SRGBColorSpace;
   S.renderer.toneMapping = THREE.ACESFilmicToneMapping; S.renderer.toneMappingExposure = 1.0;
   S.renderer.shadowMap.enabled = true; S.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -212,7 +235,7 @@ function leafGeometry() {
   return { geo, back };
 }
 function shapeLeaf(leaf, theta, z0) {
-  const P = leaf.geo.attributes.position.array; const bend = 1.15 * Math.sin(theta) * (theta < Math.PI / 2 ? 1 : 0.8);
+  const P = leaf.geo.attributes.position.array; const bend = (CFG.card ? 0.35 : 1.15) * Math.sin(theta) * (theta < Math.PI / 2 ? 1 : 0.8);   // card leaves (the album) stay nearly flat
   const ds = L / NX;
   for (let j = 0; j <= NY; j++) {
     const y = -H / 2 + H * j / NY, lead = 1 + 0.35 * (0.5 - j / NY);         // the tail corner leads
@@ -229,7 +252,7 @@ function shapeLeaf(leaf, theta, z0) {
 }
 function creamCanvas(w, h) {
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d');
-  c.fillStyle = '#efe6d2'; c.fillRect(0, 0, w, h);
+  c.fillStyle = CFG.paper; c.fillRect(0, 0, w, h);
   const img = c.getImageData(0, 0, w, h), d = img.data;              // a little paper grain
   for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 9; d[i] += n; d[i + 1] += n; d[i + 2] += n * 0.8; }
   c.putImageData(img, 0, 0); return cv;
@@ -338,10 +361,11 @@ function pick(e) {
   const hits = ray.intersectObjects(meshes, false); if (!hits.length) return null;
   const h = hits[0], leaf = h.object.userData.leaf, face = h.object.userData.face; const uv = h.uv;
   let link = null;
-  if (leaf.k === BIO_LEAF && face === 'recto' && S.boxes && leaf.iw && uv) {
+  if (S.boxes && leaf.iw && uv) {
     const fx = (uv.x * leaf.cw - leaf.mx) / leaf.iw, fy = uv.y;                            // fractions of the page art
-    for (const [key, label] of [['imdb_box', 'Josiah Walker on IMDb'], ['site_line', 'josiahwalker.com']]) {
-      const b = S.boxes[key]; if (b && fx >= b[0] - 0.01 && fx <= b[2] + 0.01 && fy >= b[1] - 0.008 && fy <= b[3] + 0.008) link = { key, label, url: S.urls[key] };
+    for (const ln of CFG.links) {
+      if (ln.leaf !== leaf.k || ln.face !== face) continue;
+      const b = S.boxes[ln.key]; if (b && fx >= b[0] - 0.01 && fx <= b[2] + 0.01 && fy >= b[1] - 0.008 && fy <= b[3] + 0.008) link = { key: ln.key, label: ln.label, url: S.urls[ln.key] };
     }
   }
   const side = leaf.theta > 1 ? 'left' : 'right';
@@ -356,35 +380,44 @@ function onMove(e) {
 function onClick(e) {
   const h = pick(e); if (!h) return; e.stopPropagation();
   if (h.link && h.link.url) { window.open(h.link.url, '_blank', 'noopener'); return; }
+  if (h.link && S.meta.onLink) { S.meta.onLink(h.link.key); return; }                   // no url: the page handles it (the poster sheet)
   const portrait = S.canvas.clientWidth < S.canvas.clientHeight;
   if (portrait) { const want = h.side === 'left' ? -1 : 1; if (want !== S.focus) { S.focus = want; return; } }
-  window.bible.turn(h.side === 'left' ? -1 : 1);
+  API.turn(h.side === 'left' ? -1 : 1);
 }
 
-window.bible = {
+const API = {
   get state() { return S.state; },
   get ready() { return S.ready; },
   get failed() { return S.failed; },
   get turned() { return turnedCount(); },
   get leaves() { return S.leaves.length; },
-  /** canvasEl: the #bible3d canvas; meta: { cam, aim, lens, res: [w, h], framing: () => ({ sc, fc, vc }), rest, boxes, urls, small, onState, onHover } */
-  mount(canvasEl, meta) {
+  get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
+  get cfg() { return CFG; },
+  /** canvasEl: the #bible3d / #album3d canvas; meta: { cam, aim, lens, res: [w, h], framing: () => ({ sc, fc, vc }), rest, boxes, urls, small, onState, onHover };
+   *  over: config overrides from frames/album.json (glb, rest, hinge, block { xs, xf, h, zt }, pages [names], closed/open poses) */
+  mount(canvasEl, meta, over) {
+    if (over) { for (const k of ['glb', 'hinge', 'block', 'closed', 'open', 'links', 'stopAt']) if (over[k] !== undefined) CFG[k] = over[k];
+      if (over.rest) CFG.rest = over.rest; if (over.leaves) { LEAVES = over.leaves.map(l => l.slice()); CFG.leaves = LEAVES; }   // [[recto, verso], ...] as CFG.leaves
+      XS = CFG.block.xs; XF = CFG.block.xf; H = CFG.block.h; ZT = CFG.block.zt; L = XF - XS; BIO_LEAF = Math.min(CFG.stopAt, LEAVES.length - 1); }
+    if (!meta.rest) meta.rest = CFG.rest;
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
     S.small = !!meta.small; S.boxes = meta.boxes || null; S.urls = meta.urls || {}; S.focus = 1; S.closeStep = 0;
     canvasEl.hidden = true; canvasEl.classList.remove('on', 'live');
     if (!S.renderer) { canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
     if (S.ready) { for (const l of S.leaves) { l.theta = 0; shapeLeaf(l, 0, stackZ(l)); } if (S.hinge) S.hinge.rotation.set(0, 0, 0); loadPages(); return Promise.resolve(true); }
-    return loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL); }).then(({ root, named }) => {
-      S.model.add(root); S.hinge = named.bb_front_hinge || null; buildLeaves(); loadPages(); S.ready = true; return true;
-    }).catch(err => { S.failed = true; console.warn('bible: not available', err); throw err; });
+    return loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL()).catch(err => { if (!CFG.fallbackGlb) throw err; S.standIn = true; return loadGLB(CFG.fallbackGlb); }); }).then(({ root, named }) => {
+      S.model.add(root); S.hinge = named[CFG.hinge] || (CFG.fallbackHinge && named[CFG.fallbackHinge]) || null; buildLeaves(); loadPages(); S.ready = true; return true;
+    }).catch(err => { S.failed = true; console.warn(CFG.name + ': not available', err); throw err; });
   },
+  get standIn() { return !!S.standIn; },                   // true while the album is drawn with bible.glb (album.glb not landed yet)
   show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps its still to the empty plate this same frame
-  hide() { if (S.canvas) S.canvas.classList.remove('on', 'live'); },
+  hide() { S.visible = false; if (S.canvas) S.canvas.classList.remove('on', 'live'); },
   /** the Bible rises, turns to the camera, opens and leafs through to the bio spread */
   lift() {
     if (!S.ready || S.state !== 'rest') return false;
-    window.bible.show(); S.state = 'lifting'; S.p0 = S.p; S.tLift = S.t0 = performance.now() / 1000; S.canvas.classList.add('live'); emit(); return true;
+    API.show(); S.state = 'lifting'; S.p0 = S.p; S.tLift = S.t0 = performance.now() / 1000; S.canvas.classList.add('live'); emit(); return true;
   },
   /** everything falls back: leaves, board, then the Bible onto the table; ends in 'rest' */
   release() {
@@ -395,15 +428,15 @@ window.bible = {
   /** turn one leaf forward (+1) or back (-1) while the Bible is open */
   turn(dir) {
     if (S.state !== 'open') return false; const now = performance.now() / 1000; if (S.meta.onHover) S.meta.onHover(null);
-    if (dir > 0) { const l = S.leaves.find(x => x.theta < 1 && !S.turning.some(t => t.leaf === x)); if (!l || l.k === LEAVES.length - 1) return false; startTurn(l, 1, TURN_S, now, true); return true; }
+    if (dir > 0) { const l = S.leaves.find(x => x.theta < 1 && !S.turning.some(t => t.leaf === x)); if (!l || l.k === LEAVES.length - 1) return false; startTurn(l, 1, CFG.hand_turn_s, now, true); return true; }
     const turned = S.leaves.filter(x => x.theta > 1 && !S.turning.some(t => t.leaf === x)); const l = turned[turned.length - 1]; if (!l) return false;
-    startTurn(l, -1, TURN_S, now, true); return true;
+    startTurn(l, -1, CFG.hand_turn_s, now, true); return true;
   },
   focus(side) { S.focus = side; },
   pickAt(x, y) { const h = pick({ clientX: x, clientY: y }); return h && { k: h.leaf.k, face: h.face, side: h.side, link: h.link && h.link.key, fx: h.fx, fy: h.fy }; },   // QA
   /** QA: jump to a pose without the animation. o = { p (0..1 lift), open (0..1), turned (leaves on the left), theta (deg of the next leaf, mid-turn) } */
   pose(o) {
-    if (!S.ready) return false; window.bible.show(); S.turning = []; S.queue = [];
+    if (!S.ready) return false; API.show(); S.turning = []; S.queue = [];
     S.p = o.p ?? 1; S.open = o.open ?? 1; S.cover = -Math.PI * S.open; S.state = o.state || (S.open >= 1 && S.p >= 1 ? 'open' : 'posed'); S.tLift = performance.now() / 1000 - LIFT_S; S.p0 = 0;   // 'posed' = held still, nothing animates
     const n = o.turned ?? 0; S.leaves.forEach((l, k) => { l.theta = k < n ? Math.PI : 0; shapeLeaf(l, l.theta, stackZ(l)); });
     if (o.theta !== undefined && n < S.leaves.length) { const l = S.leaves[n]; l.theta = o.theta * Math.PI / 180; shapeLeaf(l, l.theta, ZT + 0.0003 + LEAF_DZ * 2); }
@@ -417,4 +450,8 @@ window.bible = {
     if (S.renderer) S.renderer.clear();
   },
 };
+return API;
+}
+window.bible = makeBook(BIBLE_CFG);
+window.makeBook = makeBook; window.BIBLE_CFG = BIBLE_CFG;   // album.js builds the photo album from the same viewer
 })();

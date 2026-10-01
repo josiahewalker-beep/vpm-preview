@@ -33,6 +33,10 @@ window.pageSnd = {
   leaf(t0, dur) {
     const r = ready(); if (!r) return; const { ac, o } = r; const at = ac.currentTime + Math.max(0, t0 || 0); dur = dur || 0.7;
     const k = rnd(0.85, 1.15);
+    if (dur < 0.35) {                                                   // round 3 note 12: the rapid leaf run (0.2 s a leaf): one quick riffle and the land, no lift, no gilt settle
+      stroke(ac, o, at, dur * 0.7, 1600 * k, 3600 * k, 1.0, [[0.1, 0.09], [0.5, 0.11], [1, 0.0]], 1.0);
+      thump(ac, o, at + dur * 0.75, 170 * k, 0.045, 0.06); return;
+    }
     stroke(ac, o, at, dur * 0.55, 900 * k, 2600 * k, 1.2, [[0.05, 0.05], [0.4, 0.09], [1, 0.02]], 1.0);        // the lift and the sweep through the air
     stroke(ac, o, at + dur * 0.62, dur * 0.34, 2200 * k, 3800 * k, 0.9, [[0.08, 0.16], [0.3, 0.12], [1, 0.0]], 1.0);   // the flap
     thump(ac, o, at + dur * 0.78, 160 * k, 0.06, 0.09);                                                            // and it lands

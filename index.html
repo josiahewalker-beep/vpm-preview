@@ -27,11 +27,14 @@ body.dragging-ui * { -webkit-user-select: none; user-select: none; }
 #stage.hot { cursor: pointer; }
 #gl, #poster { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* thread D: the live crucifix, drawn over the case close-up */
-#crux3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; touch-action: none; }
-#crux3d.on { opacity: 1; } #crux3d.live { pointer-events: auto; cursor: grab; } #crux3d.grab { cursor: grabbing; }
+/* round 3 note 6: the three live canvases stay invisible in the DOM (opacity 0): the page reads their pixels every frame and composites
+   them into its own frame under the film pass, so the lens, vignette, grade and grain fall on the live model exactly as on the rendered
+   pixels around it. The elements remain for pointer input (drag, hover, click). */
+#crux3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; touch-action: none; }
+#crux3d.live { pointer-events: auto; cursor: grab; } #crux3d.grab { cursor: grabbing; }
 /* page thread: the live family Bible over the Bible close-up (no fade: it is shown the instant it lifts off the rendered still) */
-#bible3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; touch-action: none; }
-#bible3d.on { opacity: 1; } #bible3d.live { pointer-events: auto; }
+#bible3d, #album3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; touch-action: none; }
+#bible3d.live, #album3d.live { pointer-events: auto; }
 #poster { object-fit: cover; }
 @media (max-aspect-ratio: 1/1) { #poster { top: 7%; height: 60%; object-position: 55% 50%; } }
 
@@ -118,7 +121,8 @@ body.tv .controls { opacity: 0; pointer-events: none; }
 .bible-strip { position: absolute; left: max(16px, 2.2vw); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; gap: 6px; pointer-events: auto; }
 .bible-strip button { font: inherit; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: rgba(13, 11, 9, 0.55); border: 1px solid transparent; padding: 8px 10px; cursor: pointer; min-height: 36px; }
 .bible-strip button:hover { color: var(--paper); border-color: var(--rule); }
-.bible-strip .pg { display: none; } @media (max-aspect-ratio: 1/1) { .bible-strip .pg { display: inline-block; } }
+.bible-strip { flex-wrap: wrap; max-width: calc(100% - 32px); }
+.bible-strip .pg { display: none; } @media (max-aspect-ratio: 1/1) { .bible-strip .pg { display: inline-block; } .bible-strip { bottom: calc(env(safe-area-inset-bottom, 0px) + 118px); } }   /* portrait: above the hint and the look bar, which wrap to two rows there */
 .clipping { background: #e7dfcc; color: #221e1a; font-family: var(--display); max-width: 40rem; }
 .clipping h2 { font-weight: 600; line-height: 1.12; color: #221e1a; }
 .clipping p, .clipping blockquote { color: #221e1a; }
@@ -150,6 +154,7 @@ body.tv .controls { opacity: 0; pointer-events: none; }
   <canvas id="gl"></canvas>
   <canvas id="crux3d" hidden aria-hidden="true"></canvas><!-- thread D -->
   <canvas id="bible3d" hidden aria-hidden="true"></canvas><!-- page thread: the family Bible -->
+  <canvas id="album3d" hidden aria-hidden="true"></canvas><!-- page thread: the photo album (round 3 note 10) -->
 </div>
 <div id="loading">Loading the room</div>
 
@@ -242,11 +247,12 @@ body.tv .controls { opacity: 0; pointer-events: none; }
   </div>
   <div id="tvStrip" class="tv-strip" hidden>
     <div class="tv-chan" role="tablist" aria-label="Channels">
-      <button type="button" data-ch="2" role="tab">2 · Trailer</button><button type="button" data-ch="3" role="tab">3 · Synopsis</button><button type="button" data-ch="4" role="tab">4 · Stills</button><button type="button" data-ch="5" role="tab">5 · Cast &amp; Crew</button><button type="button" data-ch="6" role="tab">6 · Press</button><button type="button" data-ch="7" role="tab">7 · Screenings</button>
+      <button type="button" data-ch="1" role="tab">2 · Trailer</button><button type="button" data-ch="2" role="tab">3 · Synopsis</button><button type="button" data-ch="3" role="tab">4 · Cast &amp; Crew</button>
     </div>
     <div class="tv-guide" id="tvGuide" aria-live="polite"></div>
   </div>
   <div id="cuHint" class="cu-hint"></div>
+  <div id="hubStrip" class="bible-strip" hidden aria-label="On the coffee table"><button type="button" data-hub="bible">About Josiah &amp; The Film</button><button type="button" data-hub="album">Photographs</button><button type="button" data-hub="ashtray">The cigarette</button></div><!-- round 3 note 13: the hub's three props as text, for phones (the album and the tray are cropped off a portrait frame) -->
   <div id="bibleStrip" class="bible-strip" hidden><button type="button" data-turn="-1" aria-label="Previous leaf">‹ Turn back</button><button type="button" data-turn="1" aria-label="Next leaf">Turn ›</button><button type="button" class="pg" data-focus="-1">Left page</button><button type="button" class="pg" data-focus="1">Right page</button></div>
 </div>
 <div class="panel" id="clippanel" hidden role="dialog" aria-modal="true" aria-labelledby="clipTitle">
@@ -559,6 +565,9 @@ void main(){
   float d = core * brk * fade * mix(1.0, 0.32, lam);
   o = vec4(vec3(0.84, 0.88, 0.95) * d * gain, 1.0);
 }`;
+// pass 2e: a live canvas (the crucifix, the Bible, the album: Three.js, premultiplied alpha) composited over the frame before the film pass
+const OVER_FS = `#version 300 es
+precision highp float; in vec2 v; out vec4 o; uniform sampler2D s; void main(){ o = texture(s, vec2(v.x, 1.0 - v.y)); }`;
 // pass 2b: spark streaks and the hot glow at the nozzle
 const PART_VS = `#version 300 es
 in vec2 a; in vec4 c; out vec4 vc; void main(){ vc = c; gl_Position = vec4(a, 0.0, 1.0); }`;
@@ -615,7 +624,7 @@ void main(){
   o = vec4(c, 1.0);
 }`;
 
-const P = { comp: prog(FSQ_VS, COMP_FS), smoke: prog(SMOKE_VS, SMOKE_FS), part: prog(PART_VS, PART_FS), film: prog(FSQ_VS, FILM_FS), tv: prog(SMOKE_VS, TV_FS), walk: prog(WALK_VS, WALK_FS) };
+const P = { comp: prog(FSQ_VS, COMP_FS), smoke: prog(SMOKE_VS, SMOKE_FS), part: prog(PART_VS, PART_FS), film: prog(FSQ_VS, FILM_FS), tv: prog(SMOKE_VS, TV_FS), walk: prog(WALK_VS, WALK_FS), over: prog(FSQ_VS, OVER_FS) };
 const walkBuf = gl.createBuffer();
 const tvBuf = gl.createBuffer();
 const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -743,8 +752,7 @@ function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < 
 // ---------- clickable props (world boxes, projected each frame with the blended camera) ----------
 const PROPS = [
   { id: 'poster', label: 'The poster', lo: [1.583, 2.497, 0.342], hi: [2.057, 3.017, 0.438], act: () => openPanel($('#posterpanel')) },
-  { id: 'fam', get label() { return FEATURES.bible ? 'The family Bible' : 'About · Josiah Walker'; }, lo: [2.235, 2.63, 0.436], hi: [2.6, 3.0, 0.50], act: () => { if (FEATURES.bible) enterCloseup('c_bible', [2.415, 2.815, 0.45]); else linkPanel('Josiah Walker', 'Writer and director of Very Prosperous Men.', [['Read the bio', 'https://www.josiahwalker.com/bio'], ['IMDb', 'https://www.imdb.com/name/nm9711704/']]); } },
-  { id: 'kjv', label: 'About the film', lo: [2.08, 2.69, 0.436], hi: [2.23, 2.91, 0.482], act: () => openPanel($('#about')) },
+  { id: 'fam', get label() { return FEATURES.bible ? 'About Josiah & The Film' : 'About · Josiah Walker'; }, lo: [2.235, 2.63, 0.436], hi: [2.6, 3.0, 0.50], act: () => { if (FEATURES.bible) enterCloseup('c_bible', [2.415, 2.815, 0.45]); else linkPanel('Josiah Walker', 'Writer and director of Very Prosperous Men.', [['Read the bio', 'https://www.josiahwalker.com/bio'], ['IMDb', 'https://www.imdb.com/name/nm9711704/']]); } },
   { id: 'watch', needs: 'closeups', label: 'The watch', lo: [0.97, 3.06, 0.0], hi: [1.2, 3.29, 0.05], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'hand', needs: 'closeups', label: 'The watch', lo: [0.72, 2.95, 0.0], hi: [1.06, 3.2, 0.09], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'ashtray', needs: 'closeups', label: 'The cigarette', lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49], act: () => enterCloseup('c_ashtray', [2.25, 3.06, 0.47]) },
@@ -849,11 +857,11 @@ for (let i = 0; i < 420; i++) {
   const tmax = Math.min(wz / -SUN_D[2], 3.4), tt = 0.15 + Math.random() * (tmax - 0.15);
   motes.push({ p: [4.6 + SUN_D[0] * tt, wy + SUN_D[1] * tt, wz + SUN_D[2] * tt], ph: Math.random() * 6.28, sp: 0.4 + Math.random(), s: 0.4 + Math.random() * 0.9 });
 }
-function project(p) {   // world point -> frame coords (0..1, y down) for the blended camera; null if behind
-  const c = cur.cam, a = cur.aim; if (!c) return null;
+function project(p, K) {   // world point -> frame coords (0..1, y down) for the blended camera (or a given { cam, aim, lens }); null if behind
+  const c = K ? K.cam : cur.cam, a = K ? K.aim : cur.aim; if (!c) return null;
   const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
   const d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], z = dot(d, f); if (z < 0.05) return null;
-  const tx = 18 / 31, ty = tx / FA;
+  const tx = 18 / (K && K.lens || 31), ty = tx / FA;
   return [0.5 + dot(d, r) / z / tx * 0.5, 0.5 - dot(d, u) / z / ty * 0.5, z];
 }
 function basis(c, a) {   // camera-to-world rotation, columns: right, up, back (Blender camera looks down -Z)
@@ -1044,35 +1052,68 @@ function drawWalker(now) {
   gl.disable(gl.BLEND);
 }
 
-// ---------- close-ups: click a prop, the camera pushes toward it and dissolves into its close-up still ----------
+// ---------- close-ups: click a prop, the camera flies toward it (a rendered clip) and lands on its close-up still ----------
 const CLOSE = {
   c_watch: { hint: 'The watch · listen', sound: 'tick', at: [1.083, 3.175, 0.01], from: [35, 0], fl: 'watch' },
   c_ashtray: { hint: 'Back to the room · Esc', at: [2.25, 3.06, 0.47], from: [0, 6], fl: 'ashtray' },
   c_case: { hint: 'Click the crucifix, or the clipping in the lid', at: [1.95, 3.72, 0.56], from: [0, 0], fl: 'case' },
   c_tv: { hint: 'Turn the knob · ← →', at: [3.21, 2.96, 0.87], from: [0, 0], fl: 'tv' },
-  c_bible: { hint: 'Click the Bible', at: [2.415, 2.815, 0.45], from: [0, 0], fl: 'bible' },
+  c_bible: { hint: 'The Bible, the album or the ashtray · Back to the room · Esc', at: [2.415, 2.815, 0.45], from: [0, 0], fl: 'bible' },
 };
+// Round 3: the flights' camera paths, the same maths as scene/flights.py, so the live cigarette smoke and ember can be projected
+// through the moving camera and never vanish for the length of a clip. At clip fraction k: u = ease(k); cam = lerp(c0, c1, u) lifted
+// 0.06 sin(pi u) (the watch: a quadratic bezier past `via`); aim = lerp(a0, a1, ease(min(1, k * lead))); lens 31 -> the close-up's
+// by ease(u). c0/a0 = the grid view the flight starts from (views.json), or another close-up's camera for a flight between two
+// close-ups (`fromCU`: fl_bible_ashtray, C_bible -> C_ashtray, assumed to follow the same lerp + bow path).
+const FLIGHT = { watch: { via: [1.0, 2.35, 1.05], lead: 1.7 }, ashtray: {}, case: {}, tv: {}, bible: {}, bible_ashtray: { fromCU: 'c_bible' } };
+const SMOKE_P = [2.2497, 3.0542, 0.4800], EMBER_P = [2.2532, 3.0513, 0.4794];   // the cigarette's tip in the room (triangulated from the rendered anchors; residual 4e-5)
+const ease3 = u => u * u * (3 - 2 * u);
+function flightCam(flKey, name, k) {
+  const F = FLIGHT[flKey], end = cuMeta[name]; if (!F || !end || !end.cam) return null;
+  let c0, a0;
+  if (F.fromCU) { const s = cuMeta[F.fromCU]; if (!s) return null; c0 = s.cam; a0 = s.aim; }
+  else { const v = vmap && vmap.get(vname(CLOSE[name].from[0], CLOSE[name].from[1])); if (!v || !v.cam) return null; c0 = v.cam; a0 = v.aim; }
+  const u = ease3(Math.max(0, Math.min(1, k))), c1 = end.cam, a1 = end.aim, lens1 = end.lens || 30;
+  let cam;
+  if (F.via) cam = [0, 1, 2].map(i => (1 - u) * (1 - u) * c0[i] + 2 * (1 - u) * u * F.via[i] + u * u * c1[i]);
+  else cam = [c0[0] + (c1[0] - c0[0]) * u, c0[1] + (c1[1] - c0[1]) * u, c0[2] + (c1[2] - c0[2]) * u + 0.06 * Math.sin(Math.PI * u)];
+  const ua = ease3(Math.min(1, Math.max(0, Math.min(1, k)) * (F.lead || 1)));
+  const aim = [0, 1, 2].map(i => a0[i] + (a1[i] - a0[i]) * ua);
+  const lens0 = F.fromCU ? (cuMeta[F.fromCU].lens || 30) : 31;
+  return { cam, aim, lens: lens0 + (lens1 - lens0) * u };
+}
 let cuMeta = {}; fetch('frames/closeups.json').then(r => r.ok ? r.json() : {}).then(j => { cuMeta = j || {}; }).catch(() => {});
 const cuTex = {};
 function loadCU(name) { if (name in cuTex) return; cuTex[name] = null; const im = new Image(); im.onload = () => { cuTex[name] = tex(im); }; im.src = (SMALL ? 'frames/m/' : 'frames/') + name + '.jpg'; }
-let cu = null;        // { name, phase: 'approach'|'fly'|'still'|'return', sub: null | 'crux', subT }
+let cu = null;        // { name, fl, phase: 'approach'|'fly'|'still'|'closing'|'return', sub: null|'crux'|'bible'|'album', via, holdTex, ... }
 // the flights: a rendered camera move from a fixed grid view into each close-up (fl_<name>.mp4), and the same move
 // reversed (fl_<name>_back.mp4) for the way out. No cross-fades: frame 0 is the grid view, the last frame is the still.
 const flights = {};
+const FL_STEP = /[#&]flstep/.test(location.hash);   // QA: no flight clip plays on its own; window.__fl.seek(t) steps the active one (SwiftShader can't catch a frame otherwise)
+const HOLD_T = 2.5 / 24;                             // round 3 note 5: on the way out, the frame on screen is held until the reversed clip has visibly moved (frame 3)
 function flightVid(name, back) {
   const key = name + (back ? '_back' : ''); if (flights[key]) return flights[key];
   const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = QA_WEBM ? 'frames/_fl_' + key + '.webm' : 'frames/fl_' + key + '.mp4';
-  const e = { v, ok: false, tex: null }; v.addEventListener('loadeddata', () => { e.ok = true; }); v.addEventListener('error', () => { e.ok = false; e.err = true; });
+  const e = { v, ok: false, tex: null, up: 0 }; v.addEventListener('loadeddata', () => { e.ok = true; }); v.addEventListener('error', () => { e.ok = false; e.err = true; });
   flights[key] = e; return e;
 }
-function flightTex(e) {
+function flightTex(e, frozen) {                       // the clip's current frame as a texture; `frozen` = whatever was uploaded last, no new upload
   if (!e.tex) { e.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, e.tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+  if (frozen && e.up) return e.tex;
   gl.bindTexture(gl.TEXTURE_2D, e.tex); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL);
-  if (e.v.readyState >= 2) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, e.v);
+  if (e.v.readyState >= 2) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, e.v); e.up++; }
   return e.tex;
 }
+function vplay(e, from) { try { e.v.pause(); e.v.currentTime = from || 0; } catch (x) {} if (!FL_STEP) e.v.play().catch(() => {}); }
+function vdone(e) { return e.v.ended || (e.v.duration && e.v.currentTime >= e.v.duration - 0.02); }
+function vfrac(e) { return e.v.duration ? Math.max(0, Math.min(1, e.v.currentTime / e.v.duration)) : 0; }
+window.__fl = {   // QA: step the clip that is on screen
+  get active() { if (!cu) return null; if (cu.phase === 'fly') return flightVid(cu.fl); if (cu.phase === 'return') return flightVid(cu.fl, true); if (cu.ashPlaying) return flightVid('ashfall'); return null; },
+  seek(t) { const e = this.active; if (!e) return Promise.resolve(false); return new Promise(res => { const done = () => { e.v.removeEventListener('seeked', done); res(e.v.currentTime); }; e.v.addEventListener('seeked', done); e.v.currentTime = Math.min(t, e.v.duration || t); if (t >= (e.v.duration || Infinity)) setTimeout(done, 50); }); },
+  get info() { const e = this.active; return { phase: cu && cu.phase, name: cu && cu.name, fl: cu && cu.fl, t: e && e.v.currentTime, dur: e && e.v.duration, ready: e && e.v.readyState, holding: !!(cu && cu.holding), holdFly: !!(cu && cu.holdFly), ash: !!(cu && cu.ashFallen) }; },
+};
 // thread D: the crucifix is a live glTF (crucifix.js, loaded on demand) over the case still; the c_crucifix still is only a fallback
 let cruxLoad = null, cruxOK = false;
 function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
@@ -1080,142 +1121,213 @@ function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
     if (!cu) return;
-    if (st === 'held') $('#cuHint').textContent = 'Drag to turn it · Back to the case · Esc';
-    if (st === 'rest') { cu.sub = null; $('#cuHint').textContent = CLOSE.c_case.hint; }
-  } })).then(() => { cruxOK = true; if (cu && cu.name === 'c_case' && cu.shown) window.crux.show(); }).catch(() => { cruxOK = false; loadCU('c_crucifix'); });
+    if (st === 'held') $('#cuHint').textContent = 'Drag to turn it · Back to the room · Esc';
+    if (st === 'rest') { cu.sub = null; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_case.hint; }   // Esc while held: the cross settles back first, then the flight out
+  } })).then(() => { cruxOK = true; if (cu && cu.name === 'c_case' && cu.shown && !cu.holdFly) window.crux.show(); }).catch(() => { cruxOK = false; loadCU('c_crucifix'); });
 }
-// ---------- page thread: the ash-fall (PHASE2.md "Page contract for the ash-fall") ----------
-// 2 s after the ashtray still lands, fl_ashfall.mp4 (the same camera; frame 0 == c_ashtray, the last frame == c_ashtray2) plays
-// where the still is, then the still becomes c_ashtray2 for the rest of the session. Smoke and the ember keep drawing.
-let ashFallen = false;
+// ---------- page thread: the ash-fall (round 3 notes 3 and 4) ----------
+// Every visit to the ashtray shows the long ash (c_ashtray, the flight's last frame); 2.0 s after the still lands fl_ashfall.mp4
+// (the same camera; frame 0 == c_ashtray, its last frame == c_ashtray2; length read from the clip, not assumed) plays where the
+// still is, then the still is c_ashtray2 until the close-up is left. Leaving resets: nothing persists. Smoke and the ember keep drawing.
 function ashFall(dt, still) {
-  if (!cu || cu.name !== 'c_ashtray' || ashFallen || !FEATURES.ashfall) return null;
+  if (!cu || cu.name !== 'c_ashtray' || cu.ashFallen || !FEATURES.ashfall) return null;
   const af = flightVid('ashfall');
   if (cu.ashPlaying) {
-    if (af.v.ended || (af.v.duration && af.v.currentTime >= af.v.duration - 0.02)) { ashFallen = true; cu.ashPlaying = false; return null; }
+    if (vdone(af)) { cu.ashFallen = true; cu.ashPlaying = false; return null; }
     return { alt: af.v.readyState >= 2 ? flightTex(af) : still, altMix: 1, zoom: 1 };
   }
   const now = performance.now() / 1000; if (!cu.landAt) cu.landAt = now; cu.landT = now - cu.landAt;   // wall clock: the ash falls 2 s after the still lands
-  if (cu.landT >= ASH_DELAY && af.ok && cuTex.c_ashtray2) { cu.ashPlaying = true; af.v.currentTime = 0; af.v.play().catch(() => {}); }
-  else if (af.err) ashFallen = false;
+  if (cu.landT >= ASH_DELAY && af.ok && cuTex.c_ashtray2) { cu.ashPlaying = true; vplay(af, 0); }
   return null;
 }
 let ASH_DELAY = 2.0;
-window.__ash = { get fallen() { return ashFallen; }, get playing() { return !!(cu && cu.ashPlaying); }, get landT() { return cu && cu.landT; }, set delay(v) { ASH_DELAY = v; }, reset() { ashFallen = false; } };   // for headless QA
+window.__ash = { get fallen() { return !!(cu && cu.ashFallen); }, get playing() { return !!(cu && cu.ashPlaying); }, get landT() { return cu && cu.landT; }, set delay(v) { ASH_DELAY = v; }, reset() { if (cu) { cu.ashFallen = false; cu.landAt = 0; } } };   // for headless QA
 
-// ---------- page thread: the family Bible (bible.js, loaded on demand) over the Bible close-up (scene/BIBLE2.md) ----------
-let bibleLoad = null, bibleOK = false, bibleMeta = null;
-function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js'), fetch('frames/bible.json').then(r => r.ok ? r.json() : {}).catch(() => ({})), fetch('frames/bible_pages.json').then(r => r.ok ? r.json() : {}).catch(() => ({}))]).then(([, , bj, pj]) => { bibleMeta = { rest: bj.rest, boxes: pj, urls: { imdb_box: pj.imdb_url, site_line: pj.site_url } }; })); }
+// ---------- page thread: the family Bible and the photo album (bible.js, loaded on demand) over the Bible close-up (scene/BIBLE2.md, ALBUM.md) ----------
+let bibleLoad = null, bibleOK = false, bibleMeta = null, albumOK = false, albumMeta = null;
+let albumPages = null;
+const jget = (u) => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js').then(() => loadScript('album.js')), jget('frames/bible.json'), jget('frames/bible_pages.json'), jget('frames/album.json'), jget('frames/album_pages.json')]).then(([, , bj, pj, aj, apj]) => {
+  pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
+  bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
 function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
-function mountBible() {
+const bookHints = { lifting: 'Back to the room · Esc', opening: 'Back to the room · Esc', leafing: 'Back to the room · Esc', open: 'Turn the pages · ← → · Back to the room · Esc', closing: 'Back to the room', returning: 'Back to the room' };
+function mountBooks() {
   const m = cuMeta.c_bible; if (!m) return;
-  loadBible().then(() => window.bible.mount($('#bible3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, rest: bibleMeta.rest, boxes: bibleMeta.boxes, urls: bibleMeta.urls, small: SMALL,
-    onHover: (label, x, y) => { const tip = $('#tip'); tip.hidden = !label; if (label) { tip.textContent = label; tip.style.left = x + 'px'; tip.style.top = y + 'px'; } },
-    onState: (st) => {
-      if (!cu || cu.name !== 'c_bible') return;
-      const hints = { lifting: 'Back to the room · Esc', opening: 'Back to the room · Esc', leafing: 'Back to the room · Esc', open: 'Turn the pages · ← → · Back to the room · Esc', closing: 'Back to the room', returning: 'Back to the room' };
-      if (hints[st]) $('#cuHint').textContent = hints[st];
-      $('#bibleStrip').hidden = st !== 'open';
-      if (st === 'rest') { cu.sub = null; cu.hideBible = true; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_bible.hint; }   // the canvas hides one frame after the still is back (closeupState)
-    } })).then(() => { bibleOK = true; }).catch(() => { bibleOK = false; });
+  const common = { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, small: SMALL,
+    onHover: (label, x, y) => { const tip = $('#tip'); tip.hidden = !label; if (label) { tip.textContent = label; tip.style.left = x + 'px'; tip.style.top = y + 'px'; } } };
+  loadBible().then(() => {
+    const bible = window.bible.mount($('#bible3d'), Object.assign({}, common, { rest: bibleMeta.rest, boxes: bibleMeta.boxes, urls: bibleMeta.urls, onState: (st) => bookState('bible', st),
+      onLink: (key) => { if (key === 'about_poster') openPanel($('#posterpanel')); } })).then(() => { bibleOK = true; }).catch(() => { bibleOK = false; });
+    // the album: the same viewer with the album's config (album.js, scene/ALBUM.md: album.glb, album.json, album_pages.json); until album.glb lands it is built on bible.glb at the album's spot
+    const album = window.album.mount($('#album3d'), Object.assign({}, common, { onState: (st) => bookState('album', st) }), window.album.configFrom(albumMeta, albumPages)).then(() => { albumOK = true; }).catch(() => { albumOK = false; });
+    return Promise.all([bible, album]);
+  }).catch(() => {});
 }
-document.querySelectorAll('#bibleStrip button').forEach(b => b.addEventListener('click', () => { if (!window.bible) return; if (b.dataset.turn) window.bible.turn(+b.dataset.turn); else window.bible.focus(+b.dataset.focus); }));
+function bookState(which, st) {
+  if (!cu || cu.name !== 'c_bible' || cu.sub !== which) return;
+  if (bookHints[st]) $('#cuHint').textContent = bookHints[st];
+  $('#bibleStrip').hidden = st !== 'open';
+  if (st === 'rest') { cu.sub = null; cu.hideBook = which; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_bible.hint; }   // the canvas hides one frame after the still is back (closeupState)
+}
+function book() { return cu && (cu.sub === 'album' ? window.album : cu.sub === 'bible' ? window.bible : null); }
+document.querySelectorAll('#hubStrip button').forEach(b => b.addEventListener('click', () => { if (cu && cu.name === 'c_bible' && cu.phase === 'still' && !cu.sub) cuClick({ key: b.dataset.hub }); }));
+function hubStrip() { $('#hubStrip').hidden = !(cu && cu.name === 'c_bible' && cu.phase === 'still' && !cu.sub); }
+document.querySelectorAll('#bibleStrip button').forEach(b => b.addEventListener('click', () => { const bk = book(); if (!bk) return; if (b.dataset.turn) bk.turn(+b.dataset.turn); else bk.focus(+b.dataset.focus); }));
 window.__bible = { get ok() { return bibleOK; }, get state() { return window.bible && window.bible.state; }, lift: () => cu && cu.name === 'c_bible' && cuClick({ key: 'bible' }), release: () => window.bible && window.bible.release(), turn: (d) => window.bible && window.bible.turn(d) };   // for headless QA
+window.__hub = { hotspot: (x, y) => cuHotspot(x, y), click: (key) => cuClick({ key }) };   // for headless QA: the hub's hover labels and clicks
+window.__album = { get ok() { return albumOK; }, get state() { return window.album && window.album.state; }, lift: () => cu && cu.name === 'c_bible' && cuClick({ key: 'album' }), release: () => window.album && window.album.release(), turn: (d) => window.album && window.album.turn(d) };
 
 // ---------- page thread: the Indie Short Fest article as a page-flip viewer (article.js, loaded on demand; BRIEFCASE2.md) ----------
 let articleLoad = null;
 function loadArticle() { if (!FEATURES.clipping) return; return articleLoad || (articleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('article.js')]).then(() => window.article.init({ small: SMALL })).catch(() => {})); }
-window.__case = { get hotspots() { return cuMeta.c_case; }, open: () => cuClick({ key: 'clipping' }), get article() { return window.article; } };   // for headless QA
+window.__case = { get hotspots() { return cuMeta.c_case; }, open: () => cuClick({ key: 'clipping' }), get article() { return window.article; },
+  showLive: () => { if (cu && cu.name === 'c_case' && cruxOK) { cu.holdFly = false; cu.holdImg = null; window.crux.show(); return true; } return false; }, get crux() { return window.crux; },
+  holdFrame: (src) => new Promise(res => { const im = new Image(); im.onload = () => { if (cu && cu.name === 'c_case') { cu.holdImg = tex(im); cu.holdFly = true; if (cruxOK) window.crux.hide(); } res(true); }; im.onerror = () => res(false); im.src = src; }) };   // for headless QA: hold a given rendered frame (the flight's last) as the still
 
 function enterCloseup(name, world) {
   if (mode !== 'room') return;
   loadCU(name); if (name === 'c_case') { mountCrux(); loadArticle(); }
-  if (name === 'c_bible') { loadCU('c_bible_empty'); mountBible(); }
+  if (name === 'c_bible') { loadCU('c_bible_empty'); if (cuMeta.c_bible_noalbum) loadCU('c_bible_noalbum'); loadCU('c_ashtray'); mountBooks(); flightVid('bible_ashtray'); flightVid('bible_ashtray', true); }
   if (name === 'c_ashtray' && FEATURES.ashfall) { loadCU('c_ashtray2'); flightVid('ashfall'); }
-  if (name === 'c_tv') { for (const ch of TV.chans) if (cuMeta['c_tv_' + ch]) loadCU('c_tv_' + ch); tvTrailerInit(); }
+  if (name === 'c_tv') { for (const ch of TV.chans) if (cuMeta['c_tv_' + TV.stillOf(ch)]) loadCU('c_tv_' + TV.stillOf(ch)); tvTrailerInit(); }
   const fl = CLOSE[name].fl; flightVid(fl); flightVid(fl, true);
-  cu = { name, phase: 'approach', sub: null, subT: 0, t: 0 };
+  cu = { name, fl, phase: 'approach', sub: null, subT: 0, t: 0 };
   gt = CLOSE[name].from[0]; gtilt = CLOSE[name].from[1];          // the camera eases to the grid view the flight starts from
   mode = 'closeup'; document.body.classList.add('away'); stage.classList.remove('hot'); $('#tip').hidden = true;
   $('#back').hidden = false; $('#hint').textContent = CLOSE[name].hint;
   $('#cuLayer').hidden = false; $('#cuHint').textContent = CLOSE[name].hint;
 }
+// round 3 note 13: from the Bible hub straight into the ashtray on fl_bible_ashtray (C_bible -> C_ashtray); Esc comes back the same way.
+// Until that clip exists (the render thread is rendering it) the click falls back to the old path: out of the hub, then in from the room.
+function hopToAshtray() {
+  if (!cu || cu.name !== 'c_bible' || cu.phase !== 'still' || cu.sub) return;
+  const e = flightVid('bible_ashtray'); flightVid('bible_ashtray', true);
+  if (e.err) { cu.next = () => enterCloseup('c_ashtray', CLOSE.c_ashtray.at); leaveCloseup(); return; }
+  loadCU('c_ashtray'); loadCU('c_ashtray2'); flightVid('ashfall');
+  cu = { name: 'c_ashtray', fl: 'bible_ashtray', via: 'c_bible', phase: 'approach', sub: null, subT: 0, t: 0, hopFrom: cuTex.c_bible };
+  $('#tip').hidden = true; stage.classList.remove('hot'); $('#hint').textContent = 'Back to the Bible · Esc'; $('#cuHint').textContent = 'Back to the Bible · Esc';
+}
 function leaveCloseup() {
   if (!cu || cu.phase === 'return' || cu.phase === 'closing') return;
-  if (cu.sub === 'crux') { cu.sub = null; cu.subT = 0; }          // back always goes straight to the room
-  if (cruxOK) window.crux.hide();                                  // thread D
+  if (cu.sub === 'crux' && cruxOK && window.crux.state !== 'rest') {   // one click: the lifted cross drops back into the case, then the flight out
+    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; $('#cruxCap').classList.remove('on'); window.crux.release(); return;
+  }
+  if (cu.sub === 'crux') { cu.sub = null; cu.subT = 0; }          // the still fallback: straight out
   stopTicking(); $('#psa').classList.remove('on'); $('#cruxCap').classList.remove('on');
-  if (cu.phase === 'approach') { endCloseup(); return; }          // never got airborne: just let go of the target
-  if (cu.sub === 'bible' && bibleOK && window.bible.state !== 'rest') {   // page thread: the Bible closes and drops back first, then the flight out
-    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; window.bible.release(); return;
+  if (cu.phase === 'approach') { if (cu.via) { cu = { name: cu.via, fl: CLOSE[cu.via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true }; $('#cuHint').textContent = CLOSE[cu.name].hint; return; } endCloseup(); return; }   // never got airborne
+  const bk = book();
+  if (bk && bk.state !== 'rest') {                                 // page thread: the book closes and drops back first, then the flight out
+    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; bk.release(); return;
   }
   startReturn();
 }
 function startReturn() {
-  const back = flightVid(CLOSE[cu.name].fl, true);
-  cu.phase = 'return'; cu.t = 0;
-  if (back.ok) { back.v.currentTime = 0; back.v.play().catch(() => {}); }
+  const fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
+  // the reversed clip starts from the camera position on screen: the end of the way in (or wherever the way in was interrupted)
+  const from = cu.phase === 'fly' && fwd.v.duration ? Math.max(0, fwd.v.duration - fwd.v.currentTime) : 0;
+  cu.holdTex = cu.lastTex || null; cu.holding = true;             // round 3 note 5: hold the frame on screen until the camera has visibly moved
+  if (cu.ashPlaying) { try { flightVid('ashfall').v.pause(); } catch (e) {} cu.ashPlaying = false; cu.ashFallen = true; }
+  cu.phase = 'return'; cu.t = 0; cu.holdFly = false; cu.returnFrom = from; cu.backStarted = false;
+  if (back.ok) { vplay(back, from); cu.backStarted = true; }
 }
 function closeupState(now, dt) {
   window.__cu = cu;   // QA
-  const spec = CLOSE[cu.name], fwd = flightVid(spec.fl), back = flightVid(spec.fl, true);
-  let still = (cu.name === 'c_tv' && cu.phase === 'still' && cuTex['c_tv_' + TV.ch]) || cuTex[cu.name];
-  if (cu.name === 'c_bible' && cu.sub === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;   // the live Bible draws over the empty plate
-  if (cu.hideBible) { cu.hideBible = false; requestAnimationFrame(() => { if (window.bible) window.bible.hide(); }); }
-  if (cu.name === 'c_ashtray' && ashFallen && cuTex.c_ashtray2) still = cuTex.c_ashtray2;                // once fallen it stays fallen for the session
+  hubStrip();
+  const spec = CLOSE[cu.name], fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
+  let still = (cu.name === 'c_tv' && cuTex['c_tv_' + TV.stillOf(TV.ch)]) || cuTex[cu.name];
+  if (cu.name === 'c_bible' && cu.sub === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;             // the live Bible draws over the plate without it
+  if (cu.name === 'c_bible' && cu.sub === 'album' && cuTex.c_bible_noalbum) still = cuTex.c_bible_noalbum;         // the live album over the plate without it (099zza07; until then the plain still)
+  if (cu.hideBook) { const w = cu.hideBook; cu.hideBook = false; requestAnimationFrame(() => { if (window[w]) window[w].hide(); }); }
+  if (cu.name === 'c_ashtray' && cu.ashFallen && cuTex.c_ashtray2) still = cuTex.c_ashtray2;                   // fallen for the rest of this visit
+  if (cu.name === 'c_case' && cu.holdFly && (cu.holdImg || fwd.up)) still = cu.holdImg || flightTex(fwd);        // round 3 note 6: the rendered cross (the clip's last frame, re-read each frame: it is paused) stays until the click lifts the live one
   zc = [0.5, 0.5];
+  const out = (r) => { if (cu) cu.lastTex = r.altMix >= 1 ? r.alt : null; return r; };
   if (cu.phase === 'approach') {
+    if (cu.via) {                                                      // a hop between close-ups: already on a still; go as soon as the clip can play
+      if (fwd.ok) { cu.phase = 'fly'; vplay(fwd, 0); }
+      else if (fwd.err) { const via = cu.via; cu = { name: via, fl: CLOSE[via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true, next: () => enterCloseup('c_ashtray', CLOSE.c_ashtray.at) }; leaveCloseup(); }
+      return out({ alt: cu.hopFrom || still, altMix: 1, zoom: 1 });
+    }
     // wait until the camera has settled on the flight's first frame (a rendered grid view) and the clip is ready
     const there = Math.abs(t - spec.from[0]) < 0.05 && Math.abs(tilt - spec.from[1]) < 0.05;
     if (there && (fwd.ok || fwd.err)) {
-      if (fwd.ok) { cu.phase = 'fly'; fwd.v.currentTime = 0; fwd.v.play().catch(() => {}); }
+      if (fwd.ok) { cu.phase = 'fly'; vplay(fwd, 0); }
       else { cu.phase = 'still'; cu.shown = true; onCloseupShown(); }       // no clip: land on the still directly
     }
-    return { alt: null, altMix: 0, zoom: 1 };
+    return out({ alt: null, altMix: 0, zoom: 1 });
   }
   if (cu.phase === 'fly') {
-    if (fwd.v.ended || (fwd.v.duration && fwd.v.currentTime >= fwd.v.duration - 0.02)) { cu.phase = 'still'; cu.shown = true; onCloseupShown(); }
-    else return { alt: flightTex(fwd), altMix: fwd.v.readyState >= 2 ? 1 : 0, zoom: 1 };
+    if (vdone(fwd)) { if (fwd.v.readyState >= 2) flightTex(fwd); cu.phase = 'still'; cu.shown = true; cu.holdFly = cu.name === 'c_case' && fwd.up > 0; onCloseupShown(); }
+    else if (fwd.v.readyState >= 2) return out({ alt: flightTex(fwd), altMix: 1, zoom: 1 });
+    else return out(cu.via ? { alt: cu.hopFrom || still, altMix: 1, zoom: 1 } : { alt: null, altMix: 0, zoom: 1 });
   }
   if (cu.phase === 'still') {
     if (cu.sub === 'crux') cu.subT = Math.min(1, cu.subT + dt / 0.9);
-    const af = ashFall(dt, still); if (af) return af;
-    return { alt: still || flightTex(fwd), altMix: 1, zoom: 1 };
+    const af = ashFall(dt, still); if (af) return out(af);
+    return out({ alt: still || flightTex(fwd, true), altMix: 1, zoom: 1 });
   }
-  if (cu.phase === 'closing') return { alt: still || flightTex(fwd), altMix: 1, zoom: 1 };   // the Bible is on its way back to the table
+  if (cu.phase === 'closing') return out({ alt: still || flightTex(fwd, true), altMix: 1, zoom: 1 });   // the book is on its way back to the table
   if (cu.phase === 'return') {
     cu.t += dt;
-    if (back.ok && !(back.v.ended || (back.v.duration && back.v.currentTime >= back.v.duration - 0.02))) return { alt: flightTex(back), altMix: back.v.readyState >= 2 ? 1 : 0, zoom: 1 };
-    if (!back.ok && cu.t < 0.6) return { alt: still || null, altMix: still ? 1 - cu.t / 0.6 : 0, zoom: 1 };   // no reversed clip: short dissolve
-    endCloseup(); return { alt: null, altMix: 0, zoom: 1 };
+    if (back.ok && !cu.backStarted) { vplay(back, cu.returnFrom); cu.backStarted = true; }
+    if (back.ok && !vdone(back)) {
+      const moved = back.v.readyState >= 2 && back.v.currentTime >= cu.returnFrom + HOLD_T;
+      if (cu.holding && !moved && (cu.holdTex || still)) return out({ alt: cu.holdTex || still, altMix: 1, zoom: 1 });
+      if (cu.holding) { cu.holding = false; if (cruxOK) window.crux.hide(); }   // the cut: from here the rendered pixels carry the cross
+      return out({ alt: flightTex(back), altMix: back.v.readyState >= 2 ? 1 : 0, zoom: 1 });
+    }
+    if (!back.ok && !back.err && cu.t < 4) return out({ alt: cu.holdTex || still, altMix: 1, zoom: 1 });   // the reversed clip is still loading: hold
+    if (!back.ok && cu.t < 0.6) return out({ alt: still || null, altMix: still ? 1 - cu.t / 0.6 : 0, zoom: 1 });   // no reversed clip at all: short dissolve
+    if (cu.via) {                                                      // back at the hub: land on its still
+      const via = cu.via; cu = { name: via, fl: CLOSE[via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true };
+      $('#psa').hidden = true; $('#hint').textContent = CLOSE[via].hint; $('#cuHint').textContent = CLOSE[via].hint;
+      return out({ alt: cuTex[via] || null, altMix: cuTex[via] ? 1 : 0, zoom: 1 });
+    }
+    endCloseup(); return out({ alt: null, altMix: 0, zoom: 1 });
   }
-  return { alt: null, altMix: 0, zoom: 1 };
+  return out({ alt: null, altMix: 0, zoom: 1 });
 }
 function onCloseupShown() {
-  if (cu.name === 'c_case' && cruxOK) window.crux.show();          // thread D
   if (cu.name === 'c_ashtray') { $('#psa').hidden = false; requestAnimationFrame(() => $('#psa').classList.add('on')); }
   if (CLOSE[cu.name].sound === 'tick') startTicking();              // the watch is heard once we're on it
   if (cu.name === 'c_tv') tvOn(performance.now() / 1000);
+  if (cu.name === 'c_case' && !cu.holdFly && cruxOK) window.crux.show();   // no rendered frame to hold: the live cross shows at once
 }
 function endCloseup() {
   tvOff();
   if (window.crux) window.crux.unmount();                          // thread D
   if (window.bible) window.bible.unmount();                        // page thread
+  if (window.album) window.album.unmount();
+  const next = cu && cu.next;
   cu = null; mode = 'room'; document.body.classList.remove('away');
-  $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true;
+  $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true; $('#hubStrip').hidden = true;
   $('#hint').textContent = 'Drag to look around · Click the window · Click the TV';
+  if (next) next();
+}
+// a world box projected through a close-up's camera: the hub's hotspots (the album and the ashtray have no polygon in closeups.json)
+const HUB_BOXES = { album: { lo: [2.08, 2.69, 0.436], hi: [2.23, 2.91, 0.482] }, ashtray: { lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49] } };
+function boxPoly(b, K) {
+  const pts = [];
+  for (let i = 0; i < 8; i++) { const q = project([i & 1 ? b.hi[0] : b.lo[0], i & 2 ? b.hi[1] : b.lo[1], i & 4 ? b.hi[2] : b.lo[2]], K); if (!q) return null; pts.push(toScreen([q[0], q[1]])); }
+  return hull(pts);
 }
 function cuHotspot(x, y) {                 // screen 0..1 -> which hotspot of the current close-up
   if (cu && cu.name === 'c_tv') return tvHotspot(x, y);
   if (!cu || cu.sub || cu.phase !== 'still') return null;
-  if (cu.name === 'c_bible') {                                      // page thread: the Bible itself
-    const poly = (cuMeta.c_bible || {}).bible; if (poly && poly.length >= 3 && inPoly(x, y, poly.map(p => toScreen(p)))) return { key: 'bible', label: 'Open the Bible' };
+  if (cu.name === 'c_bible') {                                      // round 3 note 13: the hub: the Bible, the album and the ashtray
+    const m = cuMeta.c_bible || {}; const poly = m.bible;
+    if (poly && poly.length >= 3 && inPoly(x, y, poly.map(p => toScreen(p)))) return { key: 'bible', label: 'About Josiah & The Film' };
+    const K = { cam: m.cam, aim: m.aim, lens: m.lens || 30 };
+    if (m.cam) for (const [key, label] of [['album', 'Photographs · behind the scenes'], ['ashtray', 'The cigarette']]) {
+      const pp = m[key] ? m[key].map(p => toScreen(p)) : boxPoly(HUB_BOXES[key], K); if (pp && pp.length >= 3 && inPoly(x, y, pp)) return { key, label };
+    }
     return null;
   }
   if (cu.name !== 'c_case') return null;
   const m = cuMeta.c_case || {};
   // info: a label only, nothing to click (BRIEFCASE2.md: the leaflets and the sales book have nothing behind them yet)
-  for (const [key, label, info] of [['crucifix', 'Lift the crucifix'], ['clipping', 'Read the write-up · Indie Short Fest'], ['leaflets', '“Bless Your Home, Buy A Bible!” · Spurgeon Gold Leaf Editions', true], ['receipts', 'The salesman\u2019s sales book', true]]) {
+  for (const [key, label, info] of [['crucifix', 'Lift the crucifix'], ['clipping', 'Read the write-up · Indie Short Fest'], ['leaflets', '“Bless Your Home, Buy A Bible!” · Spurgeon Gold Leaf Editions', true], ['receipts', 'The salesman’s sales book', true]]) {
     const poly = m[key]; if (!poly || poly.length < 3) continue;
     if (inPoly(x, y, poly.map(p => toScreen(p)))) return { key, label, info };
   }
@@ -1224,19 +1336,22 @@ function cuHotspot(x, y) {                 // screen 0..1 -> which hotspot of th
 function cuClick(h) {
   $('#tip').hidden = true; stage.classList.remove('hot');
   if (h.act) { h.act(); return; }
-  if (h.key === 'crucifix' && cruxOK && window.crux.ready) {          // thread D: the live crucifix lifts on its own
-    cu.sub = 'crux'; window.crux.lift();
+  if (h.key === 'crucifix' && cruxOK && window.crux.ready) {          // thread D: the live crucifix lifts on its own, from the rendered frame it was resting in
+    cu.sub = 'crux'; cu.holdFly = false; window.crux.show(); window.crux.lift();
     $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
     $('#cuHint').textContent = 'Back to the case · Esc';
   } else if (h.key === 'crucifix' && cuTex.c_crucifix) {                 // fallback if the glTF could not load: the old still
     const poly = cuMeta.c_case.crucifix; const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length, cy = poly.reduce((a, p) => a + p[1], 0) / poly.length;
-    cu.sub = 'crux'; cu.subT = 0; cu.a2h = [cx, cy];
+    cu.sub = 'crux'; cu.subT = 0; cu.a2h = [cx, cy]; cu.holdFly = false;
     $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
     $('#cuHint').textContent = 'Back to the case · Esc';
   } else if (h.key === 'clipping') { if (window.article && FEATURES.clipping) window.article.open(); else openPanel($('#clippanel')); }
   else if (h.key === 'bible' && bibleOK && window.bible.ready) {   // page thread: the Bible lifts, opens and leafs to the bio
     cu.sub = 'bible'; window.bible.lift(); $('#cuHint').textContent = 'Back to the room · Esc';
   } else if (h.key === 'bible') { openPanel($('#about')); }          // the glTF could not load: the About sheet instead
+  else if (h.key === 'album' && albumOK && window.album.ready) {    // the photo album lifts and opens the same way
+    cu.sub = 'album'; window.album.lift(); $('#cuHint').textContent = 'Back to the room · Esc';
+  } else if (h.key === 'ashtray') hopToAshtray();
 }
 // the watch: a mechanical movement at 18,000 beats an hour (five ticks a second), tick and tock slightly different
 let tickTimer = null, tickCtx = null, tickGain = null;
@@ -1264,16 +1379,19 @@ function stopTicking() {
   if (tickGain && actx) { const g = tickGain; g.gain.setTargetAtTime(0, actx.currentTime, 0.15); setTimeout(() => g.disconnect(), 800); tickGain = null; }
 }
 
-// ---------- the television: six channels drawn live onto the dark tube of the c_tv still ----------
+// ---------- the television: three channels drawn live onto the dark tube of the c_tv still ----------
+// Round 3 note 9: channels 1-3 only (1 trailer, 2 synopsis, 3 cast & crew); a channel change is a clean hard cut between the
+// stills (no snow, no vertical roll, no settle), only the static CRT look stays (bulge, scan lines, dark corners, the warm-up
+// when the set comes on). The rendered knob stills are c_tv_2..7 (the selector turned to the printed 2..7), so page channel n
+// shows c_tv_(n+1): the arrow sits one number past the strip's until the dial art is renumbered (render thread).
 const TV_FS2 = `#version 300 es
-precision highp float; in vec2 lq; out vec4 o; uniform sampler2D s; uniform float t, bw, snow, roll, gain, on_;
+precision highp float; in vec2 lq; out vec4 o; uniform sampler2D s; uniform float t, bw, snow, gain, on_;
 float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main(){
   vec2 uv = lq;
   vec2 c = uv - 0.5; float r2 = dot(c, c);
   uv = 0.5 + c * (1.0 + 0.06 * r2);                       // the picture bulges with the glass
   if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { o = vec4(0.0); return; }
-  uv.y = fract(uv.y + roll);                                // vertical hold slipping between channels
   vec3 p = texture(s, uv).rgb;
   float y = dot(p, vec3(0.299, 0.587, 0.114)); p = mix(p, vec3(y) * vec3(0.93, 0.98, 1.05), bw);
   float sl = 0.82 + 0.18 * (0.5 + 0.5 * sin(uv.y * 700.0));  // scan lines
@@ -1284,22 +1402,19 @@ void main(){
   o = vec4(p, 1.0);
 }`;
 P.tv2 = prog(SMOKE_VS, TV_FS2); const tvQuad = gl.createBuffer();
-const TV = { ch: 2, chans: [2, 3, 4, 5, 6, 7], on: 0, snow: 0, roll: 0, rollV: 0, bw: 1, bwT: 1, dirty: true, t0: 0, tex: null, cv: null, ctx: null, still: null, poster: null, trailer: null, nextRoll: 4 };
+const TV = { ch: 1, chans: [1, 2, 3], on: 0, snow: 0, roll: 0, rollV: 0, bw: 1, bwT: 1, dirty: true, t0: 0, tex: null, cv: null, ctx: null, still: null, poster: null, trailer: null, nextRoll: 4, stillOf: ch => ch + 1 };
 TV.cv = document.createElement('canvas'); TV.cv.width = 800; TV.cv.height = 600; TV.ctx = TV.cv.getContext('2d');
 const TVTEXT = {
-  2: { title: 'Trailer', kicker: 'CHANNEL 2', body: 'Watch the trailer', guide: '<h3>Channel 2 · Trailer</h3><p>The trailer plays on the set. <a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch it on Vimeo ↗</a></p>' },
-  3: { title: 'Synopsis', kicker: 'CHANNEL 3', body: '1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.', guide: '<h3>Channel 3 · Synopsis</h3><p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p><p><i>What gain has man from all his toil?</i></p>' },
-  4: { title: 'Stills', kicker: 'CHANNEL 4', body: '[Stills to come]', guide: '<h3>Channel 4 · Stills</h3><p>[Hi-res stills to come]</p>' },
-  5: { title: 'Cast & Crew', kicker: 'CHANNEL 5', body: 'Dustin Ingram · Scott Subiono · Tim DeZarn · David Sullivan · Sharon Sharth · Zarah Mahler · Tanner Hagen · Larry Cedar', body2: 'Directed by Josiah Walker · Written by Joshua Oakley and Josiah Walker · Produced by Tommy Koponen and Dominic Koponen', guide: '<h3>Channel 5 · Cast &amp; Crew</h3><p>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar.</p><p>Directed by Josiah Walker. Written by Joshua Oakley and Josiah Walker. Produced by Tommy Koponen and Dominic Koponen. Walker Motion Pictures presents a Render Social production.</p>' },
-  6: { title: 'Press', kicker: 'CHANNEL 6', body: '“Feature-caliber filmmaking in every frame.”', body2: 'Indie Short Fest jury · Best Short, June–July 2026', guide: '<h3>Channel 6 · Press</h3><p>“Feature-caliber filmmaking in every frame.” — Indie Short Fest jury, July 2026. <a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">Read the write-up ↗</a></p><p>Audience Choice Award, Screamfest 2025 · Official Selection, Raindance 2026 · Official Selection, FilmQuest 2025.</p>' },
-  7: { title: 'Screenings', kicker: 'CHANNEL 7', body: '[Upcoming screenings and release to come]', guide: '<h3>Channel 7 · Screenings</h3><p>[Upcoming screenings and release to come]</p>' },
+  1: { title: 'Trailer', kicker: 'CHANNEL 2', body: 'Watch the trailer', guide: '<h3>Channel 2 · Trailer</h3><p>The trailer plays on the set. <a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch it on Vimeo ↗</a></p>' },
+  2: { title: 'Synopsis', kicker: 'CHANNEL 3', body: '1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.', guide: '<h3>Channel 3 · Synopsis</h3><p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p><p><i>What gain has man from all his toil?</i></p>' },
+  3: { title: 'Cast & Crew', kicker: 'CHANNEL 4', body: 'Dustin Ingram · Scott Subiono · Tim DeZarn · David Sullivan · Sharon Sharth · Zarah Mahler · Tanner Hagen · Larry Cedar', body2: 'Directed by Josiah Walker · Written by Joshua Oakley and Josiah Walker · Produced by Tommy Koponen and Dominic Koponen', guide: '<h3>Channel 4 · Cast &amp; Crew</h3><p>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar.</p><p>Directed by Josiah Walker. Written by Joshua Oakley and Josiah Walker. Produced by Tommy Koponen and Dominic Koponen. Walker Motion Pictures presents a Render Social production.</p>' },
 };
 function tvLoadImg(key, src) { const im = new Image(); im.onload = () => { TV[key] = im; TV.dirty = true; }; im.src = src; }
 tvLoadImg('still', 'frames/tv_screen.jpg'); tvLoadImg('poster', 'frames/poster.jpg');
-// the trailer (Josiah's file, 720p for laptops, 480p for phones) plays on channel 2 in its proper colour; every other channel is black-and-white
+// the trailer (Josiah's file, 720p for laptops, 480p for phones) plays on channel 1 in its proper colour; every other channel is black-and-white
 function tvTrailerInit() {   // called when the TV close-up opens (FEATURES arrives with views.json)
   if (TV.trailerEl || !FEATURES.trailer) return; const tv_ = document.createElement('video'); tv_.playsInline = true; tv_.preload = 'auto'; tv_.loop = true;
-  tv_.src = QA_WEBM ? 'frames/_trailer_test.webm' : SMALL ? 'frames/trailer_480.mp4' : 'frames/trailer.mp4'; tv_.addEventListener('loadeddata', () => { TV.trailer = tv_; TV.dirty = true; if (cu && cu.name === 'c_tv' && cu.phase === 'still' && TV.ch === 2) { TV.bwT = 0; tv_.muted = !soundOn; tv_.play().catch(() => {}); } });
+  tv_.src = QA_WEBM ? 'frames/_trailer_test.webm' : SMALL ? 'frames/trailer_480.mp4' : 'frames/trailer.mp4'; tv_.addEventListener('loadeddata', () => { TV.trailer = tv_; TV.dirty = true; if (cu && cu.name === 'c_tv' && cu.phase === 'still' && TV.ch === 1) { TV.bwT = 0; tv_.muted = !soundOn; tv_.play().catch(() => {}); } });
   tv_.addEventListener('error', () => { TV.trailer = null; }); TV.trailerEl = tv_; tv_.load();
 }
 function tvWrap(ctx, text, x, y, maxW, lh, font, color, align) {
@@ -1315,16 +1430,15 @@ function tvTexInit() { TV.tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D
 function tvDraw(now) {   // the channel card, 800x600, broadcast-style
   const c = TV.ctx, W2 = 800, H2 = 600, ch = TV.ch, T_ = TVTEXT[ch];
   c.fillStyle = '#0e0e10'; c.fillRect(0, 0, W2, H2);
-  if (ch === 2 || ch === 4) {   // picture channels: the still / the poster art, full frame, with a lower-third
-    const im = ch === 2 ? (TV.trailer && TV.trailer.readyState >= 2 ? TV.trailer : TV.still) : TV.poster;
+  if (ch === 1) {   // the picture channel: the trailer (or its still), full frame, with a lower-third
+    const im = TV.trailer && TV.trailer.readyState >= 2 ? TV.trailer : TV.still;
     if (im === TV.trailer) { const vw = im.videoWidth || 16, vh = im.videoHeight || 9, s_ = Math.min(W2 / vw, H2 / vh); const w = vw * s_, h = vh * s_; c.drawImage(im, (W2 - w) / 2, (H2 - h) / 2, w, h); }
-    else if (im) { const s_ = Math.max(W2 / im.width, H2 / im.height); const w = im.width * s_, h = im.height * s_; c.drawImage(im, (W2 - w) / 2, ch === 4 ? -h * 0.18 : (H2 - h) / 2, w, h); }
+    else if (im) { const s_ = Math.max(W2 / im.width, H2 / im.height); const w = im.width * s_, h = im.height * s_; c.drawImage(im, (W2 - w) / 2, (H2 - h) / 2, w, h); }
     if (im === TV.trailer) { if (!TV.tex) tvTexInit(); gl.bindTexture(gl.TEXTURE_2D, TV.tex); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.BROWSER_DEFAULT_WEBGL); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TV.cv); TV.dirty = false; return; }
     c.fillStyle = 'rgba(0,0,0,0.72)'; c.fillRect(0, H2 - 150, W2, 150);
     c.fillStyle = '#e8e8e8'; c.font = '600 22px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText(T_.kicker, W2 / 2, H2 - 108);
-    c.font = '600 44px "Newsreader", Georgia, serif'; c.fillText(ch === 2 ? 'Very Prosperous Men' : 'Stills', W2 / 2, H2 - 58);
-    if (ch === 2) { c.font = '500 20px "IBM Plex Mono", monospace'; c.fillStyle = '#bdbdbd'; c.fillText(TV.trailer ? '' : '▶  Watch the trailer', W2 / 2, H2 - 22); }
-    if (ch === 4) { c.font = '500 20px "IBM Plex Mono", monospace'; c.fillStyle = '#bdbdbd'; c.fillText(T_.body, W2 / 2, H2 - 22); }
+    c.font = '600 44px "Newsreader", Georgia, serif'; c.fillText('Very Prosperous Men', W2 / 2, H2 - 58);
+    c.font = '500 20px "IBM Plex Mono", monospace'; c.fillStyle = '#bdbdbd'; c.fillText(TV.trailer ? '' : '▶  Watch the trailer', W2 / 2, H2 - 22);
   } else {
     c.fillStyle = '#c8c8c8'; c.font = '500 22px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText('VERY PROSPEROUS MEN', W2 / 2, 84);
     c.fillStyle = '#ececec'; c.font = '600 66px "Newsreader", Georgia, serif'; c.fillText(T_.title, W2 / 2, 176);
@@ -1338,11 +1452,12 @@ function tvDraw(now) {   // the channel card, 800x600, broadcast-style
 }
 function tvSetChannel(ch, now) {
   if (!TV.chans.includes(ch) || ch === TV.ch) return;
-  TV.ch = ch; TV.dirty = true; TV.snow = 1.0; TV.rollV = 1.2; TV.nextRoll = now + 3; TV.bwT = (ch === 2 && TV.trailer) ? 0 : 1;
-  if (cuMeta['c_tv_' + ch]) loadCU('c_tv_' + ch);                    // the still with the selector turned to this channel
+  TV.ch = ch; TV.dirty = true; TV.snow = 0; TV.rollV = 0; TV.roll = 0; TV.bwT = (ch === 1 && TV.trailer) ? 0 : 1;   // a hard cut: the new still and the new picture on the same frame
+  TV.bw = TV.bwT;
+  if (cuMeta['c_tv_' + TV.stillOf(ch)]) loadCU('c_tv_' + TV.stillOf(ch));   // the still with the selector turned to this channel
   document.querySelectorAll('.tv-chan button').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.ch === ch)));
   $('#tvGuide').innerHTML = TVTEXT[ch].guide; tvClick();
-  if (ch === 2 && TV.trailer) { TV.trailer.currentTime = 0; TV.trailer.muted = !soundOn; TV.trailer.play().catch(() => {}); } else if (TV.trailer) TV.trailer.pause();
+  if (ch === 1 && TV.trailer) { TV.trailer.currentTime = 0; TV.trailer.muted = !soundOn; TV.trailer.play().catch(() => {}); } else if (TV.trailer) TV.trailer.pause();
 }
 function tvStep(d, now) { const i = TV.chans.indexOf(TV.ch); tvSetChannel(TV.chans[(i + d + TV.chans.length) % TV.chans.length], now); }
 function tvClick() {   // the knob's detent
@@ -1350,37 +1465,35 @@ function tvClick() {   // the knob's detent
   const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; f.Q.value = 3;
   const g = actx.createGain(); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 0.06);
 }
-function tvOn(now) { document.body.classList.add('tv'); TV.on = 0; TV.t0 = now; TV.snow = 0.8; TV.dirty = true; TV.bw = 1; $('#tvStrip').hidden = false; tvSetChannel(TV.ch === 2 ? 3 : 2, now); tvSetChannel(2, now); TV.snow = 0.8;
+function tvOn(now) { document.body.classList.add('tv'); TV.on = 0; TV.t0 = now; TV.snow = 0; TV.dirty = true; TV.bw = 1; $('#tvStrip').hidden = false; tvSetChannel(TV.ch === 1 ? 2 : 1, now); tvSetChannel(1, now);
   document.querySelectorAll('.tv-chan button').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.ch === TV.ch))); $('#tvGuide').innerHTML = TVTEXT[TV.ch].guide; }
 function tvOff() { document.body.classList.remove('tv'); $('#tvStrip').hidden = true; TV.bw = 1; TV.bwT = 1; if (TV.trailer) TV.trailer.pause(); }
 document.querySelectorAll('.tv-chan button').forEach(b => b.addEventListener('click', () => tvSetChannel(+b.dataset.ch, performance.now() / 1000)));
 function tvHotspot(x, y) {
   if (!cu || cu.name !== 'c_tv' || cu.phase !== 'still') return null; const m = cuMeta.c_tv || {};
   for (const [key, label, d] of [['knob0', 'Next channel', 1], ['knob1', 'Previous channel', -1]]) { const poly = m[key]; if (poly && poly.length >= 3 && inPoly(x, y, poly.map(p => toScreen(p)))) return { key, label, act: () => tvStep(d, performance.now() / 1000) }; }
-  if (m.screen && inPoly(x, y, m.screen.map(p => toScreen(p)))) return { key: 'screen', label: TV.ch === 2 && !TV.trailer ? 'Watch the trailer' : 'Next channel', act: () => { if (TV.ch === 2 && !TV.trailer) window.open('https://vimeo.com/891711371', '_blank', 'noopener'); else tvStep(1, performance.now() / 1000); } };
+  if (m.screen && inPoly(x, y, m.screen.map(p => toScreen(p)))) return { key: 'screen', label: TV.ch === 1 && !TV.trailer ? 'Watch the trailer' : 'Next channel', act: () => { if (TV.ch === 1 && !TV.trailer) window.open('https://vimeo.com/891711371', '_blank', 'noopener'); else tvStep(1, performance.now() / 1000); } };
   return null;
 }
 function drawTVChannel(now, dt) {
-  if (!cu || cu.name !== 'c_tv' || cu.phase !== 'still' || !cuMeta.c_tv || !cuMeta.c_tv.screen) return;
-  TV.on = Math.min(1, TV.on + dt / 0.9);                       // the tube warms up
-  TV.snow = Math.max(0, TV.snow - dt / 0.35); TV.roll += TV.rollV * dt; TV.rollV *= Math.exp(-dt / 0.25); if (TV.rollV < 0.02) { TV.rollV = 0; TV.roll = Math.round(TV.roll); }
-  // no idle roll: the picture holds steady (Josiah, 17:10); the vertical hold only slips for a moment when the knob turns
-  TV.bw += Math.max(-dt / 0.8, Math.min(dt / 0.8, TV.bwT - TV.bw));            // the picture finds its colour as the trailer comes in
-  if (TV.ch === 2 && TV.trailer) { TV.trailer.muted = !soundOn; if (TV.trailer.paused && TV.on > 0.5) TV.trailer.play().catch(() => {}); }
-  if (TV.dirty || (TV.ch === 2 && TV.trailer)) tvDraw(now);
+  if (!cu || cu.name !== 'c_tv' || !(cu.phase === 'still' || (cu.phase === 'return' && cu.holding)) || !cuMeta.c_tv || !cuMeta.c_tv.screen) return;   // the picture stays through the held frame on the way out
+  TV.on = Math.min(1, TV.on + dt / 0.9);                       // the tube warms up once, when the set comes on
+  TV.bw += Math.max(-dt / 0.8, Math.min(dt / 0.8, TV.bwT - TV.bw));            // the picture finds its colour as the trailer comes in (only on channel 1)
+  if (TV.ch === 1 && TV.trailer) { TV.trailer.muted = !soundOn; if (TV.trailer.paused && TV.on > 0.5 && cu.phase === 'still') TV.trailer.play().catch(() => {}); }
+  if (TV.dirty || (TV.ch === 1 && TV.trailer)) tvDraw(now);
   const q = cuMeta.c_tv.screen.map(p => { const s_ = toScreen(p); return [s_[0] * W * 2 / W - 1, 1 - s_[1] * H * 2 / H]; });   // TL TR BR BL in clip space
   const verts = new Float32Array([q[0][0], q[0][1], 0, 0, q[3][0], q[3][1], 0, 1, q[1][0], q[1][1], 1, 0, q[2][0], q[2][1], 1, 1]);
   const pr = P.tv2; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, tvQuad); gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
   const la = gl.getAttribLocation(pr.p, 'a'), lq = gl.getAttribLocation(pr.p, 'q');
   gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0); gl.enableVertexAttribArray(lq); gl.vertexAttribPointer(lq, 2, gl.FLOAT, false, 16, 8);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, TV.tex); gl.uniform1i(pr.u.s, 0);
-  gl.uniform1f(pr.u.t, now); gl.uniform1f(pr.u.bw, TV.bw); gl.uniform1f(pr.u.snow, TV.snow); gl.uniform1f(pr.u.roll, TV.roll); gl.uniform1f(pr.u.gain, 0.9); gl.uniform1f(pr.u.on_, TV.on * TV.on);
+  gl.uniform1f(pr.u.t, now); gl.uniform1f(pr.u.bw, TV.bw); gl.uniform1f(pr.u.snow, TV.snow); gl.uniform1f(pr.u.gain, 0.9); gl.uniform1f(pr.u.on_, TV.on * TV.on);
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disable(gl.BLEND);
   gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lq);
 }
 window.__tv = { TV, tvSetChannel, tvStep, enterWindow, leaveWindow, enterCloseup, leaveCloseup, get FEATURES() { return FEATURES; }, get mode() { return mode; } };   // for headless QA
 addEventListener('keydown', e => { if (cu && cu.name === 'c_tv' && cu.phase === 'still' && !e.target.closest('input,textarea')) { if (e.key === 'ArrowRight' || e.key === 'ArrowUp') tvStep(1, performance.now() / 1000); if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') tvStep(-1, performance.now() / 1000); }
-  if (cu && cu.name === 'c_bible' && cu.sub === 'bible' && bibleOK && window.bible.state === 'open') { if (e.key === 'ArrowRight') window.bible.turn(1); if (e.key === 'ArrowLeft') window.bible.turn(-1); } });
+  const bk = cu && cu.name === 'c_bible' && book(); if (bk && bk.state === 'open') { if (e.key === 'ArrowRight') bk.turn(1); if (e.key === 'ArrowLeft') bk.turn(-1); } });
 
 // ---------- window close-up (click the window) ----------
 // Preferred: a pre-rendered flight to the window (swoop.mp4, 24 fps: 30 frames of flight, then 20 of the sheer sliding open).
@@ -1557,6 +1670,65 @@ function extLoopStop() {
 }
 // ---- end thread C ----
 
+// ---------- the live canvases, composited under the film pass (round 3 note 6) ----------
+let ovTex = null;
+function drawOverlays() {
+  for (const [id, api] of [['crux3d', window.crux], ['bible3d', window.bible], ['album3d', window.album]]) {
+    if (!api || !api.visible) continue; const cv = $('#' + id); if (!cv || cv.hidden || !cv.width || !cv.height) continue;
+    if (!ovTex) { ovTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, ovTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ovTex);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); } catch (e) { continue; }
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.useProgram(P.over.p); gl.uniform1i(P.over.u.s, 0);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); fsq(P.over); gl.disable(gl.BLEND);
+  }
+}
+// ---------- the live cigarette (smoke + ember) outside the room view ----------
+// Which camera is looking at the ashtray right now: the close-up's own, a flight's at its current clip time, or none (the room draws its own).
+function liveAshCam() {
+  if (!cu) return null;
+  const camOf = n => { const C = cuMeta[n]; return C && C.cam ? { cam: C.cam, aim: C.aim, lens: C.lens || 30 } : null; };
+  if (!(cu.name === 'c_ashtray' || cu.name === 'c_bible')) return null;
+  const K = camOf(cu.name); if (!K) return null;
+  if (cu.phase === 'approach') return cu.via ? camOf(cu.via) : null;                       // in the room the room draws its own smoke
+  if (cu.phase === 'still' || cu.phase === 'closing') return K;
+  if (cu.phase === 'fly' || cu.phase === 'return') {
+    const e = flightVid(cu.fl, cu.phase === 'return');
+    if (cu.phase === 'return' && cu.holding) return cu.returnFrom && e.v.duration ? (flightCam(cu.fl, cu.name, 1 - cu.returnFrom / e.v.duration) || K) : K;
+    if (!e.ok || e.v.readyState < 2) return cu.phase === 'fly' ? (cu.via ? camOf(cu.via) : null) : K;
+    let k = vfrac(e); if (cu.phase === 'return') k = 1 - k;
+    return flightCam(cu.fl, cu.name, k) || K;
+  }
+  return null;
+}
+function drawLiveAsh(now, K) {
+  const px = p => { const q = project(p, K); if (!q) return null; return [toScreen([q[0], q[1]]), q[2]]; };
+  const b = px(SMOKE_P); if (!b) return;
+  const dist = b[1];                                                     // the smoke's drawn height: 0.12 m at the close-up's 0.39 m, 0.30 m from the room's 2.3 m
+  const dz = Math.max(0.12, Math.min(0.30, 0.12 + (dist - 0.39) / (2.3 - 0.39) * 0.18));
+  const u = px([SMOKE_P[0], SMOKE_P[1], SMOKE_P[2] + dz]); if (!u) return;
+  const inFrame = (b[0][0] > -0.3 && b[0][0] < 1.3 && b[0][1] > -0.3 && b[0][1] < 1.3); if (!inFrame) return;
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+  drawSmoke(now, b[0], u[0], 0.5 + 0.05 * Math.min(1, (dist - 0.39) / 1.9));
+  const e = px(EMBER_P), er = px([EMBER_P[0], EMBER_P[1], EMBER_P[2] + 0.0038]);
+  if (e && er) {
+    const cx = e[0][0] * W, cy = e[0][1] * H, R = Math.max(1.2, Math.hypot((er[0][0] - e[0][0]) * W, (er[0][1] - e[0][1]) * H)), v = [];
+    const a = 0.55 + 0.25 * Math.sin(now * 2.1) + 0.12 * Math.sin(now * 7.3);
+    for (let i = 0; i < 18; i++) { const a0 = i / 18 * 6.283, a1 = (i + 1) / 18 * 6.283;
+      v.push(cx / W * 2 - 1, 1 - cy / H * 2, 1, 0.45, 0.12, a, (cx + Math.cos(a0) * R) / W * 2 - 1, 1 - (cy + Math.sin(a0) * R) / H * 2, 1, 0.3, 0.05, 0,
+             (cx + Math.cos(a1) * R) / W * 2 - 1, 1 - (cy + Math.sin(a1) * R) / H * 2, 1, 0.3, 0.05, 0); }
+    const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
+    const la = gl.getAttribLocation(pr.p, 'a'), lc = gl.getAttribLocation(pr.p, 'c');
+    gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 24, 8);
+    gl.drawArrays(gl.TRIANGLES, 0, v.length / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc);
+  }
+  gl.disable(gl.BLEND);
+}
+window.__ashcam = () => liveAshCam();   // QA
+
 // ---------- frame loop ----------
 let last = performance.now() / 1000, grainT = 0, weave = [0, 0], firstShown = false;
 function frame() {
@@ -1628,21 +1800,10 @@ function frame() {
     gl.disable(gl.BLEND);
   }
   drawTVChannel(now, dt);
-  // the cigarette's close-up: its smoke and the ember breathing, live over the still
-  if (cu && cu.name === 'c_ashtray' && cu.phase === 'still' && cuMeta.c_ashtray) {
-    const m = cuMeta.c_ashtray, sb = m.smoke_base && toScreen(m.smoke_base), su = m.smoke_up && toScreen(m.smoke_up);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
-    if (sb && su) drawSmoke(now, sb, su, 0.5 * altMix);
-    if (m.ember) { const e = toScreen(m.ember), v = [], R = H * 0.022, a = altMix * (0.55 + 0.25 * Math.sin(now * 2.1) + 0.12 * Math.sin(now * 7.3));
-      for (let i = 0; i < 18; i++) { const a0 = i / 18 * 6.283, a1 = (i + 1) / 18 * 6.283, cx = e[0] * W, cy = e[1] * H;
-        v.push(cx / W * 2 - 1, 1 - cy / H * 2, 1, 0.45, 0.12, a, (cx + Math.cos(a0) * R) / W * 2 - 1, 1 - (cy + Math.sin(a0) * R) / H * 2, 1, 0.3, 0.05, 0,
-               (cx + Math.cos(a1) * R) / W * 2 - 1, 1 - (cy + Math.sin(a1) * R) / H * 2, 1, 0.3, 0.05, 0); }
-      const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
-      const la = gl.getAttribLocation(pr.p, 'a'), lc = gl.getAttribLocation(pr.p, 'c');
-      gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 24, 8);
-      gl.drawArrays(gl.TRIANGLES, 0, v.length / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc); }
-    gl.disable(gl.BLEND);
-  }
+  // the cigarette's smoke and the breathing ember, live: in the ashtray close-up (the still's own anchors), through every flight to or
+  // from it and the Bible hub (projected through the moving camera, round 3 note 2) and in the hub itself (note 13). Never faded out.
+  { const K = liveAshCam(); if (K) drawLiveAsh(now, K); }
+  drawOverlays();                                                // the live crucifix / Bible / album over everything, under the film
   // pass 3: lens and print to the screen
   gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.generateMipmap(gl.TEXTURE_2D);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);

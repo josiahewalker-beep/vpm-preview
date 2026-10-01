@@ -65,7 +65,7 @@ async function loadGLB(url) {
         clearcoat: cc ? (cc.clearcoatFactor ?? 0) : (wood ? 0.4 : 0), clearcoatRoughness: cc ? (cc.clearcoatRoughnessFactor ?? 0.2) : 0.2,
         anisotropy: an ? (an.anisotropyStrength ?? 0) : (wood && !end ? 0.35 : 0), anisotropyRotation: an ? (an.anisotropyRotation ?? 0) : 0,
         specularIntensity: 0.7, envMapIntensity: 0.22 });
-      if (wood) mat.color.setRGB(1.0, 0.9, 0.74);      // a touch warmer under the page's lights: the Cycles case still reads chocolate, ACES pulls it mauve
+      if (wood) mat.color.setRGB(1.025, 0.875, 0.53);     // matched to the Cycles flight frame (round 3 note 6: mean RGB of the cross region within ~2 %, measured headless with __case.holdFrame)
     }
     if (p.metallicRoughnessTexture) { const t = texture(p.metallicRoughnessTexture.index, false); mat.metalnessMap = t; mat.roughnessMap = t; }
     if (m.normalTexture) { mat.normalMap = texture(m.normalTexture.index, false); const sc = m.normalTexture.scale ?? 1; mat.normalScale = new THREE.Vector2(sc, -sc); }   // glTF's flipped V, as GLTFLoader does
@@ -129,7 +129,7 @@ function facePose() {
 }
 function setup() {
   const m = S.meta;
-  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass (round 3 note 6)
   S.renderer.setClearColor(0x000000, 0); S.renderer.outputColorSpace = THREE.SRGBColorSpace;
   S.renderer.toneMapping = THREE.ACESFilmicToneMapping; S.renderer.toneMappingExposure = 1.05;
   S.renderer.shadowMap.enabled = true; S.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -139,15 +139,15 @@ function setup() {
   S.cam.up.set(0, 0, 1); S.cam.position.fromArray(m.cam); S.cam.lookAt(new THREE.Vector3().fromArray(m.aim));
   restPose();
   // light: the sun through the window (up and to the right of this camera, warm), the room's bounce as a soft warm fill
-  const key = new THREE.DirectionalLight(0xfff0dc, 0.85); S.key = key;
+  const key = new THREE.DirectionalLight(0xfff09a, 0.85); S.key = key;
   key.position.copy(rest.pos).add(new THREE.Vector3(0.9, 0.45, 0.75)); key.target.position.copy(rest.pos); S.scene.add(key.target);
   key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.camera.near = 0.2; key.shadow.camera.far = 3;
   key.shadow.camera.left = key.shadow.camera.bottom = -0.3; key.shadow.camera.right = key.shadow.camera.top = 0.3; key.shadow.bias = -0.0004; key.shadow.radius = 3;
   S.scene.add(key);
-  const hemi = new THREE.HemisphereLight(0xf0e0cc, 0x7a5638, 0.32); S.scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xf0dc8c, 0x7a5638, 0.32); S.scene.add(hemi);
   S.scene.environment = roomEnvironment();     // what the glossy plastic reflects: the bright window, warm walls, dark floor
-  const fill = new THREE.DirectionalLight(0xffe9d6, 0.22); fill.position.copy(rest.pos).add(new THREE.Vector3(-0.6, -0.8, 0.9)); fill.target.position.copy(rest.pos); S.scene.add(fill, fill.target);
-  const rim = new THREE.DirectionalLight(0xfff1e0, 0.25); rim.position.copy(rest.pos).add(new THREE.Vector3(0.2, 1.0, -0.2)); rim.target.position.copy(rest.pos); S.scene.add(rim, rim.target);
+  const fill = new THREE.DirectionalLight(0xffe996, 0.22); fill.position.copy(rest.pos).add(new THREE.Vector3(-0.6, -0.8, 0.9)); fill.target.position.copy(rest.pos); S.scene.add(fill, fill.target);
+  const rim = new THREE.DirectionalLight(0xfff19c, 0.25); rim.position.copy(rest.pos).add(new THREE.Vector3(0.2, 1.0, -0.2)); rim.target.position.copy(rest.pos); S.scene.add(rim, rim.target);
   // a shadow catcher on the papers under the crucifix
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.ShadowMaterial({ opacity: 0.42, transparent: true, depthWrite: false }));
   sh.receiveShadow = true; sh.position.copy(rest.pos).addScaledVector(new THREE.Vector3(0, 0, 1), -0.0004); sh.quaternion.copy(rest.quat); S.scene.add(sh); S.shadow = sh;
@@ -168,7 +168,7 @@ function roomEnvironment() {
       let d = Math.abs(az - kaz); d = Math.min(d, 2 * Math.PI - d);
       const win = Math.exp(-Math.pow(d / 0.42, 4)) * Math.exp(-Math.pow((el - kel + 0.05) / 0.30, 4));   // the window: a soft-edged bright rectangle
       const sun = Math.exp(-Math.pow(d / 0.10, 2)) * Math.exp(-Math.pow((el - kel) / 0.08, 2));
-      r += 3.2 * win + 5.0 * sun; g += 3.0 * win + 4.4 * sun; b += 2.6 * win + 3.6 * sun;
+      r += 3.2 * win + 5.0 * sun; g += 3.0 * win + 4.4 * sun; b += 1.6 * win + 2.3 * sun;   // the window/sun warmer (note 6: the coat's reflections were the blue in the live cross)
       const k = (j * W + i) * 4; data[k] = r; data[k + 1] = g; data[k + 2] = b; data[k + 3] = 1;
     }
   }
@@ -184,8 +184,8 @@ function resize() {
   const ox = (fr.fc[0] - fr.vc[0] * fr.sc[0]) * FW, oy = (1 - fr.fc[1] - (1 - fr.vc[1]) * fr.sc[1]) * FH;
   S.cam.setViewOffset(FW, FH, ox, oy, fr.sc[0] * FW, fr.sc[1] * FH);
 }
-function frame(now) {
-  S.raf = requestAnimationFrame(frame);
+function frame(now) { S.raf = requestAnimationFrame(frame); tick(now); }
+function tick(now) {
   if (!S.ready || !S.visible) return;
   resize();
   const t = now / 1000;
@@ -243,8 +243,9 @@ window.crux = {
       S.model.add(root); S.ready = true; return true;
     }).catch(err => { S.failed = true; console.warn('crucifix: not available', err); throw err; });
   },
-  show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; requestAnimationFrame(() => S.canvas.classList.add('on')); } },
-  hide() { if (S.canvas) S.canvas.classList.remove('on', 'live'); },
+  get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
+  show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps the rendered frame for the still + this canvas on the same frame
+  hide() { S.visible = false; if (S.canvas) S.canvas.classList.remove('on', 'live'); },
   lift() { if (!S.ready || S.state === 'lifting' || S.state === 'held') return false; S.state = 'lifting'; S.p0 = S.p; S.t0 = performance.now() / 1000; emit(); return true; },
   release() {
     if (S.state === 'rest' || S.state === 'returning') return false;

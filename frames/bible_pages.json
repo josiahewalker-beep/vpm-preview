@@ -14,6 +14,42 @@
  ],
  "site_url": "https://www.josiahwalker.com/",
  "bio_source": "content/bio/josiahwalker-bio.md",
+ "about_press": [
+  0.2214,
+  0.32,
+  0.7786,
+  0.36
+ ],
+ "about_poster": [
+  0.398,
+  0.615,
+  0.602,
+  0.647
+ ],
+ "about_vimeo": [
+  0.3813,
+  0.661,
+  0.6187,
+  0.693
+ ],
+ "about_insta": [
+  0.3363,
+  0.707,
+  0.6637,
+  0.739
+ ],
+ "about_bio": [
+  0.3723,
+  0.753,
+  0.6277,
+  0.785
+ ],
+ "about_press_url": "https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/",
+ "about_vimeo_url": "https://vimeo.com/891711371",
+ "about_insta_url": "https://www.instagram.com/veryprosperousmenfilm/",
+ "about_bio_url": "https://www.josiahwalker.com/bio",
+ "about_poster_url": null,
+ "about_source": "site/index.html #about",
  "plates": {
   "creation_of_light": "File:Creation of Light (89392244).jpg",
   "moses_tables": "File:041A.Moses Breaks the Tables of the Law.jpg",
