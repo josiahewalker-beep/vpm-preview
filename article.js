@@ -62,13 +62,21 @@ function build() {
   // Back / Esc is not reached while it is open (the panel covers the button; the page's Escape handler closes open panels first).
   root.addEventListener('click', e => { if (e.target.closest('[data-close]') || !e.target.closest('.art-page, .art-bar, .art-desk, .art-mast')) window.article.close(); });
   addEventListener('keydown', e => { if (!A.root.hidden && e.key === 'Escape') { e.stopImmediatePropagation(); window.article.close(); } }, true);   // the page's Escape must not also leave the case
-  addEventListener('popstate', () => { if (A.root && !A.root.hidden) { A.pushed = false; window.article.close(); } });
+  // QA v26: the history entry is tracked by history.state, not by counting: Chrome resolves history.back()'s target when it is called, so an
+  // open() that slips in before that traversal lands (open, Esc, open, Esc, fast) used to leave the count unbalanced and the next close backed
+  // out of the site. Our own back() is flagged (A.popping): if its popstate finds the write-up open again, the entry is pushed again instead.
+  addEventListener('popstate', () => {
+    if (A.popping) { A.popping = false; if (A.root && !A.root.hidden) pushEntry(); return; }
+    if (A.root && !A.root.hidden) window.article.close();
+  });
   root.querySelector('.art-prev').addEventListener('click', () => window.article.flip(-1));
   root.querySelector('.art-next').addEventListener('click', () => window.article.flip(1));
   root.querySelector('.art-link').href = A.url || '#';
   addEventListener('keydown', e => { if (A.root.hidden || e.target.closest('input,textarea')) return; if (e.key === 'ArrowRight') window.article.flip(1); if (e.key === 'ArrowLeft') window.article.flip(-1); });
   addEventListener('resize', layout);
 }
+const onEntry = () => { try { return !!(history.state && history.state.vpmArticle); } catch (e) { return false; } };
+function pushEntry() { if (onEntry()) return; try { history.pushState({ vpmArticle: 1 }, ''); } catch (e) {} }
 function layout() {
   if (!A.root || A.root.hidden) return;
   const vw = innerWidth, vh = innerHeight, two = vw >= 760;                     // room for the pile at the left on a desktop
@@ -126,13 +134,13 @@ window.article = {
     A.root.hidden = false; layout(); A.page = 0; A.turning = null;
     A.pages.forEach((p, i) => setPage(i, 0)); updateBar();
     const c = A.root.querySelector('[data-close]'); if (c) c.focus();
-    try { history.pushState({ vpmArticle: 1 }, ''); A.pushed = true; } catch (e) { A.pushed = false; }
+    pushEntry();
   },
   /** QA: hold sheet i at an angle (degrees) without animating */
   pose(i, deg) { if (!A.root) return false; A.turning = null; setPage(i, deg); const under = A.root.querySelector('.art-under'); under.style.opacity = (0.9 * Math.sin(deg * Math.PI / 180) * (deg < 90 ? 1 : 0.5)).toFixed(3); under.style.width = `calc(var(--pw) * ${Math.max(0.15, Math.cos(deg * Math.PI / 180)).toFixed(3)})`; return true; },
   close() {
     if (!A.root || A.root.hidden) return; A.root.hidden = true; if (A.raf) cancelAnimationFrame(A.raf); A.raf = 0; A.turning = null;
-    if (A.pushed) { A.pushed = false; try { history.back(); } catch (e) {} }   // drop the entry pushed on open (the popstate finds the panel already closed)
+    if (onEntry() && !A.popping) { A.popping = true; setTimeout(() => { A.popping = false; }, 1500); try { history.back(); } catch (e) { A.popping = false; } }   // drop the entry pushed on open (its popstate is ours)
   },
   flip(dir) {
     if (!A.root || A.root.hidden || A.turning) return false;

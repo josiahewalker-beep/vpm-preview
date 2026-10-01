@@ -326,8 +326,8 @@ function tick(now) {
   if (S.state === 'closing') {
     // the turned leaves fall back (staggered), then the board closes, then the drop
     if (S.closeStep === 0) { S.turning = []; const turned = S.leaves.filter(l => l.theta > 0.001); turned.reverse().forEach((l, i) => startTurn(l, -1, BACK_TURN_S, t + i * 0.06, i === 0)); S.closeStep = 1; S.t0 = t; }
-    if (S.closeStep === 1 && !S.turning.length && t - S.t0 > 0.05) { S.closeStep = 2; S.t0 = t; if (window.pageSnd) window.pageSnd.cover(false, 0, CLOSE_S); }
-    if (S.closeStep === 2) { const k = Math.min(1, (t - S.t0) / CLOSE_S), e = easeInOut(k); S.cover = -Math.PI * (1 - e); S.open = 1 - e;
+    if (S.closeStep === 1 && !S.turning.length && t - S.t0 > 0.05) { S.closeStep = 2; S.t0 = t; S.openAt = S.open; if (window.pageSnd) window.pageSnd.cover(false, 0, CLOSE_S * S.openAt); }
+    if (S.closeStep === 2) { const k = Math.min(1, (t - S.t0) / (CLOSE_S * Math.max(0.05, S.openAt))), e = easeInOut(k); S.cover = -Math.PI * S.openAt * (1 - e); S.open = S.openAt * (1 - e);   // QA v26: from however far it had opened (Esc mid-opening used to snap the board wide first)
       if (k >= 1) { S.closeStep = 3; S.state = 'returning'; S.p0 = S.p; S.t0 = t; emit(); } }
   }
   if (S.state === 'returning') { const k = Math.min(1, (t - S.t0) / DROP_S); S.p = S.p0 * (1 - easeInOut(k)); if (k >= 1) { S.state = 'rest'; S.p = 0; emit(); } }
@@ -407,13 +407,14 @@ const API = {
     if (!S.renderer) { canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
     if (S.ready) { for (const l of S.leaves) { l.theta = 0; shapeLeaf(l, 0, stackZ(l)); } if (S.hinge) S.hinge.rotation.set(0, 0, 0); loadPages(); return Promise.resolve(true); }
-    return loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL()).catch(err => { if (!CFG.fallbackGlb) throw err; S.standIn = true; return loadGLB(CFG.fallbackGlb); }); }).then(({ root, named }) => {
-      S.model.add(root); S.hinge = named[CFG.hinge] || (CFG.fallbackHinge && named[CFG.fallbackHinge]) || null; buildLeaves(); loadPages(); S.ready = true; return true;
-    }).catch(err => { S.failed = true; console.warn(CFG.name + ': not available', err); throw err; });
+    if (S.loading) return S.loading;   // QA v26: mounted again while the glb is still on its way (the hub left and re-entered fast): one model, not two stacked
+    return (S.loading = loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL()).catch(err => { if (!CFG.fallbackGlb) throw err; S.standIn = true; return loadGLB(CFG.fallbackGlb); }); }).then(({ root, named }) => {
+      S.model.add(root); S.hinge = named[CFG.hinge] || (CFG.fallbackHinge && named[CFG.fallbackHinge]) || null; buildLeaves(); loadPages(); S.ready = true; S.loading = null; return true;
+    }).catch(err => { S.failed = true; S.loading = null; console.warn(CFG.name + ': not available', err); throw err; }));
   },
   get standIn() { return !!S.standIn; },                   // true while the album is drawn with bible.glb (album.glb not landed yet)
   show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps its still to the empty plate this same frame
-  hide() { S.visible = false; if (S.canvas) S.canvas.classList.remove('on', 'live'); },
+  hide() { S.visible = false; if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; } },   // QA v26: out of the DOM too (it was left at opacity 0)
   /** the Bible rises, turns to the camera, opens and leafs through to the bio spread */
   lift() {
     if (!S.ready || S.state !== 'rest') return false;

@@ -245,7 +245,7 @@ window.crux = {
   },
   get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
   show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps the rendered frame for the still + this canvas on the same frame
-  hide() { S.visible = false; if (S.canvas) S.canvas.classList.remove('on', 'live'); },
+  hide() { S.visible = false; if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; } },
   lift() { if (!S.ready || S.state === 'lifting' || S.state === 'held') return false; S.state = 'lifting'; S.p0 = S.p; S.t0 = performance.now() / 1000; emit(); return true; },
   release() {
     if (S.state === 'rest' || S.state === 'returning') return false;

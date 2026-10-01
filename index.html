@@ -117,6 +117,9 @@ body.tv .controls { opacity: 0; pointer-events: none; }
 .crux-cap p { margin: 0; font-family: var(--display); font-size: clamp(17px, 2vw, 24px); line-height: 1.35; color: var(--paper); text-wrap: balance; }
 .crux-cap .note { margin-top: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
 .cu-hint { position: absolute; right: max(16px, 2.2vw); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); font-size: 11px; letter-spacing: 0.06em; color: var(--dim); }
+/* QA v26: the close-up hint is printed once. #hint (in the bottom bar, above the look chips) carries it; #cuHint only stands in while the
+   set is on, when the bar's controls are faded out (it used to print over the look chips at every size, twice the same text). */
+body:not(.tv) #cuHint { display: none; }
 /* page thread: leafing controls while the Bible is open (phones have no arrow keys and see one page at a time) */
 .bible-strip { position: absolute; left: max(16px, 2.2vw); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); display: flex; gap: 6px; pointer-events: auto; }
 .bible-strip button { font: inherit; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); background: rgba(13, 11, 9, 0.55); border: 1px solid transparent; padding: 8px 10px; cursor: pointer; min-height: 36px; }
@@ -321,10 +324,13 @@ document.querySelectorAll('.chip[data-look]').forEach(b => b.addEventListener('c
 
 // ---------- lite view ----------
 let lite = false;
+const ROOM_HINT = 'Drag to look around · Click the window · Click the TV';
+function cuHint(txt) { $('#cuHint').textContent = txt; $('#hint').textContent = txt; }   // one text, printed in the bar (and by #cuHint while the set is on)
 function setLite(v) {
   lite = v; $('#liteBtn').setAttribute('aria-pressed', String(v));
   canvas.hidden = v; poster.hidden = false;
-  $('#hint').textContent = v ? 'Lite view: a still of the room' : 'Drag to look around · Click the window · Click the TV';
+  $('#hint').textContent = v ? 'Lite view: a still of the room' : ROOM_HINT;
+  if (v && window.__tv) liteCleanup();   // QA v26: switched on mid close-up / window: the frame loop stops, so leave them now rather than freeze there
 }
 $('#liteBtn').addEventListener('click', () => setLite(!lite));
 
@@ -487,7 +493,7 @@ window.__snd = SND; window.__sound = { sparkSound, autoSound, get soundOn() { re
 
 // ---------- WebGL ----------
 const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
-if (!gl) { setLite(true); $('#liteBtn').hidden = true; loading.hidden = true; return; }
+if (!gl) { setLite(true); $('#liteBtn').hidden = true; document.querySelectorAll('.chip[data-look]').forEach(b => b.hidden = true); loading.hidden = true; return; }   // no WebGL: the still, the text and the links; the look chips would do nothing
 
 function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
   if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
@@ -684,7 +690,7 @@ const VIEWMAP = () => { const m = new Map(); for (const v of views) m.set(vname(
 let vmap = null;
 
 // ---------- camera state (swing t, tilt), drag and ease back ----------
-let t = 0, tilt = 0, gt = 0, gtilt = 0, drag = null, mode = 'room';   // g* = where the hand is, t/tilt = where the camera is
+let t = 0, tilt = 0, gt = 0, gtilt = 0, drag = null; var mode = 'room';   // g* = where the hand is, t/tilt = where the camera is (`var`: the Escape handler above reads mode/cu even on the no-WebGL page)
 const T_MAX = 35, TILT_MAX = 12;
 stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui'); drag = { x: e.clientX, y: e.clientY, t0: gt, tilt0: gtilt, moved: 0 }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
 stage.addEventListener('pointermove', e => {
@@ -1085,7 +1091,7 @@ function flightCam(flKey, name, k) {
 let cuMeta = {}; fetch('frames/closeups.json').then(r => r.ok ? r.json() : {}).then(j => { cuMeta = j || {}; }).catch(() => {});
 const cuTex = {};
 function loadCU(name) { if (name in cuTex) return; cuTex[name] = null; const im = new Image(); im.onload = () => { cuTex[name] = tex(im); }; im.src = (SMALL ? 'frames/m/' : 'frames/') + name + '.jpg'; }
-let cu = null;        // { name, fl, phase: 'approach'|'fly'|'still'|'closing'|'return', sub: null|'crux'|'bible'|'album', via, holdTex, ... }
+var cu = null;        // { name, fl, phase: 'approach'|'fly'|'still'|'closing'|'return', sub: null|'crux'|'bible'|'album', via, holdTex, ... }
 // the flights: a rendered camera move from a fixed grid view into each close-up (fl_<name>.mp4), and the same move
 // reversed (fl_<name>_back.mp4) for the way out. No cross-fades: frame 0 is the grid view, the last frame is the still.
 const flights = {};
@@ -1121,8 +1127,8 @@ function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
     if (!cu) return;
-    if (st === 'held') $('#cuHint').textContent = 'Drag to turn it · Back to the room · Esc';
-    if (st === 'rest') { cu.sub = null; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_case.hint; }   // Esc while held: the cross settles back first, then the flight out
+    if (st === 'held') cuHint('Drag to turn it · Back to the case · Esc');
+    if (st === 'rest') { cu.sub = null; settled(); }   // QA v26: Esc while held puts the cross back and stays on the case (one step); Esc again (or twice, fast) leaves
   } })).then(() => { cruxOK = true; if (cu && cu.name === 'c_case' && cu.shown && !cu.holdFly) window.crux.show(); }).catch(() => { cruxOK = false; loadCU('c_crucifix'); });
 }
 // ---------- page thread: the ash-fall (round 3 notes 3 and 4) ----------
@@ -1151,7 +1157,7 @@ function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript(
   pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
   bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
 function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
-const bookHints = { lifting: 'Back to the room · Esc', opening: 'Back to the room · Esc', leafing: 'Back to the room · Esc', open: 'Turn the pages · ← → · Back to the room · Esc', closing: 'Back to the room', returning: 'Back to the room' };
+const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Back to the table · Esc', closing: 'Back to the table', returning: 'Back to the table' };
 function mountBooks() {
   const m = cuMeta.c_bible; if (!m) return;
   const common = { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, small: SMALL,
@@ -1166,9 +1172,16 @@ function mountBooks() {
 }
 function bookState(which, st) {
   if (!cu || cu.name !== 'c_bible' || cu.sub !== which) return;
-  if (bookHints[st]) $('#cuHint').textContent = bookHints[st];
+  if (bookHints[st]) cuHint(bookHints[st]);
   $('#bibleStrip').hidden = st !== 'open';
-  if (st === 'rest') { cu.sub = null; cu.hideBook = which; if (cu.phase === 'closing') startReturn(); else $('#cuHint').textContent = CLOSE.c_bible.hint; }   // the canvas hides one frame after the still is back (closeupState)
+  if (st === 'rest') { cu.sub = null; cu.hideBook = which; settled(); }   // the canvas hides one frame after the still is back (closeupState)
+}
+// QA v26: a book or the cross has dropped back. Esc was one step (back to the hub / the case still); only a second Esc pressed while it was
+// still settling (cu.leaveAfter) carries on out to the room, so hammering Esc twice still leaves.
+function settled() {
+  if (!cu) return;
+  if (cu.phase === 'closing') { cu.phase = 'still'; if (cu.leaveAfter) { cu.leaveAfter = false; cu.lastTex = cuTex[cu.name] || cu.lastTex; startReturn(); return; } }   // leaving at once: hold the rendered still (not the empty plate)
+  cuHint(CLOSE[cu.name].hint);
 }
 function book() { return cu && (cu.sub === 'album' ? window.album : cu.sub === 'bible' ? window.bible : null); }
 document.querySelectorAll('#hubStrip button').forEach(b => b.addEventListener('click', () => { if (cu && cu.name === 'c_bible' && cu.phase === 'still' && !cu.sub) cuClick({ key: b.dataset.hub }); }));
@@ -1195,8 +1208,7 @@ function enterCloseup(name, world) {
   cu = { name, fl, phase: 'approach', sub: null, subT: 0, t: 0 };
   gt = CLOSE[name].from[0]; gtilt = CLOSE[name].from[1];          // the camera eases to the grid view the flight starts from
   mode = 'closeup'; document.body.classList.add('away'); stage.classList.remove('hot'); $('#tip').hidden = true;
-  $('#back').hidden = false; $('#hint').textContent = CLOSE[name].hint;
-  $('#cuLayer').hidden = false; $('#cuHint').textContent = CLOSE[name].hint;
+  $('#back').hidden = false; $('#cuLayer').hidden = false; cuHint(CLOSE[name].hint);
 }
 // round 3 note 13: from the Bible hub straight into the ashtray on fl_bible_ashtray (C_bible -> C_ashtray); Esc comes back the same way.
 // Until that clip exists (the render thread is rendering it) the click falls back to the old path: out of the hub, then in from the room.
@@ -1206,19 +1218,20 @@ function hopToAshtray() {
   if (e.err) { cu.next = () => enterCloseup('c_ashtray', CLOSE.c_ashtray.at); leaveCloseup(); return; }
   loadCU('c_ashtray'); loadCU('c_ashtray2'); flightVid('ashfall');
   cu = { name: 'c_ashtray', fl: 'bible_ashtray', via: 'c_bible', phase: 'approach', sub: null, subT: 0, t: 0, hopFrom: cuTex.c_bible };
-  $('#tip').hidden = true; stage.classList.remove('hot'); $('#hint').textContent = 'Back to the Bible · Esc'; $('#cuHint').textContent = 'Back to the Bible · Esc';
+  $('#tip').hidden = true; stage.classList.remove('hot'); cuHint('Back to the Bible · Esc');
 }
 function leaveCloseup() {
-  if (!cu || cu.phase === 'return' || cu.phase === 'closing') return;
-  if (cu.sub === 'crux' && cruxOK && window.crux.state !== 'rest') {   // one click: the lifted cross drops back into the case, then the flight out
-    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; $('#cruxCap').classList.remove('on'); window.crux.release(); return;
+  if (!cu || cu.phase === 'return') return;
+  if (cu.phase === 'closing') { cu.leaveAfter = true; return; }      // QA v26: a second Esc while the book / cross is still settling: carry on out once it has
+  if (cu.sub === 'crux' && cruxOK && window.crux.state !== 'rest') {   // one click: the lifted cross drops back into the case (settled() takes it from there)
+    cu.phase = 'closing'; cuHint('Back to the case'); $('#cruxCap').classList.remove('on'); window.crux.release(); return;
   }
   if (cu.sub === 'crux') { cu.sub = null; cu.subT = 0; }          // the still fallback: straight out
   stopTicking(); $('#psa').classList.remove('on'); $('#cruxCap').classList.remove('on');
-  if (cu.phase === 'approach') { if (cu.via) { cu = { name: cu.via, fl: CLOSE[cu.via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true }; $('#cuHint').textContent = CLOSE[cu.name].hint; return; } endCloseup(); return; }   // never got airborne
+  if (cu.phase === 'approach') { if (cu.via) { cu = { name: cu.via, fl: CLOSE[cu.via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true }; cuHint(CLOSE[cu.name].hint); return; } endCloseup(); return; }   // never got airborne
   const bk = book();
   if (bk && bk.state !== 'rest') {                                 // page thread: the book closes and drops back first, then the flight out
-    cu.phase = 'closing'; $('#cuHint').textContent = 'Back to the room'; bk.release(); return;
+    cu.phase = 'closing'; cuHint('Back to the table'); bk.release(); return;
   }
   startReturn();
 }
@@ -1226,19 +1239,21 @@ function startReturn() {
   const fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
   // the reversed clip starts from the camera position on screen: the end of the way in (or wherever the way in was interrupted)
   const from = cu.phase === 'fly' && fwd.v.duration ? Math.max(0, fwd.v.duration - fwd.v.currentTime) : 0;
+  if (cu.phase === 'fly') { try { fwd.v.pause(); } catch (e) {} }   // QA v26: the way in stops where it was interrupted (its last uploaded frame is the hold)
   cu.holdTex = cu.lastTex || null; cu.holding = true;             // round 3 note 5: hold the frame on screen until the camera has visibly moved
   if (cu.ashPlaying) { try { flightVid('ashfall').v.pause(); } catch (e) {} cu.ashPlaying = false; cu.ashFallen = true; }
   cu.phase = 'return'; cu.t = 0; cu.holdFly = false; cu.returnFrom = from; cu.backStarted = false;
   if (back.ok) { vplay(back, from); cu.backStarted = true; }
 }
+Object.defineProperty(window, '__cu', { get: () => cu });   // QA: always the live close-up state (null in the room)
 function closeupState(now, dt) {
-  window.__cu = cu;   // QA
   hubStrip();
   const spec = CLOSE[cu.name], fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
   let still = (cu.name === 'c_tv' && cuTex['c_tv_' + TV.stillOf(TV.ch)]) || cuTex[cu.name];
-  if (cu.name === 'c_bible' && cu.sub === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;             // the live Bible draws over the plate without it
-  if (cu.name === 'c_bible' && cu.sub === 'album' && cuTex.c_bible_noalbum) still = cuTex.c_bible_noalbum;         // the live album over the plate without it (099zza07; until then the plain still)
-  if (cu.hideBook) { const w = cu.hideBook; cu.hideBook = false; requestAnimationFrame(() => { if (window[w]) window[w].hide(); }); }
+  const bk_ = cu.sub || cu.hideBook;                                                                              // (hideBook: the book is at rest, drawn live for this one last frame)
+  if (cu.name === 'c_bible' && bk_ === 'bible' && cuTex.c_bible_empty) still = cuTex.c_bible_empty;             // the live Bible draws over the plate without it
+  if (cu.name === 'c_bible' && bk_ === 'album' && cuTex.c_bible_noalbum) still = cuTex.c_bible_noalbum;         // the live album over the plate without it (099zza07; until then the plain still)
+  if (cu.hideBook) { const w = cu.hideBook; cu.hideBook = false; requestAnimationFrame(() => { if (window[w] && window[w].state === 'rest') window[w].hide(); }); }   // (QA v26: unless it was lifted again in between, which left it stuck in 'closing' for good)
   if (cu.name === 'c_ashtray' && cu.ashFallen && cuTex.c_ashtray2) still = cuTex.c_ashtray2;                   // fallen for the rest of this visit
   if (cu.name === 'c_case' && cu.holdFly && (cu.holdImg || fwd.up)) still = cu.holdImg || flightTex(fwd);        // round 3 note 6: the rendered cross (the clip's last frame, re-read each frame: it is paused) stays until the click lifts the live one
   zc = [0.5, 0.5];
@@ -1281,7 +1296,7 @@ function closeupState(now, dt) {
     if (!back.ok && cu.t < 0.6) return out({ alt: still || null, altMix: still ? 1 - cu.t / 0.6 : 0, zoom: 1 });   // no reversed clip at all: short dissolve
     if (cu.via) {                                                      // back at the hub: land on its still
       const via = cu.via; cu = { name: via, fl: CLOSE[via].fl, phase: 'still', sub: null, subT: 0, t: 0, shown: true };
-      $('#psa').hidden = true; $('#hint').textContent = CLOSE[via].hint; $('#cuHint').textContent = CLOSE[via].hint;
+      $('#psa').hidden = true; cuHint(CLOSE[via].hint);
       return out({ alt: cuTex[via] || null, altMix: cuTex[via] ? 1 : 0, zoom: 1 });
     }
     endCloseup(); return out({ alt: null, altMix: 0, zoom: 1 });
@@ -1302,7 +1317,7 @@ function endCloseup() {
   const next = cu && cu.next;
   cu = null; mode = 'room'; document.body.classList.remove('away');
   $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true; $('#hubStrip').hidden = true;
-  $('#hint').textContent = 'Drag to look around · Click the window · Click the TV';
+  $('#hint').textContent = ROOM_HINT;
   if (next) next();
 }
 // a world box projected through a close-up's camera: the hub's hotspots (the album and the ashtray have no polygon in closeups.json)
@@ -1339,18 +1354,18 @@ function cuClick(h) {
   if (h.key === 'crucifix' && cruxOK && window.crux.ready) {          // thread D: the live crucifix lifts on its own, from the rendered frame it was resting in
     cu.sub = 'crux'; cu.holdFly = false; window.crux.show(); window.crux.lift();
     $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
-    $('#cuHint').textContent = 'Back to the case · Esc';
+    cuHint('Back to the case · Esc');
   } else if (h.key === 'crucifix' && cuTex.c_crucifix) {                 // fallback if the glTF could not load: the old still
     const poly = cuMeta.c_case.crucifix; const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length, cy = poly.reduce((a, p) => a + p[1], 0) / poly.length;
     cu.sub = 'crux'; cu.subT = 0; cu.a2h = [cx, cy]; cu.holdFly = false;
     $('#cruxCap').hidden = false; requestAnimationFrame(() => $('#cruxCap').classList.add('on'));
-    $('#cuHint').textContent = 'Back to the case · Esc';
+    cuHint('Back to the case · Esc');
   } else if (h.key === 'clipping') { if (window.article && FEATURES.clipping) window.article.open(); else openPanel($('#clippanel')); }
   else if (h.key === 'bible' && bibleOK && window.bible.ready) {   // page thread: the Bible lifts, opens and leafs to the bio
-    cu.sub = 'bible'; window.bible.lift(); $('#cuHint').textContent = 'Back to the room · Esc';
+    cu.sub = 'bible'; window.bible.lift(); cuHint('Back to the table · Esc');
   } else if (h.key === 'bible') { openPanel($('#about')); }          // the glTF could not load: the About sheet instead
   else if (h.key === 'album' && albumOK && window.album.ready) {    // the photo album lifts and opens the same way
-    cu.sub = 'album'; window.album.lift(); $('#cuHint').textContent = 'Back to the room · Esc';
+    cu.sub = 'album'; window.album.lift(); cuHint('Back to the table · Esc');
   } else if (h.key === 'ashtray') hopToAshtray();
 }
 // the watch: a mechanical movement at 18,000 beats an hour (five ticks a second), tick and tock slightly different
@@ -1515,8 +1530,14 @@ function enterWindow() {
   const w = [0, 1, 2, 3].map(i => cur.anchors['win' + i]).filter(Boolean);
   zc = w.length ? [w.reduce((s, p) => s + p[0], 0) / w.length, 1 - w.reduce((s, p) => s + p[1], 0) / w.length] : [0.8, 0.8];
 }
-function leaveWindow() { if (mode === 'room') return; mode = 'leaving'; document.body.classList.remove('away'); winFrom = performance.now() / 1000; vid.pause();
-  $('#back').hidden = true; $('#hint').textContent = 'Drag to look around · Click the window · Click the TV'; }
+function leaveWindow() { if (mode === 'room') return; mode = mode === 'toWindow' ? 'room' : 'leaving'; document.body.classList.remove('away'); winFrom = performance.now() / 1000; vid.pause();   // QA v26: Esc while still settling toward the window: nothing was shown yet, so no dissolve (it flashed the clip's first frame)
+  $('#back').hidden = true; $('#hint').textContent = ROOM_HINT; }
+function liteCleanup() {   // QA v26: Lite view switched on away from the room: the frame loop stops, so end the close-up / window view first
+  if (window.article && window.article.isOpen) window.article.close();
+  if (cu) { stopTicking(); $('#psa').classList.remove('on'); $('#cruxCap').classList.remove('on'); endCloseup(); }
+  if (mode !== 'room') { mode = 'room'; document.body.classList.remove('away'); vid.pause(); looping = false; loopVid.pause(); extLoopStop(); $('#back').hidden = true; }
+  $('#hint').textContent = 'Lite view: a still of the room';
+}
 $('#back').addEventListener('click', () => { if (cu) leaveCloseup(); else leaveWindow(); });
 function openTV() { if (FEATURES.tv) enterCloseup('c_tv', CLOSE.c_tv.at); else openPanel($('#tvpanel')); }
 function loopFrameTex() {
