@@ -164,7 +164,11 @@ body:not(.tv) #cuHint { display: none; }
   .bottom { padding-top: 14px; gap: 6px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); background: none; }
   .top { padding-bottom: 10px; background: var(--ink); }
   .name { font-size: 21px; } .name small { font-size: 9.5px; margin-top: 3px; }
-  .hint { min-height: 20px; }
+  .hint { min-height: 20px; overflow: hidden; text-overflow: ellipsis; }
+  /* pass 4: the title card stays put in every close-up; the strips and captions sit at the foot of the picture instead of over the card */
+  body.away .bottom .card, body.tv .controls { opacity: 1; pointer-events: auto; }
+  .bible-strip, #hubStrip { top: auto; bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px) !important; }
+  .tv-chan, .psa, .crux-cap { bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px); }
 }
 @media (max-width: 640px) {
   nav.site { gap: 10px; }
@@ -519,7 +523,7 @@ function setSoundUI() { $('#soundBtn').textContent = soundOn ? 'Sound: on' : 'So
 function autoSound() {   // turns sound on unless the button muted it; safe to call from any gesture, any number of times
   if (soundOn || userMuted) return;
   try {
-    if (!actx) initAudio();
+    if (!actx) { initAudio(); sndPreload(); }   // decoded while still suspended, so the recordings play the instant the first tap unlocks sound
     const p = actx.resume();
     const go = () => { if (soundOn || userMuted || actx.state !== 'running') return; soundOn = true; master.gain.setTargetAtTime(0.9, actx.currentTime, 0.6); setSoundUI(); sndPreload(); droneStart(); };
     if (p && p.then) p.then(go, () => {}); go();
@@ -759,13 +763,17 @@ let vmap = null;
 // ---------- camera state (swing t, tilt), drag and ease back ----------
 let t = 0, tilt = 0, gt = 0, gtilt = 0, drag = null; var mode = 'room';   // g* = where the hand is, t/tilt = where the camera is (`var`: the Escape handler above reads mode/cu even on the no-WebGL page)
 const T_MAX = 35, TILT_MAX = 12;
-stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui'); drag = { x: e.clientX, y: e.clientY, t0: gt, tilt0: gtilt, moved: 0 }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
+let pan = 0, panK = 0, panT = 0;                        // portrait only: sideways slide of the crop inside the frame, in frame widths
+function panGain() { if (stage.clientWidth >= stage.clientHeight) return 0; const k = 70 / Math.max(420, stage.clientWidth * 0.55); return (W / (PB.band * H * FA)) / (k * stage.clientWidth); }
+function panEase() { const now = performance.now(), dt = Math.min(0.1, (now - panT) / 1000); panT = now; panK = Math.max(0, Math.min(1, panK + (mode === 'room' ? dt : -dt) / 0.7)); return pan * panK * panK * (3 - 2 * panK); }
+stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui'); drag = { x: e.clientX, y: e.clientY, t0: gt - (panGain() ? pan / panGain() : 0), tilt0: gtilt, moved: 0 }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
 stage.addEventListener('pointermove', e => {
   if (drag) {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
     const k = 70 / Math.max(420, stage.clientWidth * 0.55);
     drag.last = performance.now();
-    gt = Math.max(-T_MAX, Math.min(T_MAX, drag.t0 - dx * k));
+    const v = drag.t0 - dx * k; gt = Math.max(-T_MAX, Math.min(T_MAX, v));
+    const pg = panGain(); if (pg) { const f = framing(), hw = f.sc[0] / 2; pan = Math.max(Math.min(0, hw - 0.58), Math.min(Math.max(0, 1 - hw - 0.58), (gt - v) * pg)); } else pan = 0;   // portrait: past the last view the crop slides on to the frame's edge (the hand and watch, the vacuum)
     gtilt = Math.max(0, Math.min(TILT_MAX, drag.tilt0 + dy * k * 0.8));
   } else if (mode === 'closeup') {
     const r = stage.getBoundingClientRect(), h = cuHotspot((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
@@ -850,7 +858,7 @@ function framing() {
   if (CA < 1) {                                        // portrait: the room fills a band between the header and the title card, cropped around the table and TV
     const k = hubEase(), hubBand = Math.min(PB.band, W / (0.62 * FA) / H);     // the hub: a wider, shorter crop so the album and the ashtray show beside the Bible
     const band = PB.band + (hubBand - PB.band) * k, hpx = band * H, wpx = hpx * FA;
-    return { sc: [W / wpx, 1 / band], fc: [0.58 + (0.355 - 0.58) * k, 0.5], vc: [0.5, 1 - (PB.top + band / 2)] };
+    return { sc: [W / wpx, 1 / band], fc: [0.58 + (0.355 - 0.58) * k + panEase() * (1 - k), 0.5], vc: [0.5, 1 - (PB.top + band / 2)] };
   }
   return { sc: CA > FA ? [1, FA / CA] : [CA / FA, 1], fc: [0.5, 0.5], vc: [0.5, 0.5] };   // landscape: cover
 }
