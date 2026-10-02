@@ -64,7 +64,13 @@ nav.site a:hover { color: var(--paper); }
 
 .controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
 .hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; }
-.hint.big { font-size: clamp(15px, 2.3vw, 33px); letter-spacing: 0.02em; line-height: 1.15; }   /* Josiah 10-01: the room's line 3x bigger */
+.hint.big { font-size: clamp(12px, 1.3vw, 16.5px); letter-spacing: 0.05em; line-height: 1.25; }   /* Josiah 10-01: 1.5x the original 11 px (3x was too big) */
+/* the first-load cue: four arrows round a gripping hand, 'Drag around to explore', gone after 3 s or at the first touch */
+#dragCue { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity 0.45s ease; }
+#dragCue.on { opacity: 1; }
+#dragCue .cue { display: grid; justify-items: center; gap: 14px; color: var(--paper); padding: 46px 64px; background: radial-gradient(closest-side, rgba(10,8,6,0.62), rgba(10,8,6,0.38) 60%, rgba(10,8,6,0)); filter: drop-shadow(0 2px 14px rgba(0,0,0,0.75)); }
+#dragCue svg { width: clamp(150px, 20vw, 230px); height: auto; }
+#dragCue p { margin: 0; font-family: var(--mono); font-size: clamp(13px, 1.5vw, 18px); letter-spacing: 0.16em; text-transform: uppercase; }
 #hintTail { transition: opacity 0.6s ease; }
 @media (min-width: 901px) { .hint.big { position: fixed; right: 32px; bottom: 26px; max-width: 50vw; text-align: right; z-index: 5; pointer-events: none; } }   /* round 4 note 12: the room's hint lines fade in and out */
 /* round 4 note 11: the film look is "Clean" only; the look chips are gone. Lite view (a still of the room, for low-power devices) lives in the About sheet. */
@@ -168,6 +174,13 @@ body:not(.tv) #cuHint { display: none; }
   <canvas id="album3d" hidden aria-hidden="true"></canvas><!-- page thread: the photo album (round 3 note 10) -->
 </div>
 <div id="loading">Loading the room</div>
+<div id="dragCue" aria-hidden="true"><div class="cue">
+<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M100 14v34M88 26l12-12 12 12"/><path d="M100 186v-34M88 174l12 12 12-12"/><path d="M14 100h34M26 88l-12 12 12 12"/><path d="M186 100h-34M174 88l12 12-12 12"/>
+  <!-- a closed hand gripping: four knuckles, the thumb tucked across, the wrist -->
+  <path stroke-width="4.5" d="M78 104v-13a7 7 0 0 1 14 0v-4a7 7 0 0 1 14 0v3a7 7 0 0 1 14 0v5a6.5 6.5 0 0 1 13 0v20c0 16-10 27-26 27h-8c-12 0-18-6-24-16l-7-12c-3-6 4-11 9-6l5 6"/>
+  <path stroke-width="4" d="M92 91v10M106 90v11M120 95v8"/>
+</svg><p>Drag around to explore</p></div></div>
 
 <header class="bar top">
   <a class="name" href="https://www.josiahwalker.com/">Josiah Walker<small>Writer / Director</small></a>
@@ -322,6 +335,10 @@ const HINT_HOLD = 3000, HINT_FIRST = 5000, HINT_FADE = 600;
 let hintI = 0, hintTimer = 0, hintCycling = false;
 // Josiah 10-01: "Drag to look around:" stays; the lines come and go after the colon. A fixed line (close-ups) hides the lead and prints small.
 function hintPrint(txt, lead) { $('#hintLead').hidden = !lead; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
+// first load only: the cue comes up over the room's centre, holds, and leaves 3 s after it appeared (or at the first press / key)
+function dragCue() { const el = $('#dragCue'); if (!el || el.dataset.done) return; el.dataset.done = 1; el.classList.add('on');
+  const off = () => { el.classList.remove('on'); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); setTimeout(() => { el.hidden = true; }, 500); };
+  setTimeout(off, 3000); addEventListener('pointerdown', off, true); addEventListener('keydown', off, true); }
 function hintStop() { hintCycling = false; clearTimeout(hintTimer); hintTimer = 0; $('#hintTail').style.opacity = 1; }
 function hintCycle() {
   hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0], true);
@@ -1830,7 +1847,7 @@ function frame() {
   cur.anchors = an;
   const cam = [0, 0, 0], aim = [0, 0, 0]; for (const [, w, v] of use) for (let i = 0; i < 3; i++) { cam[i] += (v.cam ? v.cam[i] : 0) * w / wsum; aim[i] += (v.aim ? v.aim[i] : 0) * w / wsum; }
   cur.cam = cam; cur.aim = aim;
-  if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true; if (!cu && mode === 'room') hintCycle();
+  if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true; if (!cu && mode === 'room') { hintCycle(); dragCue(); }
     const q = /[#&]cu=(c_\w+)/.exec(location.hash);                  // QA hook: #cu=c_case opens that close-up
     if (q && CLOSE[q[1]]) setTimeout(() => enterCloseup(q[1], CLOSE[q[1]].at), 300); }
 
