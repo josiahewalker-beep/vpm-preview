@@ -14,6 +14,10 @@ const LIFT_S = 1.2, RETURN_S = 1.1, SNAP_S = 0.6, FILL = 0.8;
 let THREE = null, loading = null;
 function loadThree() { return loading || (loading = import(THREE_URL).then(m => (THREE = m))); }
 
+// phones (Josiah's iPhone reloaded the tab on first opening the case, 10-01): the glb's 2K-4K maps are decoded at 1024 px on small screens
+const PHONE = Math.max(innerWidth, innerHeight) < 1000;
+async function capBitmap(bmp) { if (!PHONE || Math.max(bmp.width, bmp.height) <= 1024) return bmp; const k = 1024 / Math.max(bmp.width, bmp.height);
+  try { const s = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: 'medium' }); bmp.close && bmp.close(); return s; } catch (e) { return bmp; } }
 // ---------- a small GLB reader: meshes, materials, embedded images; no skins, animations or extensions ----------
 async function loadGLB(url) {
   let r = await fetch(url); if (!r.ok) r = await fetch(url + '.wasm');
@@ -38,7 +42,7 @@ async function loadGLB(url) {
   const images = await Promise.all((json.images || []).map(async im => {
     const v = bv(im.bufferView); const blob = new Blob([new Uint8Array(bin, v.off, v.len)], { type: im.mimeType });
     const bmp = await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
-    return bmp;
+    return capBitmap(bmp);
   }));
   const texCache = {};
   function texture(ti, srgb) {
@@ -129,7 +133,7 @@ function facePose() {
 }
 function setup() {
   const m = S.meta;
-  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass (round 3 note 6)
+  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: !PHONE, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass (round 3 note 6)
   S.renderer.setClearColor(0x000000, 0); S.renderer.outputColorSpace = THREE.SRGBColorSpace;
   S.renderer.toneMapping = THREE.ACESFilmicToneMapping; S.renderer.toneMappingExposure = 1.05;
   S.renderer.shadowMap.enabled = true; S.renderer.shadowMap.type = THREE.PCFSoftShadowMap;

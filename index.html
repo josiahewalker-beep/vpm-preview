@@ -150,8 +150,15 @@ body:not(.tv) #cuHint { display: none; }
 .clipping cite { display: block; margin-top: 6px; font-style: normal; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
 .clip-mast { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
 .clipping .btn { color: #221e1a; border-color: rgba(34,30,26,0.3); }
+/* ---- phones in portrait only (Josiah's iPhone recording, 10-01). Nothing here applies to desktop or landscape. ---- */
+@media (max-aspect-ratio: 1/1) {
+  #dragCue .cue { transform: translateY(-13vh); }                                  /* centred on the room band (7%..67% of the height), clear of the title card */
+  .bible-strip, #hubStrip { top: calc(76% + 4px); bottom: auto !important; left: 16px; }   /* under the picture, in the empty band: never over the book */
+  .bible-strip button { color: var(--paper); border-color: var(--rule); min-height: 40px; }
+  nav.site { gap: 9px; flex-wrap: nowrap; } nav.site a { font-size: 9.5px; letter-spacing: 0.1em; }
+}
 @media (max-width: 640px) {
-  nav.site { gap: 12px; }
+  nav.site { gap: 10px; }
   .controls { align-items: flex-start; }
   .hint { text-align: left; }
   .bottom { flex-direction: column; align-items: stretch; }
@@ -275,7 +282,7 @@ body:not(.tv) #cuHint { display: none; }
   </div>
   <div id="cuHint" class="cu-hint"></div>
   <div id="hubStrip" class="bible-strip" hidden aria-label="On the coffee table"><button type="button" data-hub="bible">About Josiah &amp; The Film</button><button type="button" data-hub="album">Photographs</button><button type="button" data-hub="ashtray">The cigarette</button></div><!-- round 3 note 13: the hub's three props as text, for phones (the album and the tray are cropped off a portrait frame) -->
-  <div id="bibleStrip" class="bible-strip" hidden><button type="button" data-turn="-1" aria-label="Previous leaf">‹ Turn back</button><button type="button" data-turn="1" aria-label="Next leaf">Turn ›</button><button type="button" class="pg" data-focus="-1">Left page</button><button type="button" class="pg" data-focus="1">Right page</button></div>
+  <div id="bibleStrip" class="bible-strip" hidden><button type="button" data-turn="-1" aria-label="Previous leaf">‹ Turn back</button><button type="button" data-turn="1" aria-label="Next leaf">Turn ›</button><button type="button" class="pg" data-focus="-1">Left page</button><button type="button" class="pg" data-focus="1">Right page</button><button type="button" class="pg" data-focus="0">Both pages</button></div>
 </div>
 <div class="panel" id="clippanel" hidden role="dialog" aria-modal="true" aria-labelledby="clipTitle">
   <article class="sheet clipping">
@@ -337,7 +344,8 @@ const HINTS = ['Did you find the dead body?', 'Click the window', 'Did you see t
 const HINT_HOLD = 3000, HINT_FIRST = 5000, HINT_FADE = 600;
 let hintI = 0, hintTimer = 0, hintCycling = false;
 // Josiah 10-01: "Drag to look around:" stays; the lines come and go after the colon. A fixed line (close-ups) hides the lead and prints small.
-function hintPrint(txt, lead) { $('#hintLead').hidden = !lead; if (!lead) $('#hintTail').style.minWidth = ''; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
+function hintPrint(txt, lead) { if (matchMedia('(pointer: coarse)').matches) txt = String(txt).replace(/\s*·\s*← →/g, '').replace(/\s*·\s*Esc\b/g, '').replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap');   // touch screens: no keys, taps
+  $('#hintLead').hidden = !lead; if (!lead) $('#hintTail').style.minWidth = ''; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
 // first load only: the cue comes up over the room's centre, holds, and leaves 3 s after it appeared (or at the first press / key)
 function dragCue() { const el = $('#dragCue'); if (!el || el.dataset.done) return; el.dataset.done = 1; el.classList.add('on');
   const off = () => { el.classList.remove('on'); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); setTimeout(() => { el.hidden = true; }, 500); };
@@ -1590,6 +1598,8 @@ function enterWindow() {
   loadWin(); mode = 'toWindow'; document.body.classList.add('away'); winT = 0; curtainPlayed = false; gt = 0; gtilt = 0;
   // Josiah 10-01: the outside is alive from the click, not from the end of the curtain: the pumps are heard at once, rising as the camera nears
   // the glass (the swoop itself is rendered with the pumpjacks and the flag moving, in phase with the loop it hands over to)
+  // iOS only lets a <video> start inside the tap itself: prime both clips here (play, then hold at frame 0) so the swoop and the loop can run later
+  for (const v of [vid, loopVid]) { try { const pr = v.play(); if (pr && pr.then) pr.then(() => { if (mode === 'toWindow') { v.pause(); v.currentTime = 0; } }).catch(() => {}); } catch (e) {} }
   if (actx && soundOn) { sndLoad('pumpjack', 3.0); pumpStart(); if (extBusNode()) extBus.gain.setTargetAtTime(0.7, actx.currentTime, 0.9); }
   $('#back').hidden = false; setHint('The view past the fence · Click to go back · Esc'); stage.classList.remove('hot');
   const w = [0, 1, 2, 3].map(i => cur.anchors['win' + i]).filter(Boolean);

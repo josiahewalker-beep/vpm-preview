@@ -58,6 +58,10 @@ const NX = 30, NY = 12;                                   // leaf mesh grid (12 
 let LEAVES = CFG.leaves, BIO_LEAF = CFG.stopAt;
 const GLB_URL = () => CFG.glb;
 
+// phones (Josiah's iPhone reloaded the tab on first opening the case, 10-01): the glb's 2K-4K maps are decoded at 1024 px on small screens
+const PHONE = Math.max(innerWidth, innerHeight) < 1000;
+async function capBitmap(bmp) { if (!PHONE || Math.max(bmp.width, bmp.height) <= 1024) return bmp; const k = 1024 / Math.max(bmp.width, bmp.height);
+  try { const s = await createImageBitmap(bmp, { resizeWidth: Math.round(bmp.width * k), resizeHeight: Math.round(bmp.height * k), resizeQuality: 'medium' }); bmp.close && bmp.close(); return s; } catch (e) { return bmp; } }
 // ---------- a small GLB reader (as crucifix.js: meshes, materials, embedded images; node transforms honoured) ----------
 async function loadGLB(url) {
   let r = await fetch(url); if (!r.ok) r = await fetch(url + '.wasm');
@@ -81,7 +85,7 @@ async function loadGLB(url) {
   }
   const images = await Promise.all((json.images || []).map(async im => {
     const v = bv(im.bufferView); const blob = new Blob([new Uint8Array(bin, v.off, v.len)], { type: im.mimeType });
-    return createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+    return capBitmap(await createImageBitmap(blob, { imageOrientation: 'none', premultiplyAlpha: 'none', colorSpaceConversion: 'none' }));
   }));
   const texCache = {};
   function texture(ti, srgb) {
@@ -172,13 +176,13 @@ function fitPose(w, h, cx, cz, pitch, dy) {
 function closedPose() { const c = CFG.closed; return fitPose(c.w, c.h, 0.0, c.cz, c.pitch, c.dy); }
 function openPose() {
   const portrait = S.canvas.clientWidth < S.canvas.clientHeight, o = CFG.open;
-  if (portrait) return fitPose(o.pw, o.ph, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, o.ppitch, o.pdy);   // one page at a time on a phone
+  if (portrait && S.focus !== 0) return fitPose(o.pw, o.ph, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, o.ppitch, o.pdy);   // a phone: focus 0 = the whole spread across the width (Josiah 10-01), +/-1 = one page filling it
   return fitPose(o.w, o.h, XS - 0.002, ZT, o.pitch, o.dy);
 }
 
 function setup() {
   const m = S.meta;
-  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass
+  S.renderer = new THREE.WebGLRenderer({ canvas: S.canvas, alpha: true, antialias: !PHONE, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });   // preserved: index.html reads this canvas each frame and composites it under its film pass
   S.renderer.setClearColor(0x000000, 0); S.renderer.outputColorSpace = THREE.SRGBColorSpace;
   S.renderer.toneMapping = THREE.ACESFilmicToneMapping; S.renderer.toneMappingExposure = 1.0;
   S.renderer.shadowMap.enabled = true; S.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -437,7 +441,7 @@ function onClick(e) {
   if (h.link && h.link.url) { window.open(h.link.url, '_blank', 'noopener'); return; }
   if (h.link && S.meta.onLink) { S.meta.onLink(h.link.key); return; }                   // no url: the page handles it (the poster sheet)
   const portrait = S.canvas.clientWidth < S.canvas.clientHeight;
-  if (portrait) { const want = h.side === 'left' ? -1 : 1; if (want !== S.focus) { S.focus = want; return; } }
+  if (portrait) { S.focus = S.focus === 0 ? (h.side === 'left' ? -1 : 1) : 0; return; }   // a phone: tap a page to read it, tap again for both pages; the strip's buttons turn the leaves
   API.turn(h.side === 'left' ? -1 : 1);
 }
 
@@ -460,7 +464,7 @@ const API = {
     setLeafDZ();
     if (!meta.rest) meta.rest = CFG.rest;
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
-    S.small = !!meta.small; S.boxes = meta.boxes || null; S.urls = meta.urls || {}; S.focus = 1; S.closeStep = 0;
+    S.small = !!meta.small; S.boxes = meta.boxes || null; S.urls = meta.urls || {}; S.focus = 0; S.closeStep = 0;
     canvasEl.hidden = true; canvasEl.classList.remove('on', 'live');
     if (!S.renderer) { canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
