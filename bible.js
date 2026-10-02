@@ -176,7 +176,7 @@ function fitPose(w, h, cx, cz, pitch, dy, wf) {
 function closedPose() { const c = CFG.closed; return fitPose(c.w, c.h, 0.0, c.cz, c.pitch, c.dy); }
 function openPose() {
   const portrait = S.canvas.clientWidth < S.canvas.clientHeight, o = CFG.open;
-  if (portrait && S.focus !== 0) return fitPose(o.pw, 0.01, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, 0.06, 0, 0.97);   // one page across the full width, nearly square-on (Josiah 10-01: bigger, crisp)   // a phone: focus 0 = the whole spread across the width (Josiah 10-01), +/-1 = one page filling it
+  if (portrait && S.focus !== 0) return fitPose(o.pw, 0.01, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, 0.06, 0, S.meta.zoomW || 0.97);   // one page across the full width, nearly square-on (Josiah 10-01: bigger, crisp)   // a phone: focus 0 = the whole spread across the width (Josiah 10-01), +/-1 = one page filling it
   return fitPose(o.w, o.h, XS - 0.002, ZT, o.pitch, o.dy);
 }
 

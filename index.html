@@ -168,6 +168,10 @@ body:not(.tv) #cuHint { display: none; }
   /* pass 4: the title card stays put in every close-up; the strips and captions sit at the foot of the picture instead of over the card */
   body.away .bottom .card, body.tv .controls { opacity: 1; pointer-events: auto; }
   .bible-strip, #hubStrip { top: auto; bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px) !important; }
+  /* pass 5: a book open = reading; the card clears out and the leafing buttons drop to one row at the foot */
+  body.reading .bottom .card { opacity: 0; pointer-events: none; }
+  body.reading #bibleStrip { bottom: calc(env(safe-area-inset-bottom, 0px) + 44px) !important; flex-wrap: nowrap; gap: 4px; left: 12px; }
+  body.reading #bibleStrip button { font-size: 9px; letter-spacing: 0.08em; padding: 0 7px; min-height: 36px; white-space: nowrap; background: rgba(13, 11, 9, 0.8); }
   .tv-chan, .psa, .crux-cap { bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px); }
 }
 @media (max-width: 640px) {
@@ -1288,7 +1292,7 @@ function mountBooks() {
   const common = { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, small: SMALL,
     onHover: (label, x, y) => { const tip = $('#tip'); tip.hidden = !label; if (label) { tip.textContent = label; tip.style.left = x + 'px'; tip.style.top = y + 'px'; } } };
   loadBible().then(() => {
-    const bible = window.bible.mount($('#bible3d'), Object.assign({}, common, { rest: bibleMeta.rest, boxes: bibleMeta.boxes, urls: bibleMeta.urls, onState: (st) => bookState('bible', st),
+    const bible = window.bible.mount($('#bible3d'), Object.assign({}, common, { rest: bibleMeta.rest, boxes: bibleMeta.boxes, urls: bibleMeta.urls, zoomW: 1.38, onState: (st) => bookState('bible', st),
       onLink: (key) => { if (key === 'about_poster') openPanel($('#posterpanel')); } })).then(() => { bibleOK = true; }).catch(() => { bibleOK = false; });
     // the album: the same viewer with the album's config (album.js, scene/ALBUM.md: album.glb, album.json, album_pages.json); until album.glb lands it is built on bible.glb at the album's spot
     const album = window.album.mount($('#album3d'), Object.assign({}, common, { onState: (st) => bookState('album', st) }), window.album.configFrom(albumMeta, albumPages)).then(() => { albumOK = true; }).catch(() => { albumOK = false; });
@@ -1298,7 +1302,7 @@ function mountBooks() {
 function bookState(which, st) {
   if (!cu || cu.name !== 'c_bible' || cu.sub !== which) return;
   if (bookHints[st]) cuHint(bookHints[st]);
-  $('#bibleStrip').hidden = st !== 'open';
+  $('#bibleStrip').hidden = st !== 'open'; document.body.classList.toggle('reading', st === 'open');
   if (st === 'rest') { cu.sub = null; if (window[which] && window[which].state === 'rest') window[which].hide(); settled(); }   // round 4 note 4: the rendered still is back on the landing frame itself (the drop lands at speed; the live book is never seen at rest)
 }
 // QA v26: a book or the cross has dropped back. Esc was one step (back to the hub / the case still); only a second Esc pressed while it was
@@ -1441,7 +1445,7 @@ function endCloseup() {
   if (window.album) window.album.unmount();
   const next = cu && cu.next;
   cu = null; mode = 'room'; document.body.classList.remove('away');
-  $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true; $('#hubStrip').hidden = true;
+  $('#back').hidden = true; $('#cuLayer').hidden = true; $('#psa').hidden = true; $('#cruxCap').hidden = true; $('#bibleStrip').hidden = true; document.body.classList.remove('reading'); $('#hubStrip').hidden = true;
   hintCycle();
   if (next) next();
 }
