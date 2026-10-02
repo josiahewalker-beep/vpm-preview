@@ -914,11 +914,11 @@ const PROPS = [
 ];
 let FEATURES = {};
 // ---------- site nav: Contact = a message form over whatever is on screen; Bio = the Bible lifts and opens at the bio spread ----------
-const CONTACT_ENDPOINT = '';   // the form service's URL (Josiah's choice, pending); while empty the form says so and cannot send
+const CONTACT_ENDPOINT = 'https://formspree.io/f/mgavbjby';   // Josiah's Formspree form (10-01); were it empty the form would say so and not send
 function openContact() {
   const note = $('#cfNote'), send = $('#cfSend');
   if (!CONTACT_ENDPOINT) { note.hidden = false; note.textContent = '[Message delivery not connected yet]'; send.disabled = true; send.style.opacity = 0.4; }
-  openPanel($('#contactpanel')); setTimeout(() => $('#cfName').focus(), 50);
+  openPanel($('#contactpanel')); if (!matchMedia('(pointer: coarse)').matches) setTimeout(() => $('#cfName').focus(), 50);
 }
 $('#navContact').addEventListener('click', e => { e.preventDefault(); openContact(); });
 $('#contactForm').addEventListener('submit', e => {
