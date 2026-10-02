@@ -40,7 +40,7 @@ const BIBLE_CFG = {
   cover: 'cover', paper: '#efe6d2', sound: 'leaf',       // sound: 'leaf' = the recorded page turns + cover creak + drop (pagesnd.js); null = silent (the album)
   // round 4 note 6: the leaf corners are chamfered (m along each edge from the corner) so they sit inside the board's brass corner
   // protectors (bible.glb: the inner triangles' hypotenuse at x + y = 0.2144 from the board centre; the block's corner is at (0.109, 0.139))
-  chamfer: 0.0375,
+  chamfer: 0,   // Josiah 10-01: the page corners stay intact (was 0.0375, cut to sit inside the brass corners)
   // the live lights, matched to the Cycles still (round 3 note 6 for the cross, round 4 note 4 for the books): key / hemisphere sky, ground / fill / rim
   // intensities, the environment's strength on the cover, the renderer's exposure; the shadow catcher's darkness
   // (tint: a multiplier on every light's colour, envTint on the room reflection.) Round 4 note 4, tuned against c_bible's Bible region as the album's
