@@ -86,6 +86,9 @@ nav.site a:hover { color: var(--paper); }
 .sheet h3 { margin: 10px 0 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); font-weight: 500; }
 .sheet p, .sheet li { font-family: var(--display); font-size: 16px; line-height: 1.5; margin: 0; max-width: 62ch; }
 .sheet ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+#contactForm label { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin: 12px 0 6px; }
+#contactForm input, #contactForm textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; color: var(--paper); background: transparent; border: 1px solid var(--rule); padding: 10px 12px; border-radius: 0; -webkit-user-select: text; user-select: text; }
+#contactForm textarea { min-height: 8rem; resize: vertical; }
 .placeholder { color: var(--green); font-family: var(--mono); font-size: 12px; }
 .sheet .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
 .tvframe { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: #111; border-radius: 18px / 22px; overflow: hidden;
@@ -209,8 +212,8 @@ body:not(.tv) #cuHint { display: none; }
 <header class="bar top">
   <a class="name" href="./">Josiah Walker<small>Writer / Director</small></a>
   <nav class="site" aria-label="Site">
-    <a href="bio/">Bio</a>
-    <a href="contact/">Contact</a>
+    <a href="bio/" id="navBio">Bio</a>
+    <a href="contact/" id="navContact">Contact</a>
     <a href="https://www.instagram.com/josiahwalker_/">Instagram</a>
     <a href="https://www.imdb.com/name/nm9711704/">IMDb</a>
   </nav>
@@ -265,7 +268,7 @@ body:not(.tv) #cuHint { display: none; }
       <li><button class="btn" type="button" id="posterBtn">See the poster</button></li>
       <li><a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Trailer on Vimeo</a></li>
       <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm</a></li>
-      <li><a href="bio/">Josiah Walker, bio</a></li>
+      <li><a href="bio/" onclick="event.preventDefault(); document.getElementById('navBio').click()">Josiah Walker, bio</a></li>
     </ul>
     <h3>Low-power devices</h3>
     <p class="row"><span>A still of the room instead of the live view.</span><button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button></p>
@@ -312,6 +315,20 @@ body:not(.tv) #cuHint { display: none; }
     <div class="row"><h2 id="linkTitle"></h2><button class="btn" type="button" data-close>Close</button></div>
     <p id="linkText"></p>
     <div class="actions" id="linkActions"></div>
+  </div>
+</div>
+
+<div class="panel" id="contactpanel" hidden role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+  <div class="sheet" style="max-width: 30rem">
+    <div class="row"><h2 id="contactTitle">Get in touch</h2><button class="btn" type="button" data-close>Close</button></div>
+    <form id="contactForm" novalidate>
+      <label for="cfName">Name</label><input id="cfName" name="name" autocomplete="name" required>
+      <label for="cfEmail">Email</label><input id="cfEmail" name="email" type="email" autocomplete="email" required>
+      <label for="cfMsg">Message</label><textarea id="cfMsg" name="message" required></textarea>
+      <input name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+      <p class="placeholder" id="cfNote" hidden></p>
+      <div class="actions" style="margin-top:14px"><button class="btn primary" id="cfSend" type="submit">Send message</button><a class="btn" href="https://www.instagram.com/josiahwalker_/" target="_blank" rel="noopener">Instagram</a></div>
+    </form>
   </div>
 </div>
 
@@ -892,9 +909,48 @@ const PROPS = [
   { id: 'hand', needs: 'closeups', label: 'The watch', lo: [0.72, 2.95, 0.0], hi: [1.06, 3.2, 0.09], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'ashtray', needs: 'closeups', label: 'The cigarette', lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49], act: () => enterCloseup('c_ashtray', [2.25, 3.06, 0.47]) },
   { id: 'case', needs: 'closeups', label: "The salesman's case", lo: [1.71, 3.52, 0.48], hi: [2.19, 3.9, 0.82], act: () => enterCloseup('c_case', [1.95, 3.72, 0.56]) },
-  { id: 'phone', label: 'Contact', lo: [0.327, 3.853, 0.58], hi: [0.613, 4.147, 0.722], needs: 'phone', act: () => linkPanel('Contact', 'For screenings, press and representation.', [['Contact page', 'contact/'], ['Instagram', 'https://www.instagram.com/josiahwalker_/']]) },
+  { id: 'phone', label: 'Contact', lo: [0.327, 3.853, 0.58], hi: [0.613, 4.147, 0.722], needs: 'phone', act: () => openContact() },
 ];
 let FEATURES = {};
+// ---------- site nav: Contact = a message form over whatever is on screen; Bio = the Bible lifts and opens at the bio spread ----------
+const CONTACT_ENDPOINT = '';   // the form service's URL (Josiah's choice, pending); while empty the form says so and cannot send
+function openContact() {
+  const note = $('#cfNote'), send = $('#cfSend');
+  if (!CONTACT_ENDPOINT) { note.hidden = false; note.textContent = '[Message delivery not connected yet]'; send.disabled = true; send.style.opacity = 0.4; }
+  openPanel($('#contactpanel')); setTimeout(() => $('#cfName').focus(), 50);
+}
+$('#navContact').addEventListener('click', e => { e.preventDefault(); openContact(); });
+$('#contactForm').addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target, note = $('#cfNote'), send = $('#cfSend'); if (!CONTACT_ENDPOINT) return;
+  if (!f.name.value.trim() || !/^\S+@\S+\.\S+$/.test(f.email.value.trim()) || !f.message.value.trim()) { note.hidden = false; note.textContent = 'Please fill in your name, a valid email and a message.'; return; }
+  send.disabled = true; note.hidden = false; note.textContent = 'Sending…';
+  fetch(CONTACT_ENDPOINT, { method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(f) })
+    .then(r => { if (!r.ok) throw 0; note.textContent = 'Sent. Thank you.'; f.reset(); })
+    .catch(() => { note.textContent = 'That did not send. Please try again, or message on Instagram.'; })
+    .finally(() => { send.disabled = false; });
+});
+let bioWait = 0;
+function goBio() {
+  if (lite || !FEATURES.bible) { location.href = 'bio/'; return; }
+  document.querySelectorAll('.panel').forEach(p => p.hidden = true);
+  if (window.article && window.article.isOpen) window.article.close();
+  const t0 = performance.now(); clearInterval(bioWait);
+  bioWait = setInterval(() => {
+    if (performance.now() - t0 > 25000) { clearInterval(bioWait); return; }
+    if (cu && cu.name === 'c_bible') {
+      if (cu.phase !== 'still') return;
+      if (cu.sub === 'bible') { clearInterval(bioWait); return; }
+      if (cu.sub) { const bk = book(); if (bk && bk.state === 'open') bk.release(); return; }   // the album is up: put it back first
+      if (bibleOK) { clearInterval(bioWait); cuClick({ key: 'bible' });
+        if (innerWidth < innerHeight) { const t1 = performance.now(), w = setInterval(() => { const st = window.bible && window.bible.state; if (performance.now() - t1 > 15000 || !cu || cu.sub !== 'bible') return clearInterval(w); if (st === 'open') { clearInterval(w); setTimeout(() => { if (cu && cu.sub === 'bible') window.bible.focus(1); }, 700); } }, 300); } }
+      return;
+    }
+    if (cu) { if (cu.phase === 'still') leaveCloseup(); return; }
+    if (mode === 'window' || mode === 'toWindow') { leaveWindow(); return; }
+    if (mode === 'room') enterCloseup('c_bible', [2.415, 2.815, 0.45]);
+  }, 250);
+}
+$('#navBio').addEventListener('click', e => { e.preventDefault(); goBio(); });
 function linkPanel(title, text, links) {
   $('#linkTitle').textContent = title; $('#linkText').textContent = text;
   const box = $('#linkActions'); box.textContent = '';
