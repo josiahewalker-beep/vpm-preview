@@ -173,8 +173,9 @@ body:not(.tv) #cuHint { display: none; }
   .bible-strip, #hubStrip { top: auto; bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px) !important; }
   /* pass 5: a book open = reading; the card clears out and the leafing buttons drop to one row at the foot */
   body.reading .bottom .card { opacity: 0; pointer-events: none; }
-  body.reading #bibleStrip { bottom: calc(env(safe-area-inset-bottom, 0px) + 44px) !important; flex-wrap: nowrap; gap: 4px; left: 12px; }
-  body.reading #bibleStrip button { font-size: 9px; letter-spacing: 0.08em; padding: 0 7px; min-height: 36px; white-space: nowrap; background: rgba(13, 11, 9, 0.8); }
+  body.reading #bibleStrip { bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important; flex-wrap: nowrap; gap: 4px; left: 10px; right: 10px; max-width: none; }
+  body.reading #bibleStrip button { flex: 1 1 auto; font-size: 8.5px; letter-spacing: 0.04em; padding: 0 3px; min-height: 36px; white-space: nowrap; background: rgba(13, 11, 9, 0.8); }
+  body.reading #hint { visibility: hidden; }   /* the five buttons say it; the line used to print across the foot of the page */
   .tv-chan, .psa, .crux-cap { bottom: calc(100% - var(--bt, 7%) - var(--bh, 60%) + 10px); }
 }
 @media (max-width: 640px) {
@@ -1307,7 +1308,7 @@ window.__fl = {   // QA: step the clip that is on screen
 };
 // thread D: the crucifix is a live glTF (crucifix.js, loaded on demand) over the case still; the c_crucifix still is only a fallback
 let cruxLoad = null, cruxOK = false;
-function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js?v=41'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
+function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js?v=42'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
 function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
@@ -1341,7 +1342,7 @@ const jget = (u) => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null)
 function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js').then(() => loadScript('album.js')), jget('frames/bible.json'), jget('frames/bible_pages.json'), jget('frames/album.json'), jget('frames/album_pages.json')]).then(([, , bj, pj, aj, apj]) => {
   pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
   bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
-const ASSET_V = '41';   // bumped with every change to a .js module, so browsers and GitHub's cache never serve an old copy
+const ASSET_V = '42';   // bumped with every change to a .js module, so browsers and GitHub's cache never serve an old copy
 function loadScript(src) { const one = (u) => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = u; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); return one(src + '?v=' + ASSET_V).catch(() => one(src)); }
 const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Click beside the book to put it back · Esc', closing: 'Back to the table', returning: 'Back to the table' };
 function mountBooks() {
