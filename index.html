@@ -153,8 +153,9 @@ body:not(.tv) #cuHint { display: none; }
 /* ---- phones in portrait only (Josiah's iPhone recording, 10-01). Nothing here applies to desktop or landscape. ---- */
 @media (max-aspect-ratio: 1/1) {
   #dragCue .cue { transform: translateY(-13vh); }                                  /* centred on the room band (7%..67% of the height), clear of the title card */
-  .bible-strip, #hubStrip { top: calc(76% + 4px); bottom: auto !important; left: 16px; }   /* under the picture, in the empty band: never over the book */
+  .bible-strip, #hubStrip { top: calc(79% + 2px); bottom: auto !important; left: 16px; }   /* under the picture, in the empty band: never over the book */
   .bible-strip button { color: var(--paper); border-color: var(--rule); min-height: 40px; }
+  .hint { min-height: 28px; } .hint.big { font-size: 10.5px; letter-spacing: 0.02em; white-space: nowrap; } #hintTail { display: inline; white-space: nowrap; }   /* one line always: the lines changing no longer push the card up and down */
   nav.site { gap: 9px; flex-wrap: nowrap; } nav.site a { font-size: 9.5px; letter-spacing: 0.1em; }
 }
 @media (max-width: 640px) {
@@ -691,7 +692,7 @@ const black = (() => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2
 // offscreen target for the film pass (mipmapped for glow and edge softness)
 let fbo = null, fboTex = null, W = 0, H = 0;
 function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const dpr = Math.min(devicePixelRatio || 1, Math.max(innerWidth, innerHeight) < 1000 ? 2.5 : 1.5);   // phones: sharper (few pixels, and the Bible's text must read)
   const w = Math.round(stage.clientWidth * dpr), h = Math.round(stage.clientHeight * dpr);
   if (w === W && h === H) return; W = canvas.width = w; H = canvas.height = h;
   if (fboTex) gl.deleteTexture(fboTex); if (fbo) gl.deleteFramebuffer(fbo);
@@ -703,17 +704,28 @@ function resize() {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 addEventListener('resize', resize);
+// last resort: if the browser takes the GL context away (memory), come back to the room rather than sit on a black picture
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 600); });
 
 // ---------- the view grid ----------
 let views = null, TS = [], TILTS = [], FA = 1.6;
 const cache = new Map();   // name -> {b, l} textures
 const SMALL = Math.max(innerWidth, innerHeight) < 1000 || (navigator.connection && navigator.connection.saveData);   // phones get the 960px frames
 function vname(t, tilt) { const s = (t >= 0 ? '+' : '-') + String(Math.abs(t).toFixed(1)).padStart(4, '0'); return `${s}_${String(Math.round(tilt)).padStart(2, '0')}`; }
+// Phones (Josiah's iPhone went black after the case, 10-01): every view holds ~13 MB of textures and all 87 were kept (over 1 GB), so iOS dropped
+// the page's GL context. On small screens only the views nearest the camera stay in memory; the rest reload from the browser cache when needed.
+const VIEW_KEEP = 18;
+function shrink(img, w) { const c = document.createElement('canvas'); c.width = w; c.height = Math.round(w * img.naturalHeight / img.naturalWidth); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; }
+function evictViews() { if (cache.size <= VIEW_KEEP) return; const d = nm => Math.abs(parseFloat(nm.slice(0, 5)) - t) + Math.abs(+nm.slice(6) - tilt) * 1.5;
+  const far = [...cache.keys()].filter(nm => !cache.get(nm).pending).sort((a, b) => d(b) - d(a));
+  for (const nm of far) { if (cache.size <= VIEW_KEEP) break; if (d(nm) < 6) break; const e = cache.get(nm); cache.delete(nm);
+    if (e.b) gl.deleteTexture(e.b); if (e.l && e.l !== black) gl.deleteTexture(e.l); if (e.d) gl.deleteTexture(e.d); } }
 function loadView(name) {
   if (cache.has(name)) return cache.get(name);
   const e = { b: null, l: null, d: null, pending: true }; cache.set(name, e);
   const ib = new Image(), il = new Image(), id = new Image(); let n = 0;
-  const done = () => { if (++n === 3) { e.b = tex(ib); e.l = il.naturalWidth ? tex(il) : black; e.d = id.naturalWidth ? tex(id, true) : null; e.pending = false; } };
+  const done = () => { if (++n === 3) { if (!cache.has(name) || cache.get(name) !== e) return;   // evicted while loading
+    e.b = tex(ib); e.l = il.naturalWidth ? tex(SMALL ? shrink(il, 720) : il) : black; e.d = id.naturalWidth ? tex(id, true) : null; e.pending = false; if (SMALL) evictViews(); } };
   ib.onload = done; il.onload = done; il.onerror = done; id.onload = done; id.onerror = done; ib.onerror = () => { e.pending = false; };
   id.src = `frames/d_${name}.png`;
   ib.src = SMALL ? `frames/m/v_${name}.jpg` : `frames/v_${name}.jpg`; il.src = `frames/l_${name}.png`; return e;
@@ -723,6 +735,7 @@ fetch('views.json').then(r => r.json()).then(j => {
   TS = [...new Set(views.map(v => v.t))].sort((a, b) => a - b); TILTS = [...new Set(views.map(v => v.tilt))].sort((a, b) => a - b);
   // load the centre first, then outward; the far ends last
   const order = views.slice().sort((a, b) => (Math.abs(a.t) + a.tilt * 1.5) - (Math.abs(b.t) + b.tilt * 1.5));
+  if (SMALL) order.length = Math.min(order.length, 12);   // phones: the nearest dozen up front, the rest as the camera gets there
   let i = 0; const next = () => { if (i < order.length) { loadView(vname(order[i].t, order[i].tilt)); i++; setTimeout(next, i < 6 ? 0 : 40); } };
   next();
   resize(); requestAnimationFrame(frame);

@@ -159,11 +159,11 @@ function camBasis() {
   return { c, f, r, u };
 }
 /** the Bible turned to the camera: fit a w x h box (local x, y) so that local (cx, 0, cz) sits at the visible centre, pitched (top edge away) */
-function fitPose(w, h, cx, cz, pitch, dy) {
+function fitPose(w, h, cx, cz, pitch, dy, wf) {
   const { c, f, r, u } = camBasis(); const fr = S.meta.framing();
   const fovH = 2 * Math.atan(18 / S.meta.lens), aspect = S.meta.res[0] / S.meta.res[1];
   const tanV = Math.tan(fovH / 2) / aspect, tanH = Math.tan(fovH / 2);
-  const dV = h / (FILL * fr.sc[1] * 2 * tanV), dH = w / (0.9 * fr.sc[0] * 2 * tanH);
+  const dV = h / (FILL * fr.sc[1] * 2 * tanV), dH = w / ((wf || 0.9) * fr.sc[0] * 2 * tanH);
   const d = Math.max(dV, dH);
   const sx = (fr.fc[0] + (0.5 - fr.vc[0]) * fr.sc[0]) - 0.5, sy = (fr.fc[1] + (0.5 - fr.vc[1]) * fr.sc[1]) - 0.5 + (dy || 0) * fr.sc[1];
   const target = c.clone().addScaledVector(f, d).addScaledVector(r, sx * 2 * tanH * d).addScaledVector(u, sy * 2 * tanV * d);
@@ -176,7 +176,7 @@ function fitPose(w, h, cx, cz, pitch, dy) {
 function closedPose() { const c = CFG.closed; return fitPose(c.w, c.h, 0.0, c.cz, c.pitch, c.dy); }
 function openPose() {
   const portrait = S.canvas.clientWidth < S.canvas.clientHeight, o = CFG.open;
-  if (portrait && S.focus !== 0) return fitPose(o.pw, o.ph, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, o.ppitch, o.pdy);   // a phone: focus 0 = the whole spread across the width (Josiah 10-01), +/-1 = one page filling it
+  if (portrait && S.focus !== 0) return fitPose(o.pw, 0.01, S.focus > 0 ? (XS + XF) / 2 : (XS + XF) / 2 - L - 0.004, ZT, 0.06, 0, 0.97);   // one page across the full width, nearly square-on (Josiah 10-01: bigger, crisp)   // a phone: focus 0 = the whole spread across the width (Josiah 10-01), +/-1 = one page filling it
   return fitPose(o.w, o.h, XS - 0.002, ZT, o.pitch, o.dy);
 }
 
@@ -236,7 +236,7 @@ function roomEnvironment() {
 }
 function resize() {
   const w = S.canvas.clientWidth, h = S.canvas.clientHeight; if (!w || !h) return;
-  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const dpr = Math.min(devicePixelRatio || 1, PHONE ? 2.5 : 1.5);
   if (S.canvas.width !== Math.round(w * dpr) || S.canvas.height !== Math.round(h * dpr)) { S.renderer.setPixelRatio(dpr); S.renderer.setSize(w, h, false); }
   const fr = S.meta.framing(), FW = S.meta.res[0], FH = S.meta.res[1];
   const ox = (fr.fc[0] - fr.vc[0] * fr.sc[0]) * FW, oy = (1 - fr.fc[1] - (1 - fr.vc[1]) * fr.sc[1]) * FH;
@@ -292,7 +292,7 @@ function creamCanvas(w, h) {
 function pageTexture(cv) { const t = new THREE.CanvasTexture(cv); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
 function leafMaterial(tex) { return new THREE.MeshStandardMaterial({ map: tex, color: 0xfffaf0, roughness: 0.93, metalness: 0, envMapIntensity: 0.15 }); }
 function buildLeaves() {
-  const ch = S.small ? 720 : 1440, cw = Math.round(ch * L / H);
+  const ch = 1440,   /* phones too (10-01): the 720 px pages read blurry once a page fills the screen */ cw = Math.round(ch * L / H);
   const blank = pageTexture(creamCanvas(S.small ? 256 : 512, Math.round((S.small ? 256 : 512) * H / L))); S.blank = blank;
   LEAVES.forEach((names, k) => {
     const g = leafGeometry(); const leaf = { k, geo: g.geo, back: g.back, theta: k < 0 ? Math.PI : 0, side: 'right', front: null, backMesh: null, names, cw, ch, iw: 0, ih: 0, img: [null, null], tex: [null, null] };
@@ -309,7 +309,7 @@ function buildLeaves() {
 const PAGE_WIN = 2;
 function loadPages() {
   if (S.pagesLoaded) return; S.pagesLoaded = true;
-  const base = S.small ? 'frames/m/' : 'frames/';
+  const base = 'frames/';
   for (const leaf of S.leaves) for (const [fi, name] of [[0, leaf.names[0]], [1, leaf.names[1]]]) {
     if (!name) continue;
     const im = new Image(); im.decoding = 'async';
