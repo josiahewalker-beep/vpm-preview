@@ -392,6 +392,10 @@ function tick(now) {
   if (S.state === 'lifting' && t - S.tLift >= 0.5 * LIFT_S) { S.state = 'opening'; S.t0 = t; if (CFG.sound && window.pageSnd) window.pageSnd.cover(true, 0.05, OPEN_S); emit(); }
   if (S.state === 'opening') {
     const k = Math.min(1, (t - S.t0) / OPEN_S), e = easeInOut(k); S.cover = -Math.PI * e; S.open = e;
+    if (S.directNow) {   // Josiah 10-01 (the site's Bio link): no leafing; the leaves before the bio travel over with the board, each a touch behind the one above it, and the book lies open at the bio
+      for (let i = 0; i < BIO_LEAF; i++) { const l = S.leaves[i], lag = 0.05 * (i + 1), ki = Math.max(0, (k - lag) / (1 - lag)); l.theta = Math.PI * easeInOut(ki); shapeLeaf(l, l.theta, k >= 1 ? stackZ(l) : turnZ(l, l.theta)); }
+      if (k >= 1) { S.directNow = false; S.queue = []; S.state = 'open'; emit(); }
+    } else
     if (k >= 1) { S.state = 'leafing'; S.t0 = t; S.runT = -RUN_DELAY; S.queue = S.leaves.slice(0, BIO_LEAF).map((l, i) => ({ leaf: l, at: t + RUN_DELAY + i * TURN_GAP })); emit(); }
   }
   if (S.state === 'leafing') {
@@ -464,6 +468,8 @@ function onClick(e) {
 
 const API = {
   get state() { return S.state; },
+  set direct(v) { S.direct = !!v; },                       // the next lift() opens straight at the bio spread
+  get bioDelta() { return BIO_LEAF - turnedCount(); },     // leaves to turn (+ forward, - back) to reach the bio spread
   get ready() { return S.ready; },
   get failed() { return S.failed; },
   get turned() { return turnedCount(); },
@@ -499,7 +505,7 @@ const API = {
   lift() {
     if (!S.ready || S.state !== 'rest') return false;
     if (CFG.sound && window.pageSnd && window.pageSnd.load) window.pageSnd.load();   // round 5: the click is the gesture the audio context needs; the slices are decoded before the first leaf turns
-    API.show(); S.state = 'lifting'; S.p0 = S.p; S.tLift = S.t0 = performance.now() / 1000; S.canvas.classList.add('live'); emit(); return true;
+    S.directNow = !!S.direct; S.direct = false; API.show(); S.state = 'lifting'; S.p0 = S.p; S.tLift = S.t0 = performance.now() / 1000; S.canvas.classList.add('live'); emit(); return true;
   },
   /** everything falls back: leaves, board, then the Bible onto the table; ends in 'rest' */
   release() {
