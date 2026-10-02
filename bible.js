@@ -8,7 +8,7 @@
 // 1920x1200 frame) and the page's framing, so the model rests exactly where the rendered Bible lies on the table.
 // Sequence: rest (the page shows the rendered still; this canvas is idle) -> lift() : the Bible rises toward the camera and
 // turns to face it -> the padded front board swings open (bb_front_hinge, about its local +y, negative opens) -> a run of
-// leaves turns (Doré plates and KJV text, frames/bible_p01..08.jpg drawn on curling page meshes) -> settled on the bio
+// leaves turns (the title page, Doré plates, KJV text, the NT half-title: frames/bible_p01..10.jpg drawn on curling page meshes) -> settled on the bio
 // spread (07 left, 08 right; the IMDb box and the site line on 08 are links) -> release() : the leaves fall back, the
 // board closes, the Bible drops back onto the table -> rest.
 // window.bible / window.album = { mount(canvasEl, meta, cfgOverrides), show(), hide(), lift(), release(), turn(dir), unmount(), get state(), ... }
@@ -25,8 +25,10 @@ const BIBLE_CFG = {
   // the page block (bb_pages in the glb): spine at xs, fore-edge at xf, head/tail at +-h/2, top face at zt (BIBLE2.md, measured from the glb)
   block: { xs: -0.111, xf: 0.109, h: 0.278, zt: 0.0545 },
   closed: { w: 0.25, h: 0.315, cz: 0.032, pitch: 0.1, dy: 0.03 }, open: { w: 0.47, h: 0.30, pitch: 0.2, dy: 0.025, pw: 0.236, ph: 0.30, ppitch: 0.16, pdy: 0.02 },
-  // the leaves: recto = the face seen on the right before the turn, verso = the face seen on the left after it (null = blank flyleaf)
-  leaves: [[null, 'bible_p01'], ['bible_p02', 'bible_p03'], ['bible_p04', 'bible_p05'], ['bible_p06', 'bible_p07'], ['bible_p08', 'bible_p09'], ['bible_p10', null]],
+  // the leaves: recto = the face seen on the right before the turn, verso = the face seen on the left after it (null = a blank face).
+  // Round 5: the title page is the recto of leaf 0 (it faces the reader as the cover opens, its verso blank), 06 is the New Testament
+  // half-title; frames/bible_pages.json `leaves` (scene/art/bible_pages.py) carries the same list and wins when present (mount()).
+  leaves: [['bible_p01', null], ['bible_p02', 'bible_p03'], ['bible_p04', 'bible_p05'], ['bible_p06', 'bible_p07'], ['bible_p08', 'bible_p09'], ['bible_p10', null]],
   stopAt: 4,                                              // the leaf run turns leaves 0..stopAt-1: the bio spread (07 | 08); one more turn = About the film (09 | 10)
   // the link boxes (fractions in frames/bible_pages.json): the bio page 08 (the recto of leaf 4) and About the film page 10 (the recto of leaf 5);
   // url = the json's <key>_url (index.html passes them as `urls`); a key without a url goes to meta.onLink(key) (the poster)
@@ -35,7 +37,7 @@ const BIBLE_CFG = {
           { leaf: 5, face: 'recto', key: 'about_vimeo', label: 'The trailer on Vimeo' }, { leaf: 5, face: 'recto', key: 'about_insta', label: '@veryprosperousmenfilm on Instagram' },
           { leaf: 5, face: 'recto', key: 'about_bio', label: 'Josiah Walker · bio' }],
   lift_s: 1.3, open_s: 1.15, turn_s: 0.2, turn_gap: 0.12, run_delay: 0.15, close_s: 0.62, drop_s: 0.8, back_turn_s: 0.34, hand_turn_s: 0.72,
-  cover: 'cover', paper: '#efe6d2', sound: 'leaf',
+  cover: 'cover', paper: '#efe6d2', sound: 'leaf',       // sound: 'leaf' = the recorded page turns + cover creak + drop (pagesnd.js); null = silent (the album)
   // round 4 note 6: the leaf corners are chamfered (m along each edge from the corner) so they sit inside the board's brass corner
   // protectors (bible.glb: the inner triangles' hypotenuse at x + y = 0.2144 from the board centre; the block's corner is at (0.109, 0.139))
   chamfer: 0.0375,
@@ -335,7 +337,9 @@ function updatePageTex(all) {
 function startTurn(leaf, dir, dur, now, snd) {
   if (S.turning.some(t => t.leaf === leaf)) return;
   S.turning.push({ leaf, t0: now, dur, dir, from: leaf.theta });
-  if (snd && window.pageSnd) window.pageSnd.leaf(0, dur);
+  // round 5 note 2: one recorded turn per leaf, its transient on the vertical (half-way through the ease); `now` may be a little
+  // ahead of the clock for the staggered fall-back, so the sound waits the same; the album (sound: null) is silent
+  if (snd && CFG.sound && window.pageSnd) window.pageSnd.turn(Math.max(0, now - performance.now() / 1000), dur);
 }
 function stackZ(leaf) { return ZT + 0.0003 + LEAF_DZ * (leaf.theta > 1 ? leaf.k : (LEAVES.length - 1 - leaf.k)); }
 // a turning leaf's height at the spine: its place on the right stack while it rises off it, its place on the left stack as it lays down there
@@ -364,7 +368,7 @@ function tick(now) {
   const t = now / 1000;
   // the lift p: 0 on the table, 1 in front of the camera; the cover angle; the open blend
   if (S.state === 'lifting' || S.state === 'opening' || S.state === 'leafing' || S.state === 'open') { const k = Math.min(1, (t - S.tLift) / LIFT_S); S.p = S.p0 + (1 - S.p0) * easeOut(k); }
-  if (S.state === 'lifting' && t - S.tLift >= 0.5 * LIFT_S) { S.state = 'opening'; S.t0 = t; if (window.pageSnd) window.pageSnd.cover(true, 0.05, OPEN_S); emit(); }
+  if (S.state === 'lifting' && t - S.tLift >= 0.5 * LIFT_S) { S.state = 'opening'; S.t0 = t; if (CFG.sound && window.pageSnd) window.pageSnd.cover(true, 0.05, OPEN_S); emit(); }
   if (S.state === 'opening') {
     const k = Math.min(1, (t - S.t0) / OPEN_S), e = easeInOut(k); S.cover = -Math.PI * e; S.open = e;
     if (k >= 1) { S.state = 'leafing'; S.t0 = t; S.runT = -RUN_DELAY; S.queue = S.leaves.slice(0, BIO_LEAF).map((l, i) => ({ leaf: l, at: t + RUN_DELAY + i * TURN_GAP })); emit(); }
@@ -376,12 +380,12 @@ function tick(now) {
   if (S.state === 'closing') {
     // the turned leaves fall back (staggered), then the board closes, then the drop
     if (S.closeStep === 0) { S.turning = []; const turned = S.leaves.filter(l => l.theta > 0.001); turned.reverse().forEach((l, i) => startTurn(l, -1, BACK_TURN_S, t + i * 0.06, i === 0)); S.closeStep = 1; S.t0 = t; }
-    if (S.closeStep === 1 && !S.turning.length && t - S.t0 > 0.05) { S.closeStep = 2; S.t0 = t; S.openAt = S.open; if (window.pageSnd) window.pageSnd.cover(false, 0, CLOSE_S * S.openAt); }
+    if (S.closeStep === 1 && !S.turning.length && t - S.t0 > 0.05) { S.closeStep = 2; S.t0 = t; S.openAt = S.open; if (CFG.sound && window.pageSnd) window.pageSnd.cover(false, 0, CLOSE_S * S.openAt); }
     if (S.closeStep === 2) { const k = Math.min(1, (t - S.t0) / (CLOSE_S * Math.max(0.05, S.openAt))), e = easeInOut(k); S.cover = -Math.PI * S.openAt * (1 - e); S.open = S.openAt * (1 - e);   // QA v26: from however far it had opened (Esc mid-opening used to snap the board wide first)
       if (k >= 1) { S.closeStep = 3; S.state = 'returning'; S.p0 = S.p; S.t0 = t; emit(); } }
   }
   if (S.state === 'returning') { const k = Math.min(1, (t - S.t0) / DROP_S); S.p = S.p0 * (1 - k * k * (0.55 + 0.45 * k));   // eases in and lands at speed: the rendered still takes over on the landing frame, under motion (round 4 note 4)
-    if (k >= 1) { S.state = 'rest'; S.p = 0; if (window.pageSnd && window.pageSnd.drop) window.pageSnd.drop(0); emit(); } }
+    if (k >= 1) { S.state = 'rest'; S.p = 0; if (CFG.sound && window.pageSnd && window.pageSnd.drop) window.pageSnd.drop(0); emit(); } }
   updateLeaves(t);
   if (S.hinge) S.hinge.rotation.set(0, S.cover, 0);
   // the pose: rest -> closed face pose by p, closed -> open by the open blend; a breath of movement while it is held open
@@ -448,9 +452,11 @@ const API = {
   /** canvasEl: the #bible3d / #album3d canvas; meta: { cam, aim, lens, res: [w, h], framing: () => ({ sc, fc, vc }), rest, boxes, urls, small, onState, onHover };
    *  over: config overrides from frames/album.json (glb, rest, hinge, block { xs, xf, h, zt }, pages [names], closed/open poses) */
   mount(canvasEl, meta, over) {
-    if (over) { for (const k of ['glb', 'hinge', 'block', 'closed', 'open', 'links', 'stopAt', 'chamfer', 'lights']) if (over[k] !== undefined) CFG[k] = over[k];
+    if (over) { for (const k of ['glb', 'hinge', 'block', 'closed', 'open', 'links', 'stopAt', 'chamfer', 'lights', 'sound']) if (over[k] !== undefined) CFG[k] = over[k];
       if (over.rest) CFG.rest = over.rest; if (over.leaves) { LEAVES = over.leaves.map(l => l.slice()); CFG.leaves = LEAVES; }   // [[recto, verso], ...] as CFG.leaves
       XS = CFG.block.xs; XF = CFG.block.xf; H = CFG.block.h; ZT = CFG.block.zt; L = XF - XS; BIO_LEAF = Math.min(CFG.stopAt, LEAVES.length - 1); }
+    // round 5: the Bible's leaf order comes with its page art (frames/bible_pages.json `leaves`, [[recto, verso], ...]) when the json carries it
+    if (!(over && over.leaves) && meta.boxes && Array.isArray(meta.boxes.leaves) && meta.boxes.leaves.length && !S.ready) { LEAVES = meta.boxes.leaves.map(l => l.slice()); CFG.leaves = LEAVES; BIO_LEAF = Math.min(CFG.stopAt, LEAVES.length - 1); }
     setLeafDZ();
     if (!meta.rest) meta.rest = CFG.rest;
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
@@ -458,6 +464,7 @@ const API = {
     canvasEl.hidden = true; canvasEl.classList.remove('on', 'live');
     if (!S.renderer) { canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
+    if (window.pageSnd && CFG.sound && window.pageSnd.load) window.pageSnd.load();   // the recorded page turns decode while the hub is still (needs the audio context: a no-op before the first gesture, retried at the first turn)
     if (S.ready) { for (const l of S.leaves) { l.theta = 0; shapeLeaf(l, 0, stackZ(l)); } if (S.hinge) S.hinge.rotation.set(0, 0, 0); loadPages(); return Promise.resolve(true); }
     if (S.loading) return S.loading;   // QA v26: mounted again while the glb is still on its way (the hub left and re-entered fast): one model, not two stacked
     return (S.loading = loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL()).catch(err => { if (!CFG.fallbackGlb) throw err; S.standIn = true; return loadGLB(CFG.fallbackGlb); }); }).then(({ root, named }) => {
@@ -470,6 +477,7 @@ const API = {
   /** the Bible rises, turns to the camera, opens and leafs through to the bio spread */
   lift() {
     if (!S.ready || S.state !== 'rest') return false;
+    if (CFG.sound && window.pageSnd && window.pageSnd.load) window.pageSnd.load();   // round 5: the click is the gesture the audio context needs; the slices are decoded before the first leaf turns
     API.show(); S.state = 'lifting'; S.p0 = S.p; S.tLift = S.t0 = performance.now() / 1000; S.canvas.classList.add('live'); emit(); return true;
   },
   /** everything falls back: leaves, board, then the Bible onto the table; ends in 'rest' */

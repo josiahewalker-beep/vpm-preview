@@ -1,11 +1,54 @@
-// Page sounds, generated with Web Audio (no recordings): a leaf turning in a big Bible, a newsprint sheet flipping,
-// the padded cover of the Bible opening and closing. Plays through the page's master gain (window.__snd from index.html),
-// so the Sound button mutes it. window.pageSnd = { leaf(t0, dur), sheet(t0, dur), cover(open, t0, dur) }; times in seconds
-// from now (0 = now), dur = how long the move on screen takes, so the landing lands with the picture.
+// Page sounds. Round 5 note 2: every leaf turn plays one of Josiah's recorded page turns (frames/pageturn.mp4, Epidemic Sound,
+// sliced into single events by scene/art/pageturn_slice.py; frames/pageturn.json lists each slice's start, dur and the time of its
+// loudest transient), started so that the transient lands when the leaf passes vertical; the slices are picked at random without
+// repeats. The generated sounds remain: the padded cover's creak, the closed book dropping onto the table, and the old leaf/sheet
+// strokes as the stand-in until the recording has decoded. Everything runs through one "book bus" at -6 dB (Josiah: 50 % quieter)
+// into the page's master gain (window.__snd from index.html), so the Sound button mutes it all.
+// window.pageSnd = { turn(t0, dur, opts), leaf(t0, dur), sheet(t0, dur), cover(open, t0, dur), drop(t0), load() }; times in
+// seconds from now (0 = now), dur = how long the move on screen takes, so the landing lands with the picture.
 (() => {
 'use strict';
 const ctx = () => { const s = window.__snd; return s && s.ctx && s.ctx(); };
-const out = () => { const s = window.__snd; return s && s.master; };
+const BUS_GAIN = 0.5;                                                   // -6 dB on everything the books and the article make
+let bus = null, busCtx = null;
+function out() {
+  const s = window.__snd, ac = ctx(); if (!s || !s.master || !ac) return null;
+  if (!bus || busCtx !== ac) { bus = ac.createGain(); bus.gain.value = BUS_GAIN; bus.connect(s.master); busCtx = ac; }
+  return bus;
+}
+// ---- the recording: decoded once (QA runs on the Vorbis copy frames/_pageturn.ogg, as index.html does for the other recordings)
+const QA_WEBM = /webmtest/.test(location.hash);
+let slices = null, buf = null, loading = false, bag = [];
+function load() {
+  const ac = ctx(); if (!ac || buf || loading) return; loading = true;
+  Promise.all([fetch('frames/pageturn.json').then(r => r.json()), fetch(QA_WEBM ? 'frames/_pageturn.ogg' : 'frames/pageturn.mp4').then(r => r.arrayBuffer()).then(ab => ac.decodeAudioData(ab))])
+    .then(([j, b]) => { slices = j.slices || []; buf = b; }).catch(() => {}).then(() => { loading = false; });
+}
+function pickSlice(short) {
+  // random without repeats: a shuffled bag, refilled when empty; `short` prefers slices whose transient comes early (the rapid run)
+  if (!bag.length) { bag = slices.map((s, i) => i); for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; } }
+  if (short) { const k = bag.findIndex(i => slices[i].peak < 0.5); if (k >= 0) return slices[bag.splice(k, 1)[0]]; }
+  return slices[bag.pop()];
+}
+/** one recorded page turn for a leaf that takes `dur` s on screen, starting in t0 s: the slice's loudest transient lands at the
+ *  leaf's vertical (`at` = fraction of dur, default 0.5 where bible.js's ease is half-way); a turn shorter than 0.35 s (the rapid
+ *  run) keeps only ~0.4 s past the transient so the overlapping slices stay a riffle, not a pile-up. Returns false without the recording. */
+function playSlice(t0, dur, opts) {
+  const ac = ctx(), o = out(); if (!ac || !o || !buf || !slices || !slices.length) return false;
+  try { if (ac.state !== 'running') return false; } catch (e) { return false; }
+  opts = opts || {}; t0 = +t0 || 0; dur = +dur || 0.7; const at = ac.currentTime + Math.max(0, t0); const lead = dur * (opts.at ?? 0.5);
+  const sl = pickSlice(dur < 0.35); if (!sl) return false;
+  const skip = Math.max(0, sl.peak - lead);                            // start inside the slice when its transient is later than the lead
+  const wait = Math.max(0, lead - sl.peak);                            // ... or a little late when it comes early
+  const tail = dur < 0.35 ? 0.4 : 1.4;                                 // seconds kept after the transient
+  const len = Math.min(sl.dur - skip, (sl.peak - skip) + tail);
+  const s = ac.createBufferSource(); s.buffer = buf; const g = ac.createGain();
+  const start = at + wait, gain = opts.gain ?? 1.0;
+  g.gain.setValueAtTime(skip > 0 ? 0 : gain, start); if (skip > 0) g.gain.linearRampToValueAtTime(gain, start + 0.012);
+  g.gain.setValueAtTime(gain, start + len - 0.06); g.gain.linearRampToValueAtTime(0, start + len);
+  s.connect(g).connect(o); s.start(start, sl.start + skip, len + 0.01);
+  return true;
+}
 let noise = null;
 function noiseBuf(ac) {
   if (noise && noise.sampleRate === ac.sampleRate) return noise;
@@ -29,6 +72,14 @@ function thump(ac, dst, at, f, gain, dur) {                        // a soft low
 }
 function ready() { const ac = ctx(), o = out(); if (!ac || !o) return null; try { if (ac.state !== 'running') return null; } catch (e) { return null; } return { ac, o }; }
 window.pageSnd = {
+  load,
+  get loaded() { return !!buf; },
+  get slices() { return slices; },
+  /** a page turning: the recording when it is in, else the generated leaf (or sheet, for the article) */
+  turn(t0, dur, opts) {
+    load(); if (playSlice(t0, dur, opts)) return;
+    if (opts && opts.sheet) window.pageSnd.sheet(t0, dur); else window.pageSnd.leaf(t0, dur);
+  },
   /** a heavy gilt-edged leaf: a soft lift, a rising slide of paper on paper, the flap as it lands */
   leaf(t0, dur) {
     const r = ready(); if (!r) return; const { ac, o } = r; const at = ac.currentTime + Math.max(0, t0 || 0); dur = dur || 0.7;

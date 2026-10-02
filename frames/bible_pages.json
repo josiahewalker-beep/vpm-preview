@@ -1,48 +1,48 @@
 {
  "imdb_box": [
-  0.1786,
-  0.755,
-  0.8214,
-  0.795
+  0.1929,
+  0.7785,
+  0.8071,
+  0.8185
  ],
  "imdb_url": "https://www.imdb.com/name/nm9711704/",
  "site_line": [
-  0.1429,
-  0.815,
-  0.8571,
-  0.838
+  0.1714,
+  0.8385,
+  0.8286,
+  0.8615
  ],
  "site_url": "https://www.josiahwalker.com/",
  "bio_source": "content/bio/josiahwalker-bio.md",
  "about_press": [
-  0.2214,
+  0.2357,
   0.32,
-  0.7786,
+  0.7643,
   0.36
  ],
  "about_poster": [
   0.398,
-  0.615,
+  0.635,
   0.602,
-  0.647
+  0.667
  ],
  "about_vimeo": [
   0.3813,
-  0.661,
+  0.681,
   0.6187,
-  0.693
+  0.713
  ],
  "about_insta": [
   0.3363,
-  0.707,
+  0.727,
   0.6637,
-  0.739
+  0.759
  ],
  "about_bio": [
   0.3723,
-  0.753,
+  0.773,
   0.6277,
-  0.785
+  0.805
  ],
  "about_press_url": "https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/",
  "about_vimeo_url": "https://vimeo.com/891711371",
@@ -52,7 +52,33 @@
  "about_source": "site/index.html #about",
  "plates": {
   "creation_of_light": "File:Creation of Light (89392244).jpg",
-  "moses_tables": "File:041A.Moses Breaks the Tables of the Law.jpg",
-  "crucifixion": "File:Gustave Dor\u00e9 - Crucifixion of Jesus.jpg"
- }
+  "moses_tables": "File:041A.Moses Breaks the Tables of the Law.jpg"
+ },
+ "leaves": [
+  [
+   "bible_p01",
+   null
+  ],
+  [
+   "bible_p02",
+   "bible_p03"
+  ],
+  [
+   "bible_p04",
+   "bible_p05"
+  ],
+  [
+   "bible_p06",
+   "bible_p07"
+  ],
+  [
+   "bible_p08",
+   "bible_p09"
+  ],
+  [
+   "bible_p10",
+   null
+  ]
+ ],
+ "note": "round 5: the title page is the recto of leaf 0 (it faces the reader when the cover opens); 06 is the New Testament half-title"
 }

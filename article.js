@@ -100,7 +100,8 @@ function onPage(i, e) {
   const p = A.pages[i];
   if (p.theta >= 179) { window.article.flip(-1); return; }           // a sheet on the pile: turn it back
   if (i === N - 1) {                                                  // page 3: the whole page is the link (and its URL box)
-    if (A.url) window.open(A.url, '_blank', 'noopener'); return;
+    // window.open is blocked inside the review host's sandbox; a real anchor click (the bar's link) is allowed from a user gesture
+    if (A.url) { const a = A.root.querySelector('.art-link'); if (a && a.href) a.click(); else window.open(A.url, '_blank', 'noopener'); } return;
   }
   window.article.flip(1);
 }
@@ -131,6 +132,7 @@ window.article = {
   },
   open() {
     if (!A.built) build();
+    if (window.pageSnd && window.pageSnd.load) window.pageSnd.load();   // round 5: the recorded page turns decode as the article opens (the click made the audio context)
     A.root.hidden = false; layout(); A.page = 0; A.turning = null;
     A.pages.forEach((p, i) => setPage(i, 0)); updateBar();
     const c = A.root.querySelector('[data-close]'); if (c) c.focus();
@@ -146,7 +148,7 @@ window.article = {
     if (!A.root || A.root.hidden || A.turning) return false;
     const i = dir > 0 ? A.page : A.page - 1; if (i < 0 || i >= N - 1) return false;
     A.turning = { i, dir, t0: performance.now() / 1000 };
-    if (window.pageSnd) window.pageSnd.sheet(0, FLIP_S);
+    if (window.pageSnd) window.pageSnd.turn(0, FLIP_S, { sheet: true });   // round 5 note 2: the recorded page turns (the generated newsprint sheet until they decode)
     A.raf = requestAnimationFrame(animate); return true;
   },
 };

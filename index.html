@@ -179,13 +179,13 @@ body:not(.tv) #cuHint { display: none; }
 
 <footer class="bar bottom">
   <div class="card">
-    <span class="year">Short film · 26 min</span>
+    <span class="year">Short film · 22 min</span>
     <h1>Very Prosperous Men</h1>
     <p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p>
     <div class="actions">
       <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer ↗</a>
       <button class="btn" id="aboutBtn" type="button">About the film</button>
-      <button class="btn" id="soundBtn" type="button" aria-pressed="false">Sound off</button>
+      <button class="btn" id="soundBtn" type="button" aria-pressed="false">Sound: off</button>
     </div>
   </div>
   <div class="controls">
@@ -200,7 +200,7 @@ body:not(.tv) #cuHint { display: none; }
     <p><i>What gain has man from all his toil?</i></p>
     <h3>Film</h3>
     <ul>
-      <li>Horror · Thriller · Drama, 26 minutes</li>
+      <li>Horror · Thriller · Drama, 22 minutes</li>
       <li>Directed by Josiah Walker</li>
       <li>Written by Joshua Oakley and Josiah Walker</li>
       <li>Produced by Tommy Koponen and Dominic Koponen</li>
@@ -465,7 +465,7 @@ function curtainSound() {
     o.connect(og).connect(master); o.start(tt); o.stop(tt + 0.1); }
 }
 let userMuted = false;
-function setSoundUI() { $('#soundBtn').textContent = soundOn ? 'Sound on' : 'Sound off'; $('#soundBtn').setAttribute('aria-pressed', String(soundOn)); }
+function setSoundUI() { $('#soundBtn').textContent = soundOn ? 'Sound: on' : 'Sound: off'; $('#soundBtn').setAttribute('aria-pressed', String(soundOn)); }   // the label states the current state (Josiah 10-01)
 function autoSound() {   // turns sound on unless the button muted it; safe to call from any gesture, any number of times
   if (soundOn || userMuted) return;
   try {
