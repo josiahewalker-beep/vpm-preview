@@ -512,11 +512,11 @@ function curtainSound() {
   if (!soundOn || !actx) return;
   const t = actx.currentTime, s = actx.createBufferSource(); s.buffer = noiseBuf(1.6);
   const f = actx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(2400, t + 1.2);
-  const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.22, t + 0.15); g.gain.linearRampToValueAtTime(0.16, t + 1.0); g.gain.linearRampToValueAtTime(0, t + 1.4);
+  const g = actx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.066, t + 0.15); g.gain.linearRampToValueAtTime(0.048, t + 1.0); g.gain.linearRampToValueAtTime(0, t + 1.4);
   s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + 1.6);
   // rings sliding on the rod
   for (let i = 0; i < 7; i++) { const o = actx.createOscillator(), og = actx.createGain(), tt = t + 0.12 + i * 0.16 + Math.random() * 0.05;
-    o.type = 'triangle'; o.frequency.value = 2600 + Math.random() * 900; og.gain.setValueAtTime(0.0, tt); og.gain.linearRampToValueAtTime(0.03, tt + 0.004); og.gain.exponentialRampToValueAtTime(0.0005, tt + 0.08);
+    o.type = 'triangle'; o.frequency.value = 2600 + Math.random() * 900; og.gain.setValueAtTime(0.0, tt); og.gain.linearRampToValueAtTime(0.009, tt + 0.004); og.gain.exponentialRampToValueAtTime(0.0005, tt + 0.08);
     o.connect(og).connect(master); o.start(tt); o.stop(tt + 0.1); }
 }
 let userMuted = false;
