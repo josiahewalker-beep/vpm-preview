@@ -45,7 +45,8 @@ body.dragging-ui * { -webkit-user-select: none; user-select: none; }
        background: linear-gradient(var(--scrim), transparent); }
 .bottom { bottom: 0; align-items: flex-end; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); padding-top: 40px;
           background: linear-gradient(transparent, var(--scrim)); flex-wrap: wrap; }
-.name { font-family: var(--display); font-size: 17px; letter-spacing: 0.02em; text-decoration: none; }
+.name { font-family: var(--display); font-size: clamp(22px, 2.4vw, 34px); letter-spacing: 0.02em; text-decoration: none; line-height: 1.05; display: inline-flex; flex-direction: column; }   /* Josiah 10-01: name 2x, with the credit under it */
+.name small { font-family: var(--mono, ui-monospace, monospace); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-top: 4px; white-space: nowrap; }
 nav.site { display: flex; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
 nav.site a { text-decoration: none; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; color: var(--dim); }
 nav.site a:hover { color: var(--paper); }
@@ -62,7 +63,10 @@ nav.site a:hover { color: var(--paper); }
 .btn.primary:hover { background: var(--green); border-color: var(--green); color: var(--ink); }
 
 .controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
-.hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; transition: opacity 0.6s ease; }   /* round 4 note 12: the room's hint lines fade in and out */
+.hint { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; text-align: right; }
+.hint.big { font-size: clamp(15px, 2.3vw, 33px); letter-spacing: 0.02em; line-height: 1.15; }   /* Josiah 10-01: the room's line 3x bigger */
+#hintTail { transition: opacity 0.6s ease; }
+@media (min-width: 901px) { .hint.big { position: fixed; right: 32px; bottom: 26px; max-width: 50vw; text-align: right; z-index: 5; pointer-events: none; } }   /* round 4 note 12: the room's hint lines fade in and out */
 /* round 4 note 11: the film look is "Clean" only; the look chips are gone. Lite view (a still of the room, for low-power devices) lives in the About sheet. */
 .chip { font: inherit; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); background: transparent;
         border: 1px solid transparent; padding: 6px 8px; cursor: pointer; }
@@ -166,7 +170,7 @@ body:not(.tv) #cuHint { display: none; }
 <div id="loading">Loading the room</div>
 
 <header class="bar top">
-  <a class="name" href="https://www.josiahwalker.com/">Josiah Walker</a>
+  <a class="name" href="https://www.josiahwalker.com/">Josiah Walker<small>Writer / Director</small></a>
   <nav class="site" aria-label="Site">
     <a href="https://www.josiahwalker.com/bio">Bio</a>
     <a href="https://www.josiahwalker.com/contact">Contact</a>
@@ -189,7 +193,7 @@ body:not(.tv) #cuHint { display: none; }
     </div>
   </div>
   <div class="controls">
-    <div class="hint" id="hint">Drag to look around</div>
+    <div class="hint big" id="hint"><span id="hintLead">Drag to look around: </span><span id="hintTail"></span></div>
   </div>
 </footer>
 
@@ -313,16 +317,17 @@ try { localStorage.removeItem('vpm-look'); } catch (e) {}
 // ---------- the hint line (round 4 note 12) ----------
 // In the room: "Drag to look around" first, then the lines below take turns, each fading in and out (0.6 s) and holding 3 s, round and
 // round. Any close-up / window / lite hint stops the cycle and prints at once; back in the room it starts over from "Drag to look around".
-const HINTS = ['Drag to look around', 'Did you find the dead body?', 'Click the window', 'Did you see the vacuum?', 'Click the TV', 'Check out that cigarette'];
+const HINTS = ['Did you find the dead body?', 'Click the window', 'Did you see the vacuum?', 'Click the TV', 'Check out that cigarette'];
 const HINT_HOLD = 3000, HINT_FIRST = 5000, HINT_FADE = 600;
 let hintI = 0, hintTimer = 0, hintCycling = false;
-function hintPrint(txt) { $('#hint').textContent = txt; $('#hint').style.opacity = 1; }
-function hintStop() { hintCycling = false; clearTimeout(hintTimer); hintTimer = 0; $('#hint').style.opacity = 1; }
+// Josiah 10-01: "Drag to look around:" stays; the lines come and go after the colon. A fixed line (close-ups) hides the lead and prints small.
+function hintPrint(txt, lead) { $('#hintLead').hidden = !lead; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
+function hintStop() { hintCycling = false; clearTimeout(hintTimer); hintTimer = 0; $('#hintTail').style.opacity = 1; }
 function hintCycle() {
-  hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0]);
-  const next = () => { if (!hintCycling) return; $('#hint').style.opacity = 0;
-    hintTimer = setTimeout(() => { if (!hintCycling) return; hintI = (hintI + 1) % HINTS.length; hintPrint(HINTS[hintI]); hintTimer = setTimeout(next, HINT_HOLD); }, reduce ? 0 : HINT_FADE); };
-  hintTimer = setTimeout(next, HINT_FIRST);
+  hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0], true);
+  const next = () => { if (!hintCycling) return; $('#hintTail').style.opacity = 0;
+    hintTimer = setTimeout(() => { if (!hintCycling) return; hintI = (hintI + 1) % HINTS.length; hintPrint(HINTS[hintI], true); hintTimer = setTimeout(next, HINT_HOLD); }, reduce ? 0 : HINT_FADE); };
+  hintTimer = setTimeout(next, HINT_HOLD);
 }
 function setHint(txt) { hintStop(); hintPrint(txt); }                                     // a fixed line (close-ups, the window, lite)
 window.__hint = { get cycling() { return hintCycling; }, get i() { return hintI; }, get lines() { return HINTS; } };   // QA

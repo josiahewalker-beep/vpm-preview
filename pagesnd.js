@@ -2,14 +2,14 @@
 // sliced into single events by scene/art/pageturn_slice.py; frames/pageturn.json lists each slice's start, dur and the time of its
 // loudest transient), started so that the transient lands when the leaf passes vertical; the slices are picked at random without
 // repeats. The generated sounds remain: the padded cover's creak, the closed book dropping onto the table, and the old leaf/sheet
-// strokes as the stand-in until the recording has decoded. Everything runs through one "book bus" at -6 dB (Josiah: 50 % quieter)
+// strokes as the stand-in until the recording has decoded. Everything runs through one "book bus" at -12 dB (Josiah: 50 % quieter, then 50 % again on 10-01)
 // into the page's master gain (window.__snd from index.html), so the Sound button mutes it all.
 // window.pageSnd = { turn(t0, dur, opts), leaf(t0, dur), sheet(t0, dur), cover(open, t0, dur), drop(t0), load() }; times in
 // seconds from now (0 = now), dur = how long the move on screen takes, so the landing lands with the picture.
 (() => {
 'use strict';
 const ctx = () => { const s = window.__snd; return s && s.ctx && s.ctx(); };
-const BUS_GAIN = 0.5;                                                   // -6 dB on everything the books and the article make
+const BUS_GAIN = 0.25;                                                  // -12 dB on everything the books and the article make
 let bus = null, busCtx = null;
 function out() {
   const s = window.__snd, ac = ctx(); if (!s || !s.master || !ac) return null;
