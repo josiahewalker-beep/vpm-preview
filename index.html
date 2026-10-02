@@ -71,8 +71,9 @@ nav.site a:hover { color: var(--paper); }
 #dragCue .cue { display: grid; justify-items: center; gap: 14px; color: var(--paper); padding: 46px 64px; background: radial-gradient(closest-side, rgba(10,8,6,0.62), rgba(10,8,6,0.38) 60%, rgba(10,8,6,0)); filter: drop-shadow(0 2px 14px rgba(0,0,0,0.75)); }
 #dragCue svg { width: clamp(150px, 20vw, 230px); height: auto; }
 #dragCue p { margin: 0; font-family: var(--mono); font-size: clamp(13px, 1.5vw, 18px); letter-spacing: 0.16em; text-transform: uppercase; }
-#hintTail { transition: opacity 0.6s ease; }
-@media (min-width: 901px) { .hint.big { position: fixed; right: 32px; bottom: 26px; max-width: 50vw; text-align: right; z-index: 5; pointer-events: none; } }   /* round 4 note 12: the room's hint lines fade in and out */
+#hintTail { transition: opacity 0.6s ease; display: inline-block; text-align: left; white-space: nowrap; }   /* fixed width (set in hintFit) so the lead never moves */
+@media (max-width: 900px) { #hintTail { white-space: normal; display: inline; } }
+@media (min-width: 901px) { .hint.big { position: fixed; right: 32px; bottom: 26px; max-width: 70vw; text-align: right; white-space: nowrap; z-index: 5; pointer-events: none; } }   /* round 4 note 12: the room's hint lines fade in and out */
 /* round 4 note 11: the film look is "Clean" only; the look chips are gone. Lite view (a still of the room, for low-power devices) lives in the About sheet. */
 .chip { font: inherit; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); background: transparent;
         border: 1px solid transparent; padding: 6px 8px; cursor: pointer; }
@@ -334,14 +335,18 @@ const HINTS = ['Did you find the dead body?', 'Click the window', 'Did you see t
 const HINT_HOLD = 3000, HINT_FIRST = 5000, HINT_FADE = 600;
 let hintI = 0, hintTimer = 0, hintCycling = false;
 // Josiah 10-01: "Drag to look around:" stays; the lines come and go after the colon. A fixed line (close-ups) hides the lead and prints small.
-function hintPrint(txt, lead) { $('#hintLead').hidden = !lead; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
+function hintPrint(txt, lead) { $('#hintLead').hidden = !lead; if (!lead) $('#hintTail').style.minWidth = ''; $('#hint').classList.toggle('big', !!lead); $('#hintTail').textContent = txt; $('#hintTail').style.opacity = 1; }
 // first load only: the cue comes up over the room's centre, holds, and leaves 3 s after it appeared (or at the first press / key)
 function dragCue() { const el = $('#dragCue'); if (!el || el.dataset.done) return; el.dataset.done = 1; el.classList.add('on');
   const off = () => { el.classList.remove('on'); removeEventListener('pointerdown', off, true); removeEventListener('keydown', off, true); setTimeout(() => { el.hidden = true; }, 500); };
   setTimeout(off, 3000); addEventListener('pointerdown', off, true); addEventListener('keydown', off, true); }
+// the tail is as wide as the longest line, so "Drag to look around:" holds its place while the lines change (desktop; phones wrap from the left)
+function hintFit() { const t = $('#hintTail'); if (innerWidth <= 900) { t.style.minWidth = ''; return; } const was = t.textContent; t.style.minWidth = ''; let w = 0;
+  for (const h of HINTS) { t.textContent = h; w = Math.max(w, t.getBoundingClientRect().width); } t.textContent = was; t.style.minWidth = Math.ceil(w) + 'px'; }
+addEventListener('resize', () => { if (hintCycling) hintFit(); });
 function hintStop() { hintCycling = false; clearTimeout(hintTimer); hintTimer = 0; $('#hintTail').style.opacity = 1; }
 function hintCycle() {
-  hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0], true);
+  hintStop(); hintCycling = true; hintI = 0; hintPrint(HINTS[0], true); hintFit(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (hintCycling) hintFit(); });
   const next = () => { if (!hintCycling) return; $('#hintTail').style.opacity = 0;
     hintTimer = setTimeout(() => { if (!hintCycling) return; hintI = (hintI + 1) % HINTS.length; hintPrint(HINTS[hintI], true); hintTimer = setTimeout(next, HINT_HOLD); }, reduce ? 0 : HINT_FADE); };
   hintTimer = setTimeout(next, HINT_HOLD);
