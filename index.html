@@ -36,7 +36,7 @@ body.dragging-ui * { -webkit-user-select: none; user-select: none; }
 #bible3d, #album3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; touch-action: none; }
 #bible3d.live, #album3d.live { pointer-events: auto; }
 #poster { object-fit: cover; }
-@media (max-aspect-ratio: 1/1) { #poster { top: 7%; height: 60%; object-position: 55% 50%; } }
+@media (max-aspect-ratio: 1/1) { #poster { top: var(--bt, 7%); height: var(--bh, 60%); object-position: 58% 50%; } }
 
 .bar { position: fixed; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
        padding-inline: max(16px, 2.2vw); pointer-events: none; z-index: 5; }
@@ -152,11 +152,19 @@ body:not(.tv) #cuHint { display: none; }
 .clipping .btn { color: #221e1a; border-color: rgba(34,30,26,0.3); }
 /* ---- phones in portrait only (Josiah's iPhone recording, 10-01). Nothing here applies to desktop or landscape. ---- */
 @media (max-aspect-ratio: 1/1) {
-  #dragCue .cue { transform: translateY(-13vh); }                                  /* centred on the room band (7%..67% of the height), clear of the title card */
-  .bible-strip, #hubStrip { top: calc(79% + 2px); bottom: auto !important; left: 16px; }   /* under the picture, in the empty band: never over the book */
+  #dragCue .cue { transform: translateY(calc(var(--bt, 7vh) + var(--bh, 60vh) / 2 - 50vh)); }                                  /* centred on the room band (7%..67% of the height), clear of the title card */
+  .bible-strip, #hubStrip { top: calc(var(--bt, 7%) + var(--bh, 60%) + 14px); bottom: auto !important; left: 16px; }   /* under the picture, in the empty band: never over the book */
   .bible-strip button { color: var(--paper); border-color: var(--rule); min-height: 40px; }
   .hint { min-height: 28px; } .hint.big { font-size: 10.5px; letter-spacing: 0.02em; white-space: nowrap; } #hintTail { display: inline; white-space: nowrap; }   /* one line always: the lines changing no longer push the card up and down */
   nav.site { gap: 9px; flex-wrap: nowrap; } nav.site a { font-size: 9.5px; letter-spacing: 0.1em; }
+  /* Josiah 10-01 (phone, pass 3): smaller buttons on one row, a tighter card that sits lower, and the picture starts under the name */
+  .bottom .btn { font-size: 9px; letter-spacing: 0.1em; padding: 0 9px; min-height: 32px; gap: 5px; white-space: nowrap; }
+  .actions { gap: 6px; flex-wrap: nowrap; margin-top: 2px; }
+  .card { gap: 5px; } .card h1 { font-size: 27px; } .card p { font-size: 13px; line-height: 1.32; } .card .year { font-size: 10px; }
+  .bottom { padding-top: 14px; gap: 6px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); background: none; }
+  .top { padding-bottom: 10px; background: var(--ink); }
+  .name { font-size: 21px; } .name small { font-size: 9.5px; margin-top: 3px; }
+  .hint { min-height: 20px; }
 }
 @media (max-width: 640px) {
   nav.site { gap: 10px; }
@@ -396,7 +404,7 @@ const SND = { buf: {}, loading: {}, drone: null, pump: null };
 const SPARK_SLICES = [[0.03,0.69],[2.195,3.22],[6.235,7.145],[9.72,11.06],[12.655,13.23],[15.85,16.48],[19.865,20.595],[23.78,24.465],[27.045,27.775],[30.935,31.945],[35.28,36.27],[37.4,37.875],[39.21,39.62],[41.2,41.895],[42.02,42.095],[43.74,45.285],[46.805,47.4],[49.47,50.48],[51.495,52.55],[53.525,53.9],[54.885,55.315],[55.36,55.435],[56.49,56.92],[57.71,58.11],[58.165,58.25],[59.485,59.79],[60.805,61.515],[63.885,64.335],[66.215,66.78],[66.82,66.94],[68.425,68.77],[69.595,70.09],[70.15,70.24],[71.4,72.07],[73.635,74.37],[75.81,76.435],[76.53,76.615]];   // [start, end] seconds of each sputter in sparks.mp4, cut at the transients
 function sndLoad(name, loop) {
   if (!actx || SND.buf[name] || SND.loading[name]) return; SND.loading[name] = true;
-  fetch(QA_WEBM ? 'frames/_' + name + '.ogg' : 'frames/' + name + '.mp4').then(r => r.arrayBuffer()).then(ab => actx.decodeAudioData(ab)).then(b => {
+  sndRaw(name).then(ab => new Promise((ok, no) => { const p = actx.decodeAudioData(ab.slice(0), ok, no); if (p && p.then) p.then(ok, no); })).then(b => {
     return loop ? seamless(b, loop) : b;
   }).then(b => {
     SND.buf[name] = b; SND.loading[name] = false;
@@ -404,6 +412,9 @@ function sndLoad(name, loop) {
     if (name === 'pumpjack' && (looping || mode === 'toWindow' || mode === 'window')) pumpStart();
   }).catch(() => { SND.loading[name] = false; });
 }
+const RAW = {};   // the files themselves are fetched at page load (before any gesture), so the recording is ready when the sound comes on
+function sndRaw(name) { return RAW[name] || (RAW[name] = fetch(QA_WEBM ? 'frames/_' + name + '.ogg' : 'frames/' + name + '.mp4').then(r => r.arrayBuffer()).catch(e => { delete RAW[name]; throw e; })); }
+sndRaw('sparks').catch(() => {}); sndRaw('drone').catch(() => {});
 function seamless(b, x) {   // a loop that joins without a click, rendered offline AT THE CONTEXT'S SAMPLE RATE (Safari mishandles
   // looping a buffer of another rate): the file from x onward, its last x seconds crossfading (equal power) into its first x seconds
   const sr = actx.sampleRate, L = b.duration - x; if (L <= x) return Promise.resolve(b);
@@ -478,6 +489,7 @@ function sparkSound(energy) {                            // one burst -> one spu
     } catch (err) {}
     return;
   }
+  sndLoad('sparks'); return;   // Josiah 10-01 (phone): no generated stand-in; until his recording is decoded the vacuum is silent
   try {
     const t = actx.currentTime, count = 1 + Math.floor(Math.random() * 3);
     const pool = SPARK_KINDS.slice().sort(() => Math.random() - 0.5).slice(0, count);
@@ -692,6 +704,7 @@ const black = (() => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2
 // offscreen target for the film pass (mipmapped for glow and edge softness)
 let fbo = null, fboTex = null, W = 0, H = 0;
 function resize() {
+  measureBand();
   const dpr = Math.min(devicePixelRatio || 1, Math.max(innerWidth, innerHeight) < 1000 ? 2.5 : 1.5);   // phones: sharper (few pixels, and the Bible's text must read)
   const w = Math.round(stage.clientWidth * dpr), h = Math.round(stage.clientHeight * dpr);
   if (w === W && h === H) return; W = canvas.width = w; H = canvas.height = h;
@@ -812,11 +825,32 @@ stage.addEventListener('pointerleave', () => { $('#tip').hidden = true; }); stag
 
 // ---------- where things are on screen ----------
 // screen <-> frame mapping: frameUV = fc + (screenUV - vc) * sc   (both y up)
+const PB = { top: 0.07, band: 0.6 };                   // portrait band as fractions of the height; measured from the header and the card
+function measureBand() {
+  try {
+    const h = innerHeight, nm = document.querySelector('.bar.top .name'), cd = document.querySelector('.bottom .card');
+    if (!nm || !cd || innerWidth >= h) return;
+    const top = nm.getBoundingClientRect().bottom + 10, bot = cd.getBoundingClientRect().top - 8;
+    if (bot - top < h * 0.3) return;
+    PB.top = top / h; PB.band = Math.min(0.75, (bot - top) / h);
+    document.documentElement.style.setProperty('--bt', top + 'px'); document.documentElement.style.setProperty('--bh', PB.band * h + 'px');
+  } catch (e) {}
+}
+let hubK = 0, hubT = 0;
+function hubEase() {
+  let on = false; try { on = !!(cu && cu.name === 'c_bible'); } catch (e) {}
+  const now = performance.now(), dt = Math.min(0.1, (now - hubT) / 1000); hubT = now;
+  hubK = Math.max(0, Math.min(1, hubK + (on ? dt : -dt) / 0.9));
+  return hubK * hubK * (3 - 2 * hubK);
+}
+addEventListener('resize', measureBand); addEventListener('orientationchange', () => setTimeout(measureBand, 300)); setTimeout(measureBand, 0); setTimeout(measureBand, 1200);
+try { document.fonts.ready.then(measureBand); } catch (e) {}
 function framing() {
   const CA = W / H;
-  if (CA < 1) {                                        // portrait: the room fills a band in the upper part, cropped around the table and TV
-    const band = 0.6, hpx = band * H, wpx = hpx * FA;
-    return { sc: [W / wpx, 1 / band], fc: [0.55, 0.5], vc: [0.5, 1 - (0.07 + band / 2)] };
+  if (CA < 1) {                                        // portrait: the room fills a band between the header and the title card, cropped around the table and TV
+    const k = hubEase(), hubBand = Math.min(PB.band, W / (0.62 * FA) / H);     // the hub: a wider, shorter crop so the album and the ashtray show beside the Bible
+    const band = PB.band + (hubBand - PB.band) * k, hpx = band * H, wpx = hpx * FA;
+    return { sc: [W / wpx, 1 / band], fc: [0.58 + (0.355 - 0.58) * k, 0.5], vc: [0.5, 1 - (PB.top + band / 2)] };
   }
   return { sc: CA > FA ? [1, FA / CA] : [CA / FA, 1], fc: [0.5, 0.5], vc: [0.5, 0.5] };   // landscape: cover
 }
