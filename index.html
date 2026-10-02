@@ -224,7 +224,7 @@ body:not(.tv) #cuHint { display: none; }
     <h1>Very Prosperous Men</h1>
     <p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p>
     <div class="actions">
-      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer ↗</a>
+      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer</a>
       <button class="btn" id="aboutBtn" type="button">About the film</button>
       <button class="btn" id="soundBtn" type="button" aria-pressed="false">Sound: off</button>
     </div>
@@ -244,9 +244,6 @@ body:not(.tv) #cuHint { display: none; }
       <li>Horror · Thriller · Drama, 22 minutes</li>
       <li>Directed by Josiah Walker</li>
       <li>Written by Joshua Oakley and Josiah Walker</li>
-      <li>Produced by Tommy Koponen and Dominic Koponen</li>
-      <li>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar</li>
-      <li>Walker Motion Pictures presents a Render Social production</li>
     </ul>
     <h3>Festivals</h3>
     <ul>
@@ -259,16 +256,16 @@ body:not(.tv) #cuHint { display: none; }
       <li>Best Short, June–July 2026, Indie Short Fest</li>
     </ul>
     <h3>Press</h3>
-    <p>“Feature-caliber filmmaking in every frame.” <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">— Indie Short Fest jury, July 2026 · <a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">read the write-up ↗</a></span></p>
+    <p>“Feature-caliber filmmaking in every frame.” <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">— Indie Short Fest jury, July 2026 · <a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">read the write-up</a></span></p>
     <p class="placeholder">[More press to come]</p>
     <h3>Screenings</h3>
     <p class="placeholder">[Upcoming screenings and release to come]</p>
     <h3>Links</h3>
     <ul>
       <li><button class="btn" type="button" id="posterBtn">See the poster</button></li>
-      <li><a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Trailer on Vimeo ↗</a></li>
-      <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm ↗</a></li>
-      <li><a href="https://www.josiahwalker.com/bio" target="_blank" rel="noopener">Josiah Walker, bio ↗</a></li>
+      <li><a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Trailer on Vimeo</a></li>
+      <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm</a></li>
+      <li><a href="https://www.josiahwalker.com/bio" target="_blank" rel="noopener">Josiah Walker, bio</a></li>
     </ul>
     <h3>Low-power devices</h3>
     <p class="row"><span>A still of the room instead of the live view.</span><button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button></p>
@@ -307,7 +304,7 @@ body:not(.tv) #cuHint { display: none; }
     <h2 id="clipTitle">Psychological Thriller “Very Prosperous Men” Named Best Short of June-July 2026 at Indie Short Fest</h2>
     <p>Few short films balance moral tension, dark humor, and existential unease with the confidence displayed by <i>Very Prosperous Men</i>, the latest work from American filmmaker Josiah Walker. Awarded Best Short of the Season at Indie Short Fest for the June-July 2026 competition, the film transforms a seemingly straightforward crime story into a meditation on faith, guilt, and the quiet desperation that often hides beneath the pursuit of prosperity.</p>
     <blockquote>“Feature-caliber filmmaking in every frame.”<cite>Indie Short Fest Jury Verdict</cite></blockquote>
-    <p><a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">Read the full write-up ↗</a></p>
+    <p><a href="https://indieshortfest.com/2026/07/12/psychological-thriller-very-prosperous-men-named-best-short-of-june-july-2026-at-indie-short-fest/" target="_blank" rel="noopener">Read the full write-up</a></p>
   </article>
 </div>
 <div class="panel" id="linkpanel" hidden role="dialog" aria-modal="true" aria-labelledby="linkTitle">
@@ -324,7 +321,7 @@ body:not(.tv) #cuHint { display: none; }
     <div class="tvframe"><img src="frames/tv_screen.jpg" alt="Still from the film on the television"><div class="scan"></div></div>
     <div class="row">
       <p>The trailer plays on Vimeo.</p>
-      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer ↗</a>
+      <a class="btn primary" href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch the trailer</a>
     </div>
   </div>
 </div>
@@ -898,7 +895,7 @@ let FEATURES = {};
 function linkPanel(title, text, links) {
   $('#linkTitle').textContent = title; $('#linkText').textContent = text;
   const box = $('#linkActions'); box.textContent = '';
-  links.forEach(([label, href], i) => { const a = document.createElement('a'); a.className = 'btn' + (i === 0 ? ' primary' : ''); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label + ' ↗'; box.appendChild(a); });
+  links.forEach(([label, href], i) => { const a = document.createElement('a'); a.className = 'btn' + (i === 0 ? ' primary' : ''); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label + ''; box.appendChild(a); });
   openPanel($('#linkpanel'));
 }
 function propHit(x, y) {
@@ -1549,7 +1546,7 @@ P.tv2 = prog(SMOKE_VS, TV_FS2); const tvQuad = gl.createBuffer();
 const TV = { ch: 1, chans: [1, 2, 3], on: 0, snow: 0, roll: 0, rollV: 0, bw: 1, bwT: 1, dirty: true, t0: 0, tex: null, cv: null, ctx: null, still: null, poster: null, trailer: null, nextRoll: 4, stillOf: ch => ch + 1 };
 TV.cv = document.createElement('canvas'); TV.cv.width = 800; TV.cv.height = 600; TV.ctx = TV.cv.getContext('2d');
 const TVTEXT = {
-  1: { title: 'Trailer', kicker: 'CHANNEL 2', body: 'Watch the trailer', guide: '<h3>Channel 2 · Trailer</h3><p>The trailer plays on the set. <a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch it on Vimeo ↗</a></p>' },
+  1: { title: 'Trailer', kicker: 'CHANNEL 2', body: 'Watch the trailer', guide: '<h3>Channel 2 · Trailer</h3><p>The trailer plays on the set. <a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Watch it on Vimeo</a></p>' },
   2: { title: 'Synopsis', kicker: 'CHANNEL 3', body: '1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.', guide: '<h3>Channel 3 · Synopsis</h3><p>1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions.</p><p><i>What gain has man from all his toil?</i></p>' },
   3: { title: 'Cast & Crew', kicker: 'CHANNEL 4', body: 'Dustin Ingram · Scott Subiono · Tim DeZarn · David Sullivan · Sharon Sharth · Zarah Mahler · Tanner Hagen · Larry Cedar', body2: 'Directed by Josiah Walker · Written by Joshua Oakley and Josiah Walker · Produced by Tommy Koponen and Dominic Koponen', guide: '<h3>Channel 4 · Cast &amp; Crew</h3><p>Starring Dustin Ingram, with Scott Subiono, Tim DeZarn, David Sullivan, Sharon Sharth, Zarah Mahler, Tanner Hagen and Larry Cedar.</p><p>Directed by Josiah Walker. Written by Joshua Oakley and Josiah Walker. Produced by Tommy Koponen and Dominic Koponen. Walker Motion Pictures presents a Render Social production.</p>' },
 };

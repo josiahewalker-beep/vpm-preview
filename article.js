@@ -47,7 +47,7 @@ function build() {
   root.innerHTML = `<div class="art-mast">Indie Short Fest · Published July 12, 2026</div>
     <button class="btn art-close" type="button" data-close aria-label="Close the write-up and go back to the case"><b>×</b><span>Close · Esc</span></button>
     <div class="art-stage"><div class="art-book"><div class="art-desk"><span>From the salesman\u2019s case</span><b>\u201cVery Prosperous Men\u201d named Best Short</b><i>Indie Short Fest, festival news \u00b7 published July 12, 2026</i><span class="art-desk-n"></span></div><div class="art-under"></div><div class="art-hint"></div></div></div>
-    <div class="art-bar"><button class="btn art-prev" type="button" aria-label="Previous page">‹ Previous</button><span class="art-n">page 1 of 3</span><button class="btn art-next" type="button" aria-label="Next page">Turn ›</button><a class="btn art-link" target="_blank" rel="noopener">Read it online ↗</a></div>`;
+    <div class="art-bar"><button class="btn art-prev" type="button" aria-label="Previous page">‹ Previous</button><span class="art-n">page 1 of 3</span><button class="btn art-next" type="button" aria-label="Next page">Turn ›</button><a class="btn art-link" target="_blank" rel="noopener">Read it online</a></div>`;
   document.body.appendChild(root); A.root = root; A.book = root.querySelector('.art-book');
   const base = A.small ? 'frames/m/' : 'frames/';
   for (let i = 0; i < N; i++) {
