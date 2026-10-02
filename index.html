@@ -207,10 +207,10 @@ body:not(.tv) #cuHint { display: none; }
 </svg><p>Drag around to explore</p></div></div>
 
 <header class="bar top">
-  <a class="name" href="https://www.josiahwalker.com/">Josiah Walker<small>Writer / Director</small></a>
+  <a class="name" href="./">Josiah Walker<small>Writer / Director</small></a>
   <nav class="site" aria-label="Site">
-    <a href="https://www.josiahwalker.com/bio">Bio</a>
-    <a href="https://www.josiahwalker.com/contact">Contact</a>
+    <a href="bio/">Bio</a>
+    <a href="contact/">Contact</a>
     <a href="https://www.instagram.com/josiahwalker_/">Instagram</a>
     <a href="https://www.imdb.com/name/nm9711704/">IMDb</a>
   </nav>
@@ -265,7 +265,7 @@ body:not(.tv) #cuHint { display: none; }
       <li><button class="btn" type="button" id="posterBtn">See the poster</button></li>
       <li><a href="https://vimeo.com/891711371" target="_blank" rel="noopener">Trailer on Vimeo</a></li>
       <li><a href="https://www.instagram.com/veryprosperousmenfilm/" target="_blank" rel="noopener">@veryprosperousmenfilm</a></li>
-      <li><a href="https://www.josiahwalker.com/bio" target="_blank" rel="noopener">Josiah Walker, bio</a></li>
+      <li><a href="bio/">Josiah Walker, bio</a></li>
     </ul>
     <h3>Low-power devices</h3>
     <p class="row"><span>A still of the room instead of the live view.</span><button class="chip" type="button" id="liteBtn" aria-pressed="false">Lite view</button></p>
@@ -892,7 +892,7 @@ const PROPS = [
   { id: 'hand', needs: 'closeups', label: 'The watch', lo: [0.72, 2.95, 0.0], hi: [1.06, 3.2, 0.09], act: () => enterCloseup('c_watch', [1.083, 3.175, 0.01]) },
   { id: 'ashtray', needs: 'closeups', label: 'The cigarette', lo: [2.12, 2.95, 0.436], hi: [2.34, 3.16, 0.49], act: () => enterCloseup('c_ashtray', [2.25, 3.06, 0.47]) },
   { id: 'case', needs: 'closeups', label: "The salesman's case", lo: [1.71, 3.52, 0.48], hi: [2.19, 3.9, 0.82], act: () => enterCloseup('c_case', [1.95, 3.72, 0.56]) },
-  { id: 'phone', label: 'Contact', lo: [0.327, 3.853, 0.58], hi: [0.613, 4.147, 0.722], needs: 'phone', act: () => linkPanel('Contact', 'For screenings, press and representation.', [['Contact page', 'https://www.josiahwalker.com/contact'], ['Instagram', 'https://www.instagram.com/josiahwalker_/']]) },
+  { id: 'phone', label: 'Contact', lo: [0.327, 3.853, 0.58], hi: [0.613, 4.147, 0.722], needs: 'phone', act: () => linkPanel('Contact', 'For screenings, press and representation.', [['Contact page', 'contact/'], ['Instagram', 'https://www.instagram.com/josiahwalker_/']]) },
 ];
 let FEATURES = {};
 function linkPanel(title, text, links) {
