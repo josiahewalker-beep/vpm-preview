@@ -68,9 +68,9 @@ nav.site a:hover { color: var(--paper); }
 /* the first-load cue: four arrows round a gripping hand, 'Drag around to explore', gone after 3 s or at the first touch */
 #dragCue { position: fixed; inset: 0; z-index: 6; display: grid; place-items: center; pointer-events: none; opacity: 0; transition: opacity 0.45s ease; }
 #dragCue.on { opacity: 1; }
-#dragCue .cue { display: grid; justify-items: center; gap: 14px; color: var(--paper); padding: 46px 64px; background: radial-gradient(closest-side, rgba(10,8,6,0.62), rgba(10,8,6,0.38) 60%, rgba(10,8,6,0)); filter: drop-shadow(0 2px 14px rgba(0,0,0,0.75)); }
-#dragCue svg { width: clamp(150px, 20vw, 230px); height: auto; }
-#dragCue p { margin: 0; font-family: var(--mono); font-size: clamp(13px, 1.5vw, 18px); letter-spacing: 0.16em; text-transform: uppercase; }
+#dragCue .cue { display: grid; justify-items: center; gap: 16px; color: var(--paper); padding: 26px 34px 22px; border: 1px solid rgba(239,230,212,0.55); background: rgba(13,11,9,0.42); }   /* option B (Josiah 10-01): the site's hairline button language */
+#dragCue svg { width: clamp(96px, 9vw, 120px); height: auto; overflow: visible; }
+#dragCue p { margin: 0; font-family: var(--mono); font-size: clamp(11px, 1vw, 13px); letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; }
 #hintTail { transition: opacity 0.6s ease; display: inline-block; text-align: left; white-space: nowrap; }   /* fixed width (set in hintFit) so the lead never moves */
 @media (max-width: 900px) { #hintTail { white-space: normal; display: inline; } }
 @media (min-width: 901px) { .hint.big { position: fixed; right: 32px; bottom: 26px; max-width: 70vw; text-align: right; white-space: nowrap; z-index: 5; pointer-events: none; } }   /* round 4 note 12: the room's hint lines fade in and out */
@@ -176,11 +176,10 @@ body:not(.tv) #cuHint { display: none; }
 </div>
 <div id="loading">Loading the room</div>
 <div id="dragCue" aria-hidden="true"><div class="cue">
-<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M100 14v34M88 26l12-12 12 12"/><path d="M100 186v-34M88 174l12 12 12-12"/><path d="M14 100h34M26 88l-12 12 12 12"/><path d="M186 100h-34M174 88l12 12-12 12"/>
-  <!-- a closed hand gripping: four knuckles, the thumb tucked across, the wrist -->
-  <path stroke-width="4.5" d="M78 104v-13a7 7 0 0 1 14 0v-4a7 7 0 0 1 14 0v3a7 7 0 0 1 14 0v5a6.5 6.5 0 0 1 13 0v20c0 16-10 27-26 27h-8c-12 0-18-6-24-16l-7-12c-3-6 4-11 9-6l5 6"/>
-  <path stroke-width="4" d="M92 91v10M106 90v11M120 95v8"/>
+<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+  <path d="M60 8v22M52 16l8-8 8 8M60 112V90M52 104l8 8 8-8M8 60h22M16 52l-8 8 8 8M112 60H90M104 52l8 8-8 8"/>
+  <!-- the gripping hand at half size, its outline's middle on the arrows' crossing (bbox centre 63.107, 67.0) -->
+  <g transform="translate(60 60) scale(.5) translate(-63.107 -67)"><path stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M49 63v-9a4.5 4.5 0 0 1 9 0v-3a4.5 4.5 0 0 1 9 0v2a4.5 4.5 0 0 1 9 0v3.5a4.3 4.3 0 0 1 8.6 0V70c0 10.500-6.500 17.500-17 17.500h-5c-8 0-12-4-16-10.500l-4.500-8c-2-4 2.600-7 6-4l3 4"/></g>
 </svg><p>Drag around to explore</p></div></div>
 
 <header class="bar top">
