@@ -392,7 +392,7 @@ function sndLoad(name, loop) {
   }).then(b => {
     SND.buf[name] = b; SND.loading[name] = false;
     if (name === 'drone' && soundOn) droneStart();
-    if (name === 'pumpjack' && looping) pumpStart();
+    if (name === 'pumpjack' && (looping || mode === 'toWindow' || mode === 'window')) pumpStart();
   }).catch(() => { SND.loading[name] = false; });
 }
 function seamless(b, x) {   // a loop that joins without a click, rendered offline AT THE CONTEXT'S SAMPLE RATE (Safari mishandles
@@ -1588,6 +1588,9 @@ function loadWin() { if (winTex.closed !== null) return; winTex.closed = false;
   a.src = 'frames/w_closed.jpg'; b.src = 'frames/w_open.jpg'; }
 function enterWindow() {
   loadWin(); mode = 'toWindow'; document.body.classList.add('away'); winT = 0; curtainPlayed = false; gt = 0; gtilt = 0;
+  // Josiah 10-01: the outside is alive from the click, not from the end of the curtain: the pumps are heard at once, rising as the camera nears
+  // the glass (the swoop itself is rendered with the pumpjacks and the flag moving, in phase with the loop it hands over to)
+  if (actx && soundOn) { sndLoad('pumpjack', 3.0); pumpStart(); if (extBusNode()) extBus.gain.setTargetAtTime(0.7, actx.currentTime, 0.9); }
   $('#back').hidden = false; setHint('The view past the fence · Click to go back · Esc'); stage.classList.remove('hot');
   const w = [0, 1, 2, 3].map(i => cur.anchors['win' + i]).filter(Boolean);
   zc = w.length ? [w.reduce((s, p) => s + p[0], 0) / w.length, 1 - w.reduce((s, p) => s + p[1], 0) / w.length] : [0.8, 0.8];
