@@ -845,21 +845,24 @@ function measureBand() {
     document.documentElement.style.setProperty('--bt', top + 'px'); document.documentElement.style.setProperty('--bh', PB.band * h + 'px');
   } catch (e) {}
 }
-let hubK = 0, hubT = 0;
-function hubEase() {
-  let on = false; try { on = !!(cu && cu.name === 'c_bible'); } catch (e) {}
-  const now = performance.now(), dt = Math.min(0.1, (now - hubT) / 1000); hubT = now;
-  hubK = Math.max(0, Math.min(1, hubK + (on ? dt : -dt) / 0.9));
-  return hubK * hubK * (3 - 2 * hubK);
+// portrait crop per subject: [centre x in the frame, width of the frame that must show]; anything else in close-up is centred
+const CU_CROP = { c_bible: [0.355, 0.62], c_tv: [0.5, 0.7], c_case: [0.5, 0.5] };
+const PF = { cx: null, w: 0, t: 0 };
+function portraitCrop() {
+  const nat = W / (PB.band * H * FA); let tc = 0.58 + panEase(), tw = nat, inCu = false;
+  try { if (cu) { inCu = true; const c = CU_CROP[cu.name] || [0.5, 0]; tc = c[0]; tw = Math.max(nat, c[1]); } } catch (e) {}
+  const now = performance.now(), dt = Math.min(0.1, (now - PF.t) / 1000); PF.t = now;
+  if (PF.cx === null || (!inCu && Math.abs(PF.w - tw) < 0.002)) { PF.cx = tc; PF.w = tw; }   // in the room the drag is followed directly
+  else { const a = 1 - Math.exp(-dt / 0.28); PF.cx += (tc - PF.cx) * a; PF.w += (tw - PF.w) * a; }
+  return PF;
 }
 addEventListener('resize', measureBand); addEventListener('orientationchange', () => setTimeout(measureBand, 300)); setTimeout(measureBand, 0); setTimeout(measureBand, 1200);
 try { document.fonts.ready.then(measureBand); } catch (e) {}
 function framing() {
   const CA = W / H;
   if (CA < 1) {                                        // portrait: the room fills a band between the header and the title card, cropped around the table and TV
-    const k = hubEase(), hubBand = Math.min(PB.band, W / (0.62 * FA) / H);     // the hub: a wider, shorter crop so the album and the ashtray show beside the Bible
-    const band = PB.band + (hubBand - PB.band) * k, hpx = band * H, wpx = hpx * FA;
-    return { sc: [W / wpx, 1 / band], fc: [0.58 + (0.355 - 0.58) * k + panEase() * (1 - k), 0.5], vc: [0.5, 1 - (PB.top + band / 2)] };
+    const c = portraitCrop(), hpx = W / (c.w * FA), band = hpx / H;
+    return { sc: [c.w, 1 / band], fc: [c.cx, 0.5], vc: [0.5, 1 - (PB.top + band / 2)] };
   }
   return { sc: CA > FA ? [1, FA / CA] : [CA / FA, 1], fc: [0.5, 0.5], vc: [0.5, 0.5] };   // landscape: cover
 }
