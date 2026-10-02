@@ -130,6 +130,21 @@ async function loadGLB(url) {
       if (!geo.attributes.normal) geo.computeVertexNormals();
       const mesh = new THREE.Mesh(geo, pr.material !== undefined ? mats[pr.material] : new THREE.MeshStandardMaterial());
       mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh);
+      // Josiah 10-01: the brass corner protectors keep their outside cap and edge wraps only. Their inside caps lay over the corners of
+      // the paste-down endpapers (the first and last spreads read as pages with the corners cut off); the back board's screws sat on that inside face too.
+      const cm = /^bb_corner_([fb])\d$/.exec(g.name);
+      if (cm && geo.attributes.position) {
+        const P = geo.attributes.position, idx = geo.index ? Array.from(geo.index.array) : Array.from({ length: P.count }, (_, i) => i);
+        let lo = Infinity, hi = -Infinity; for (let i = 0; i < P.count; i++) { const z = P.getZ(i); if (z < lo) lo = z; if (z > hi) hi = z; }
+        const inner = (z) => cm[1] === 'f' ? z < lo + 0.001 : z > hi - 0.001, keep = [];
+        for (let t = 0; t < idx.length; t += 3) {
+          const v = [idx[t], idx[t + 1], idx[t + 2]], xs = v.map(i => P.getX(i)), ys = v.map(i => P.getY(i));
+          const cap = v.every(i => inner(P.getZ(i))) && Math.max(...xs) - Math.min(...xs) > 0.01 && Math.max(...ys) - Math.min(...ys) > 0.01;
+          if (!cap) keep.push(v[0], v[1], v[2]);
+        }
+        geo.setIndex(keep);
+      }
+      if (/^bb_corner_b\d_(screw|slot)\d$/.test(g.name)) mesh.visible = false;
     }
     parent.add(g); (nd.children || []).forEach(c => addNode(c, g));
   };

@@ -1307,7 +1307,7 @@ window.__fl = {   // QA: step the clip that is on screen
 };
 // thread D: the crucifix is a live glTF (crucifix.js, loaded on demand) over the case still; the c_crucifix still is only a fallback
 let cruxLoad = null, cruxOK = false;
-function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
+function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js?v=41'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
 function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
@@ -1341,7 +1341,8 @@ const jget = (u) => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null)
 function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js').then(() => loadScript('album.js')), jget('frames/bible.json'), jget('frames/bible_pages.json'), jget('frames/album.json'), jget('frames/album_pages.json')]).then(([, , bj, pj, aj, apj]) => {
   pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
   bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
-function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
+const ASSET_V = '41';   // bumped with every change to a .js module, so browsers and GitHub's cache never serve an old copy
+function loadScript(src) { const one = (u) => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = u; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); return one(src + '?v=' + ASSET_V).catch(() => one(src)); }
 const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Click beside the book to put it back · Esc', closing: 'Back to the table', returning: 'Back to the table' };
 function mountBooks() {
   const m = cuMeta.c_bible; if (!m) return;
