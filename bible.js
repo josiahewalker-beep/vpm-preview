@@ -47,7 +47,7 @@ const BIBLE_CFG = {
   // (page4/tune.py): live vs still mean RGB -0.3 / +2.1 / -2.2 %, luminance 0.0 % (was +3.1 / +8.2 / +15.2 %, +7.9 %). coverTint tints the cover's map only.
   lights: { key: 1.05, sky: 0xf2e4d0, ground: 0x6b4a30, hemi: 0.45, fill: 0.22, rim: 0.2, exposure: 0.9, shadow: 0.38, env: 0.55, tint: [1, 1, 1], coverTint: [1.03, 0.98, 0.92], envTint: [1.0, 1.0, 0.78] },
 };
-const PAGE_V = '42';
+const PAGE_V = '43';
 function makeBook(CFG0) {
 const CFG = Object.assign({}, CFG0);
 let LIFT_S = CFG.lift_s, OPEN_S = CFG.open_s, TURN_S = CFG.turn_s, TURN_GAP = CFG.turn_gap, RUN_DELAY = CFG.run_delay, CLOSE_S = CFG.close_s, DROP_S = CFG.drop_s, BACK_TURN_S = CFG.back_turn_s;
