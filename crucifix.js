@@ -176,18 +176,24 @@ function roomEnvironment() {
       const k = (j * W + i) * 4; data[k] = r; data[k + 1] = g; data[k + 2] = b; data[k + 3] = 1;
     }
   }
-  const tex = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType); tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
+  // without OES_texture_float_linear (many iPhones) a linearly filtered float texture is incomplete and samples black: half floats there
+  const lin = S.renderer.extensions.has('OES_texture_float_linear');
+  const tex = lin ? new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType) : new THREE.DataTexture(Uint16Array.from(data, THREE.DataUtils.toHalfFloat), W, H, THREE.RGBAFormat, THREE.HalfFloatType); tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
   const pm = new THREE.PMREMGenerator(S.renderer); const env = pm.fromEquirectangular(tex).texture; pm.dispose(); tex.dispose();
   return env;
 }
 function resize() {
   const w = S.canvas.clientWidth, h = S.canvas.clientHeight; if (!w || !h) return;
   const dpr = Math.min(devicePixelRatio || 1, 1.5);
-  if (S.canvas.width !== Math.round(w * dpr) || S.canvas.height !== Math.round(h * dpr)) { S.renderer.setPixelRatio(dpr); S.renderer.setSize(w, h, false); }
+  if (S.canvas.width !== Math.floor(w * dpr) || S.canvas.height !== Math.floor(h * dpr)) { S.renderer.setPixelRatio(dpr); S.renderer.setSize(w, h, false); }   // three floors w * dpr (Math.round re-sized it every frame at 393 x 1.5)
   const fr = S.meta.framing(), FW = S.meta.res[0], FH = S.meta.res[1];
   const ox = (fr.fc[0] - fr.vc[0] * fr.sc[0]) * FW, oy = (1 - fr.fc[1] - (1 - fr.vc[1]) * fr.sc[1]) * FH;
   S.cam.setViewOffset(FW, FH, ox, oy, fr.sc[0] * FW, fr.sc[1] * FH);
 }
+// Draw only when something on screen changed: index.html copies this canvas into its own frame whenever `drawn` moves, so an idle
+// prop (resting, held still, the open page being read) costs nothing. `sig` = the numbers that decide the picture; S.force redraws.
+function sigChanged(sig) { const o = S.sig; let same = !S.force && o && o.length === sig.length; if (same) for (let i = 0; i < sig.length; i++) if (Math.abs(sig[i] - o[i]) > 1e-7) { same = false; break; }
+  S.sig = sig; S.force = false; return !same; }
 function frame(now) { S.raf = requestAnimationFrame(frame); tick(now); }
 function tick(now) {
   if (!S.ready || !S.visible) return;
@@ -207,7 +213,9 @@ function tick(now) {
   }
   S.model.position.copy(pos); S.model.quaternion.copy(q);
   S.shadow.material.opacity = 0.42 * Math.max(0, 1 - p * 2.5);
-  S.renderer.render(S.scene, S.cam);
+  const v = S.cam.view || {};
+  if (!sigChanged([pos.x, pos.y, pos.z, q.x, q.y, q.z, q.w, S.canvas.width, S.canvas.height, v.offsetX || 0, v.offsetY || 0, v.width || 0, v.height || 0])) return;
+  S.renderer.render(S.scene, S.cam); S.drawn = (S.drawn || 0) + 1;
 }
 function emit() { if (S.onState) try { S.onState(S.state); } catch (e) {} }
 
@@ -237,17 +245,19 @@ window.crux = {
   mount(canvasEl, meta) {
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.yaw = S.pitch = 0; S.drag = S.snap = null;
     canvasEl.hidden = false; canvasEl.classList.remove('on', 'live');
-    if (!S.renderer) {
+    if (!S.wired) { S.wired = true;   // once: S.renderer is only set after three.module has loaded
       canvasEl.addEventListener('pointerdown', onDown); canvasEl.addEventListener('pointermove', onMove);
       canvasEl.addEventListener('pointerup', onUp); canvasEl.addEventListener('pointercancel', onUp);
     }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
     if (S.ready) return Promise.resolve(true);
-    return loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL); }).then(root => {
-      S.model.add(root); S.ready = true; return true;
-    }).catch(err => { S.failed = true; console.warn('crucifix: not available', err); throw err; });
+    if (S.loading) return S.loading;   // mounted again while the glb is on its way (the case left and re-entered fast): one model, not two
+    return (S.loading = loadThree().then(() => { if (!S.renderer) setup(); return loadGLB(GLB_URL); }).then(root => {
+      S.model.add(root); S.ready = true; S.loading = null; return true;
+    }).catch(err => { S.failed = true; S.loading = null; console.warn('crucifix: not available', err); throw err; }));
   },
   get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
+  get drawn() { return S.drawn || 0; },                // bumped on every render: index.html re-uploads the canvas only then
   /** round 4 note 8: is the screen point (client px) on the cross? (a click beside it puts the cross back) */
   hitAt(clientX, clientY) {
     if (!S.ready || !S.visible) return false;
@@ -255,7 +265,7 @@ window.crux = {
     const ray = new THREE.Raycaster(); ray.setFromCamera(ptr, S.cam); const meshes = []; S.model.traverse(o => { if (o.isMesh && o !== S.shadow) meshes.push(o); });
     return ray.intersectObjects(meshes, false).length > 0;
   },
-  show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps the rendered frame for the still + this canvas on the same frame
+  show() { S.visible = true; S.force = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps the rendered frame for the still + this canvas on the same frame
   hide() { S.visible = false; if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; } },
   lift() { if (!S.ready || S.state === 'lifting' || S.state === 'held') return false; S.state = 'lifting'; S.p0 = S.p; S.t0 = performance.now() / 1000; emit(); return true; },
   release() {

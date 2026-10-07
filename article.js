@@ -128,7 +128,7 @@ window.article = {
   get turning() { return !!A.turning; },
   init(meta) {
     A.meta = meta || {}; A.small = !!A.meta.small;
-    return fetch('frames/clipping_pages.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(j => { A.url = j.url || ''; A.box = j.p3_url_box || null; build(); return true; });
+    return fetch('frames/clipping_pages.json').then(r => r.ok ? r.json() : {}).catch(() => ({})).then(j => { A.url = j.url || ''; A.box = j.p3_url_box || null; build(); if (A.root) A.root.querySelector('.art-link').href = A.url || '#'; return true; });   // build() is a no-op if open() built it first
   },
   open() {
     if (!A.built) build();

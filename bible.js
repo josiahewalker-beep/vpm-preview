@@ -246,14 +246,16 @@ function roomEnvironment() {
       const k = (j * W + i) * 4; data[k] = r * et[0]; data[k + 1] = g * et[1]; data[k + 2] = b * et[2]; data[k + 3] = 1;
     }
   }
-  const tex = new THREE.DataTexture(data, W, Hh, THREE.RGBAFormat, THREE.FloatType); tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
+  // without OES_texture_float_linear (many iPhones) a linearly filtered float texture is incomplete and samples black: half floats there
+  const lin = S.renderer.extensions.has('OES_texture_float_linear');
+  const tex = lin ? new THREE.DataTexture(data, W, Hh, THREE.RGBAFormat, THREE.FloatType) : new THREE.DataTexture(Uint16Array.from(data, THREE.DataUtils.toHalfFloat), W, Hh, THREE.RGBAFormat, THREE.HalfFloatType); tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
   const pm = new THREE.PMREMGenerator(S.renderer); const env = pm.fromEquirectangular(tex).texture; pm.dispose(); tex.dispose();
   return env;
 }
 function resize() {
   const w = S.canvas.clientWidth, h = S.canvas.clientHeight; if (!w || !h) return;
   const dpr = Math.min(devicePixelRatio || 1, PHONE ? 2.5 : 1.5);
-  if (S.canvas.width !== Math.round(w * dpr) || S.canvas.height !== Math.round(h * dpr)) { S.renderer.setPixelRatio(dpr); S.renderer.setSize(w, h, false); }
+  if (S.canvas.width !== Math.floor(w * dpr) || S.canvas.height !== Math.floor(h * dpr)) { S.renderer.setPixelRatio(dpr); S.renderer.setSize(w, h, false); }   // three floors w * dpr (Math.round re-sized it every frame at 393 x 2.5)
   const fr = S.meta.framing(), FW = S.meta.res[0], FH = S.meta.res[1];
   const ox = (fr.fc[0] - fr.vc[0] * fr.sc[0]) * FW, oy = (1 - fr.fc[1] - (1 - fr.vc[1]) * fr.sc[1]) * FH;
   S.cam.setViewOffset(FW, FH, ox, oy, fr.sc[0] * FW, fr.sc[1] * FH);
@@ -349,8 +351,8 @@ function updatePageTex(all) {
     const near = all || (leaf.k >= n - 1 - PAGE_WIN && leaf.k <= n + PAGE_WIN);
     for (let fi = 0; fi < 2; fi++) {
       const mesh = fi === 0 ? leaf.front : leaf.backMesh;
-      if (near && leaf.img[fi] && !leaf.tex[fi] && built < 1) { leaf.tex[fi] = leafTexture(leaf, fi); mesh.material.map = leaf.tex[fi]; mesh.material.needsUpdate = true; built++; }
-      else if (!near && leaf.tex[fi]) { leaf.tex[fi].dispose(); leaf.tex[fi] = null; mesh.material.map = S.blank; mesh.material.needsUpdate = true; }
+      if (near && leaf.img[fi] && !leaf.tex[fi] && built < 1) { leaf.tex[fi] = leafTexture(leaf, fi); mesh.material.map = leaf.tex[fi]; mesh.material.needsUpdate = true; built++; S.force = true; }
+      else if (!near && leaf.tex[fi]) { leaf.tex[fi].dispose(); leaf.tex[fi] = null; mesh.material.map = S.blank; mesh.material.needsUpdate = true; S.force = true; }
     }
   }
 }
@@ -382,6 +384,10 @@ function updateLeaves(now) {
 function turnedCount() { return S.leaves.filter(l => l.theta > 1).length; }
 
 // ---------- pose and frame ----------
+// Draw only when something on screen changed: index.html copies this canvas into its own frame whenever `drawn` moves, so an idle
+// prop (resting, held still, the open page being read) costs nothing. `sig` = the numbers that decide the picture; S.force redraws.
+function sigChanged(sig) { const o = S.sig; let same = !S.force && o && o.length === sig.length; if (same) for (let i = 0; i < sig.length; i++) if (Math.abs(sig[i] - o[i]) > 1e-7) { same = false; break; }
+  S.sig = sig; S.force = false; return !same; }
 function frame(now) { S.raf = requestAnimationFrame(frame); tick(now); }
 function tick(now) {
   if (!S.ready || !S.visible) return;
@@ -419,7 +425,7 @@ function tick(now) {
   const p = S.p;
   const pos = rest.pos.clone().lerp(face.pos, p); pos.z += 0.08 * Math.sin(Math.PI * p);        // a small arc up off the table
   const q = rest.quat.clone().slerp(face.quat, p);
-  if (S.state === 'open' || S.state === 'leafing') {
+  if (!PHONE && (S.state === 'open' || S.state === 'leafing')) {   // phones: no breath, so an open page held still is drawn once, not every frame
     const { r, u } = camBasis(); const a = 0.004 * Math.sin(t * 0.7) * S.open, b = 0.003 * Math.sin(t * 0.47 + 1.3) * S.open;
     q.premultiply(new THREE.Quaternion().setFromAxisAngle(u, a)).premultiply(new THREE.Quaternion().setFromAxisAngle(r, b));
   }
@@ -427,7 +433,9 @@ function tick(now) {
   S.key.target.position.copy(pos); S.key.position.copy(pos).addScaledVector(S.sun, 1.6);
   { const { c, f, r, u } = camBasis(); S.read.target.position.copy(pos); S.read.position.copy(pos).addScaledVector(f, -1.2).addScaledVector(r, 0.5).addScaledVector(u, 0.9); S.read.intensity = 1.3 * S.open * p; }   // (1.3: the pages keep their cream at exposure 0.9)
   S.shadow.material.opacity = CFG.lights.shadow * Math.max(0, 1 - p * 2.5);
-  S.renderer.render(S.scene, S.cam);
+  const v = S.cam.view || {}; let th = 0; for (let i = 0; i < S.leaves.length; i++) th += S.leaves[i].theta * (i + 1);
+  if (!sigChanged([pos.x, pos.y, pos.z, q.x, q.y, q.z, q.w, S.cover, S.open, th, S.turning.length, S.canvas.width, S.canvas.height, v.offsetX || 0, v.offsetY || 0, v.width || 0, v.height || 0])) return;
+  S.renderer.render(S.scene, S.cam); S.drawn = (S.drawn || 0) + 1;
 }
 
 // ---------- pointer: links on the bio page, leafing back and forth, page focus on a phone ----------
@@ -475,6 +483,7 @@ const API = {
   get turned() { return turnedCount(); },
   get leaves() { return S.leaves.length; },
   get visible() { return S.visible && S.ready; },      // index.html composites the canvas while this is true
+  get drawn() { return S.drawn || 0; },                // bumped on every render: index.html re-uploads the canvas only then
   get cfg() { return CFG; },
   /** canvasEl: the #bible3d / #album3d canvas; meta: { cam, aim, lens, res: [w, h], framing: () => ({ sc, fc, vc }), rest, boxes, urls, small, onState, onHover };
    *  over: config overrides from frames/album.json (glb, rest, hinge, block { xs, xf, h, zt }, pages [names], closed/open poses) */
@@ -489,7 +498,7 @@ const API = {
     S.canvas = canvasEl; S.meta = meta; S.onState = meta.onState || null; S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];
     S.small = !!meta.small; S.boxes = meta.boxes || null; S.urls = meta.urls || {}; S.focus = 0; S.closeStep = 0;
     canvasEl.hidden = true; canvasEl.classList.remove('on', 'live');
-    if (!S.renderer) { canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
+    if (!S.wired) { S.wired = true; canvasEl.addEventListener('pointermove', onMove); canvasEl.addEventListener('click', onClick); canvasEl.addEventListener('pointerleave', () => { if (S.meta.onHover) S.meta.onHover(null); }); }
     if (!S.raf) S.raf = requestAnimationFrame(frame);
     if (window.pageSnd && CFG.sound && window.pageSnd.load) window.pageSnd.load();   // the recorded page turns decode while the hub is still (needs the audio context: a no-op before the first gesture, retried at the first turn)
     if (S.ready) { for (const l of S.leaves) { l.theta = 0; shapeLeaf(l, 0, stackZ(l)); } if (S.hinge) S.hinge.rotation.set(0, 0, 0); loadPages(); return Promise.resolve(true); }
@@ -499,7 +508,7 @@ const API = {
     }).catch(err => { S.failed = true; S.loading = null; console.warn(CFG.name + ': not available', err); throw err; }));
   },
   get standIn() { return !!S.standIn; },                   // true while the album is drawn with bible.glb (album.glb not landed yet)
-  show() { S.visible = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps its still to the empty plate this same frame
+  show() { S.visible = true; S.force = true; if (S.canvas) { S.canvas.hidden = false; S.canvas.classList.add('on'); } tick(performance.now()); },   // drawn at once: the page swaps its still to the empty plate this same frame
   hide() { S.visible = false; if (S.canvas) { S.canvas.classList.remove('on', 'live'); S.canvas.hidden = true; } },   // QA v26: out of the DOM too (it was left at opacity 0)
   /** the Bible rises, turns to the camera, opens and leafs through to the bio spread */
   lift() {
@@ -529,7 +538,7 @@ const API = {
     S.fill.intensity = LG.fill; S.fill.color.copy(S.tinted(0xffe6d0)); S.rim.intensity = LG.rim; S.rim.color.copy(S.tinted(0xfff3e4)); S.read.color.copy(S.tinted(0xfff6ea)); for (const m of S.coverMats) m.envMapIntensity = LG.env;
     if (o && o.envTint) { const old = S.scene.environment; S.scene.environment = roomEnvironment(); if (old) old.dispose(); }
     if (o && o.coverTint) for (const m of S.coverMats) { const b = m.userData.base, ct = LG.coverTint; m.color.setRGB(b[0] * ct[0], b[1] * ct[1], b[2] * ct[2]); }
-    if (S.visible) tick(performance.now()); return true;
+    S.force = true; if (S.visible) tick(performance.now()); return true;
   },
   pickAt(x, y) { const h = pick({ clientX: x, clientY: y }); return h && { k: h.leaf.k, face: h.face, side: h.side, link: h.link && h.link.key, fx: h.fx, fy: h.fy }; },   // QA
   /** QA: jump to a pose without the animation. o = { p (0..1 lift), open (0..1), turned (leaves on the left), theta (deg of the next leaf, mid-turn) } */
@@ -540,7 +549,7 @@ const API = {
     if (o.theta !== undefined && n < S.leaves.length) { const l = S.leaves[n]; l.theta = o.theta * Math.PI / 180; shapeLeaf(l, l.theta, turnZ(l, l.theta)); }
     if (S.state === 'open') S.canvas.classList.add('live');
     for (let i = 0; i < 2 * (2 * PAGE_WIN + 3); i++) updatePageTex(false);   // every texture of the window now (QA stills)
-    tick(performance.now()); return true;
+    S.force = true; tick(performance.now()); return true;
   },
   unmount() {
     S.visible = false; S.state = 'rest'; S.p = 0; S.cover = 0; S.open = 0; S.turning = []; S.queue = [];

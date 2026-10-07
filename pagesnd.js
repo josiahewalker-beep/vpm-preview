@@ -18,11 +18,11 @@ function out() {
 }
 // ---- the recording: decoded once (QA runs on the Vorbis copy frames/_pageturn.ogg, as index.html does for the other recordings)
 const QA_WEBM = /webmtest/.test(location.hash);
-let slices = null, buf = null, loading = false, bag = [];
+let slices = null, buf = null, loading = false, bag = [], failedAt = -1e9;
 function load() {
-  const ac = ctx(); if (!ac || buf || loading) return; loading = true;
+  const ac = ctx(); if (!ac || buf || loading || performance.now() - failedAt < 30000) return; loading = true;   // after a failure, not again on every turn
   Promise.all([fetch('frames/pageturn.json').then(r => r.json()), fetch(QA_WEBM ? 'frames/_pageturn.ogg' : 'frames/pageturn.mp4').then(r => r.arrayBuffer()).then(ab => ac.decodeAudioData(ab))])
-    .then(([j, b]) => { slices = j.slices || []; buf = b; }).catch(() => {}).then(() => { loading = false; });
+    .then(([j, b]) => { slices = j.slices || []; buf = b; }).catch(() => { failedAt = performance.now(); }).then(() => { loading = false; });
 }
 function pickSlice(short) {
   // random without repeats: a shuffled bag, refilled when empty; `short` prefers slices whose transient comes early (the rapid run)

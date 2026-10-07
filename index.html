@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Josiah Walker · Very Prosperous Men</title><meta name="description" content="Very Prosperous Men, a short film directed by Josiah Walker. 1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions."><link rel="canonical" href="https://www.josiahwalker.com/"><meta property="og:type" content="website"><meta property="og:url" content="https://www.josiahwalker.com/"><meta property="og:title" content="Josiah Walker · Very Prosperous Men"><meta property="og:description" content="1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions."><meta property="og:image" content="https://www.josiahwalker.com/frames/v_%2B00.0_00.jpg"><meta name="twitter:card" content="summary_large_image"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body><title>Very Prosperous Men</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Josiah Walker · Very Prosperous Men</title><meta name="description" content="Very Prosperous Men, a short film directed by Josiah Walker. 1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions."><link rel="canonical" href="https://josiahwalker.com/"><meta property="og:type" content="website"><meta property="og:url" content="https://josiahwalker.com/"><meta property="og:title" content="Josiah Walker · Very Prosperous Men"><meta property="og:description" content="1962. California desert. A struggling door-to-door Bible salesman navigates the haunting consequence of his actions."><meta property="og:image" content="https://josiahwalker.com/frames/v_%2B00.0_00.jpg"><meta name="twitter:card" content="summary_large_image"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body><title>Very Prosperous Men</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -367,6 +367,7 @@ const LOOKS = {
   clean: { distort: 0, fringe: 0, edge: 0, vig: 0, bloom: 0, hal: 0, halc: [1, 1, 1], lift: [0, 0, 0], gam: [1, 1, 1], gain: [1, 1, 1], sat: 1, con: 1, grain: 0.008, weave: 0 },
 };
 const look = 'clean';
+const FILM_FX = !!(LOOKS[look].bloom || LOOKS[look].hal || LOOKS[look].edge);   // regenerating the frame's mip chain every frame cost phones dearly
 try { localStorage.removeItem('vpm-look'); } catch (e) {}
 
 // ---------- the hint line (round 4 note 12) ----------
@@ -602,28 +603,98 @@ vec2 warp(sampler2D d, vec3 ci, mat3 ri, vec2 f){
   }
   return s;
 }
+// Visibility-aware warp (the TV's antenna, every thin or near edge). The fixed-point warp above starts at the pixel itself, so it
+// cannot find a thin foreground object that has moved further than its own width between two views: between two grid views the
+// antenna shifted ~14 px against the window behind it and came out as two half-transparent copies cross-fading as the camera moved.
+// Here the ray through this pixel is marched front to back along its epipolar line in the view's depth map (1 depth texel a step,
+// uniform in inverse depth) and the first surface it meets is taken. The tilt views of one yaw share a camera centre (tilt is a pure
+// rotation), so one march per yaw column serves both of its tilt views. Where the two columns disagree the nearer surface wins (the
+// farther one is something the other view sees behind it); pixels neither column can see fall back to the fixed-point warp.
+const float RHO_N = 1.0 / 1.4, RHO_F = 1.0 / 5.2;            // the grid's depths span 1.48..5.04 m
+uniform bool marchOn, onGrid; uniform bvec2 sameC;   // sameC: the camera sits at that yaw column's centre (a pure tilt): no search needed   // onGrid: the camera is on a rendered view
+float zTexel(sampler2D d, vec2 s){ ivec2 sz = textureSize(d, 0); vec4 t = texelFetch(d, clamp(ivec2(s * vec2(sz)), ivec2(0), sz - 1), 0);
+  float n = (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / 65535.0; return 1.0 / (1.0 / ZFAR + n * (1.0 / ZNEAR - 1.0 / ZFAR)); }
+vec2 projV(vec3 q){ return vec2(0.5 + (q.x / -q.z) / tx * 0.5, 0.5 - (q.y / -q.z) / ty * 0.5); }
+bool inside(vec2 s){ return s.x >= 0.0 && s.x <= 1.0 && s.y >= 0.0 && s.y <= 1.0; }
+// -> (inverse depth of the hit in the current camera, 1 if a surface was met, the march's step in inverse depth)
+vec3 march(sampler2D d, sampler2D l, vec3 ci, mat3 ri, vec3 dir){
+  mat3 rt = transpose(ri); vec3 o = rt * (cc - ci), dv = rt * dir;     // in the view's camera: q(z) = o + z dv; scaled by rho = 1/z: o rho + dv
+  vec2 sz = vec2(textureSize(d, 0)), lz = vec2(textureSize(l, 0));
+  vec2 s0 = projV(o * RHO_N + dv), s1 = projV(o * RHO_F + dv);
+  // the nearest and farthest surface around this ray's search line (B, A of the view's light map: viewDepthLight()); margins for
+  // the few % the view's depth differs from this camera's
+  vec2 ra = texelFetch(l, clamp(ivec2(s0 * lz), ivec2(0), ivec2(lz) - 1), 0).ba, rb = texelFetch(l, clamp(ivec2(s1 * lz), ivec2(0), ivec2(lz) - 1), 0).ba;
+  vec2 rg = vec2(max(ra.x, rb.x), min(ra.y, rb.y));                    // the tiles round both ends of the search line cover all of it
+  float rn = min(RHO_N, rg.x * 1.04 + 0.01), rf = max(RHO_F, rg.y * 0.96 - 0.01);
+  if (rn <= rf) { rn = RHO_N; rf = RHO_F; }                           // no range stored (no depth for this view): the whole span
+  float L = length((s1 - s0) * sz) * (rn - rf) / (RHO_N - RHO_F);
+  int N = int(clamp(ceil(L), 1.0, 48.0)); float stepR = (rf - rn) / float(N);
+  float pd = 0.0, pr = rn; bool have = false, hid = false;
+  for (int k = 0; k <= 48; k++) {
+    if (k > N) break;
+    float rho = rn + stepR * float(k); vec3 q = o * rho + dv; vec2 s = projV(q);
+    if (!inside(s) || q.z >= 0.0) { have = false; continue; }
+    float diff = 1.0 / zTexel(d, s) - rho / -q.z;                       // > 0: the ray point is behind the surface the view saw there
+    if (diff > -stepR * 2.5) hid = true;                                 // passed behind something nearer
+    if (have && pd <= 0.0 && diff > 0.0 && diff < -stepR * 2.5)          // a crossing, not a step behind an occluder's edge
+      return vec3(mix(pr, rho, clamp(-pd / max(diff - pd, 1e-6), 0.0, 1.0)), 1.0, -stepR);
+    pd = diff; pr = rho; have = true;
+  }
+  return vec3(rf, hid ? 0.5 : 0.0, -stepR);                            // 0.5: hidden from this view (a disocclusion): rf = the local far surface, for the fill
+}
+// one yaw column: march in whichever of its two tilt views holds this ray
+vec3 marchCol(sampler2D dA, sampler2D lA, vec3 cA, mat3 rA, float wA, float hA, sampler2D dB, sampler2D lB, vec3 cB, mat3 rB, float wB, float hB, vec3 dir){
+  bool useA = hA > 0.5 && (wB <= 0.001 || hB < 0.5 || inside(projV(transpose(rA) * (cc + dir * 3.0 - cA))));
+  if (useA) return march(dA, lA, cA, rA, dir);
+  if (hB > 0.5) return march(dB, lB, cB, rB, dir);
+  return vec3(0.0);
+}
+void addAt(sampler2D b, sampler2D l, vec3 ci, mat3 ri, vec3 P, float wt, inout vec3 c, inout vec2 L, inout float ws){
+  if (wt <= 0.0) return; vec3 q = transpose(ri) * (P - ci); if (q.z >= 0.0) return; vec2 s = projV(q); if (!inside(s)) return;
+  c += texture(b, s).rgb * wt; L += texture(l, s).rg * wt; ws += wt;
+}
 uniform float head, spark; uniform float fade; uniform sampler2D alt; uniform float altMix; uniform sampler2D alt2; uniform float alt2Mix; uniform vec2 a2h; uniform float a2s;
 void main(){
   vec2 uv0 = fc + (v - vc) * sc; vec2 uv = zc + (uv0 - zc) / zoom; uv.y = 1.0 - uv.y; uv0.y = 1.0 - uv0.y;
-  // settled on one rendered view: no warping needed; otherwise warp only the views that carry weight
-  bool single = w.x > 0.999;
+  vec2 uc = mix(uv, uv0, altMix);
+  if (uc.x < 0.0 || uc.x > 1.0 || uc.y < 0.0 || uc.y > 1.0) { o = vec4(0.05, 0.045, 0.04, 1.0); return; }   // off the frame (the portrait band's margins): nothing to warp
   vec3 c = vec3(0.0); vec2 L = vec2(0.0);
-  if (w.x > 0.001) { vec2 s = (!single && hasD.x > 0.5) ? warp(d0, cp0, vr0, uv) : uv; c += texture(b0, s).rgb * w.x; L += texture(l0, s).rg * w.x; }
-  if (w.y > 0.001) { vec2 s = hasD.y > 0.5 ? warp(d1, cp1, vr1, uv) : uv; c += texture(b1, s).rgb * w.y; L += texture(l1, s).rg * w.y; }
-  if (w.z > 0.001) { vec2 s = hasD.z > 0.5 ? warp(d2, cp2, vr2, uv) : uv; c += texture(b2, s).rgb * w.z; L += texture(l2, s).rg * w.z; }
-  if (w.w > 0.001) { vec2 s = hasD.w > 0.5 ? warp(d3, cp3, vr3, uv) : uv; c += texture(b3, s).rgb * w.w; L += texture(l3, s).rg * w.w; }
+  if (altMix < 0.999) {
+    float wmax = max(max(w.x, w.y), max(w.z, w.w)); float ws = 0.0;
+    if (onGrid && wmax > 0.999) {                        // settled on one rendered view: no warping (not merely the only view loaded: that one is warped to the camera)
+      if (w.x == wmax) { c = texture(b0, uv).rgb; L = texture(l0, uv).rg; } else if (w.y == wmax) { c = texture(b1, uv).rgb; L = texture(l1, uv).rg; }
+      else if (w.z == wmax) { c = texture(b2, uv).rgb; L = texture(l2, uv).rg; } else { c = texture(b3, uv).rgb; L = texture(l3, uv).rg; }
+      ws = 1.0;
+    } else if (marchOn) {                                // slots: 0 = (yaw a, tilt lo), 1 = (b, lo), 2 = (a, hi), 3 = (b, hi)
+      vec3 dir = cr * vec3((uv.x * 2.0 - 1.0) * tx, (1.0 - uv.y * 2.0) * ty, -1.0);
+      // a column whose centre is the camera's: every depth lands on the same pixel (a rotation), so any point on the ray will do
+      vec3 hA = (w.x + w.z <= 0.001) ? vec3(0.0) : sameC.x ? vec3(1.0 / 3.0, 1.0, 1.0) : marchCol(d0, l0, cp0, vr0, w.x, hasD.x, d2, l2, cp2, vr2, w.z, hasD.z, dir);
+      vec3 hB = (w.y + w.w <= 0.001) ? vec3(0.0) : sameC.y ? vec3(1.0 / 3.0, 1.0, 1.0) : marchCol(d1, l1, cp1, vr1, w.y, hasD.y, d3, l3, cp3, vr3, w.w, hasD.w, dir);
+      float hitA = step(0.75, hA.y), hitB = step(0.75, hB.y);
+      float rs = max(hitA > 0.0 ? hA.x : -1.0, hitB > 0.0 ? hB.x : -1.0), tol = max(hA.z, hB.z) * 1.5;
+      float kA = hitA * (1.0 - smoothstep(tol, 2.0 * tol, rs - hA.x)), kB = hitB * (1.0 - smoothstep(tol, 2.0 * tol, rs - hB.x));
+      if (kA > 0.0) { vec3 P = cc + dir / hA.x; addAt(b0, l0, cp0, vr0, P, w.x * kA, c, L, ws); addAt(b2, l2, cp2, vr2, P, w.z * kA, c, L, ws); }
+      if (kB > 0.0) { vec3 P = cc + dir / hB.x; addAt(b1, l1, cp1, vr1, P, w.y * kB, c, L, ws); addAt(b3, l3, cp3, vr3, P, w.w * kB, c, L, ws); }
+      if (ws > 1e-4) { c /= ws; L /= ws; }
+    }
+    if (ws <= 1e-4) {                                    // the fixed-point warp (#warp=old, or where neither column met a surface)
+      c = vec3(0.0); L = vec2(0.0);
+      if (w.x > 0.001) { vec2 s = hasD.x > 0.5 ? warp(d0, cp0, vr0, uv) : uv; c += texture(b0, s).rgb * w.x; L += texture(l0, s).rg * w.x; }
+      if (w.y > 0.001) { vec2 s = hasD.y > 0.5 ? warp(d1, cp1, vr1, uv) : uv; c += texture(b1, s).rgb * w.y; L += texture(l1, s).rg * w.y; }
+      if (w.z > 0.001) { vec2 s = hasD.z > 0.5 ? warp(d2, cp2, vr2, uv) : uv; c += texture(b2, s).rgb * w.z; L += texture(l2, s).rg * w.z; }
+      if (w.w > 0.001) { vec2 s = hasD.w > 0.5 ? warp(d3, cp3, vr3, uv) : uv; c += texture(b3, s).rgb * w.w; L += texture(l3, s).rg * w.w; }
+    }
+  }
   c += L.g * 0.25 * head * vec3(1.0, 0.93, 0.8) * 1.2;
   c += L.r * 0.25 * spark * vec3(1.0, 0.58, 0.25) * 1.5;
   vec3 a = texture(alt, uv0).rgb;
   c = mix(c, a, altMix);
   if (alt2Mix > 0.0) {                                  // second image grows out of the point a2h (image space) to fill the frame
     vec2 u2 = a2h + (uv0 - a2h) / a2s;
-    float inside = step(0.0, u2.x) * step(u2.x, 1.0) * step(0.0, u2.y) * step(u2.y, 1.0);
-    c = mix(c, texture(alt2, u2).rgb, alt2Mix * inside);
+    float in2 = step(0.0, u2.x) * step(u2.x, 1.0) * step(0.0, u2.y) * step(u2.y, 1.0);
+    c = mix(c, texture(alt2, u2).rgb, alt2Mix * in2);
   }
-  vec2 uc = mix(uv, uv0, altMix);
-  bool out_ = uc.x < 0.0 || uc.x > 1.0 || uc.y < 0.0 || uc.y > 1.0;
-  o = vec4(out_ ? vec3(0.05, 0.045, 0.04) : c * fade, 1.0);
+  o = vec4(c * fade, 1.0);
 }`;
 // pass 2a: cigarette smoke, drawn on a quad anchored at the ember
 const SMOKE_VS = `#version 300 es
@@ -680,23 +751,27 @@ void main(){
 // pass 3: lens and print
 const FILM_FS = `#version 300 es
 precision highp float; in vec2 v; out vec4 o;
-uniform sampler2D s; uniform vec2 res; uniform float t;
+uniform sampler2D s; uniform vec2 res; uniform float t; uniform vec2 rsc;   // rsc: the part of the target drawn this frame (the motion resolution)
+vec2 R(vec2 u){ return min(clamp(u, 0.0, 1.0) * rsc, rsc - 0.5 / res); }
 uniform float distort, fringe, edge, vig, bloom, hal, sat, con, grain; uniform vec3 halc, lift, gam, gain; uniform vec2 weave;
+const bool FX = ${FILM_FX};
 float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main(){
   vec2 uv = v + weave / res;
   vec2 nn = (uv - 0.5) * vec2(2.0, 2.0 * res.y / res.x); float r2 = dot(nn, nn);
   float sgeo = 1.0 - distort * 0.25 + distort * r2 * 0.25;
-  float lod = edge * pow(clamp((sqrt(r2) - 0.45) / 0.75, 0.0, 1.0), 1.5) * 2.2;
+  float lod = !FX ? 0.0 : edge * pow(clamp((sqrt(r2) - 0.45) / 0.75, 0.0, 1.0), 1.5) * 2.2;
   vec3 c;
-  c.r = textureLod(s, 0.5 + (uv - 0.5) * sgeo * (1.0 + fringe), lod).r;
-  c.g = textureLod(s, 0.5 + (uv - 0.5) * sgeo, lod).g;
-  c.b = textureLod(s, 0.5 + (uv - 0.5) * sgeo * (1.0 - fringe), lod).b;
+  c.r = textureLod(s, R(0.5 + (uv - 0.5) * sgeo * (1.0 + fringe)), lod).r;
+  c.g = textureLod(s, R(0.5 + (uv - 0.5) * sgeo), lod).g;
+  c.b = textureLod(s, R(0.5 + (uv - 0.5) * sgeo * (1.0 - fringe)), lod).b;
   vec2 uvg = 0.5 + (uv - 0.5) * sgeo;
-  vec3 g1 = textureLod(s, uvg, 3.5).rgb, g2 = textureLod(s, uvg, 5.5).rgb;
-  float l1 = dot(g1, vec3(0.2126, 0.7152, 0.0722)), l2 = dot(g2, vec3(0.2126, 0.7152, 0.0722));
-  c += max(g2 - 0.62, 0.0) * bloom * 2.0;
-  c += halc * (max(l1 - 0.62, 0.0) + 0.6 * max(l2 - 0.62, 0.0)) * hal;
+  if (FX) {
+    vec3 g1 = textureLod(s, R(uvg), 3.5).rgb, g2 = textureLod(s, R(uvg), 5.5).rgb;
+    float l1 = dot(g1, vec3(0.2126, 0.7152, 0.0722)), l2 = dot(g2, vec3(0.2126, 0.7152, 0.0722));
+    c += max(g2 - 0.62, 0.0) * bloom * 2.0;
+    c += halc * (max(l1 - 0.62, 0.0) + 0.6 * max(l2 - 0.62, 0.0)) * hal;
+  }
   c *= 1.0 - vig * pow(clamp(r2 / 1.6, 0.0, 1.0), 1.3);
   c = clamp(0.5 + (c - 0.5) * con, 0.0, 1.0);
   c = pow(c, gam) * gain; c = lift + c * (1.0 - lift);
@@ -707,7 +782,83 @@ void main(){
   o = vec4(c, 1.0);
 }`;
 
+// The depth range (viewDepthLight): once per view, the depth map's nearest / farthest inverse depth per 16-texel tile, widened by a tile
+// all round (read at both ends of a search line, at most ~32 texels long between neighbouring views), stored in B, A of the light map
+const RANGE_HEAD = `#version 300 es
+precision highp float; out vec4 o; uniform sampler2D d; const float ZNEAR = 0.3, ZFAR = 60.0;
+float rho(vec4 t){ float n = (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / 65535.0; return 1.0 / ZFAR + n * (1.0 / ZNEAR - 1.0 / ZFAR); }
+`;
+const RANGE_A_FS = RANGE_HEAD + `void main(){ ivec2 sz = textureSize(d, 0), t0 = ivec2(gl_FragCoord.xy) * 16; float hi = 0.0, lo = 1.0;
+  for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) { float r = rho(texelFetch(d, min(t0 + ivec2(x, y), sz - 1), 0)); hi = max(hi, r); lo = min(lo, r); }
+  o = vec4(min(1.0, ceil(hi * 255.0) / 255.0), max(0.0, floor(lo * 255.0) / 255.0), 0.0, 1.0); }`;   // rounded outward: never narrower than the truth
+const RANGE_B_FS = `#version 300 es
+precision highp float; out vec4 o; uniform sampler2D d;
+void main(){ ivec2 sz = textureSize(d, 0), p = ivec2(gl_FragCoord.xy); vec2 r = vec2(0.0, 1.0);
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) { vec2 t = texelFetch(d, clamp(p + ivec2(x, y), ivec2(0), sz - 1), 0).rg; r = vec2(max(r.x, t.x), min(r.y, t.y)); }
+  o = vec4(r, 0.0, 1.0); }`;
+// a view's light map with the range in B, A: each light texel takes the dilated range of the depth tile under it
+const LR_FS = `#version 300 es
+precision highp float; out vec4 o; uniform sampler2D l, rt; uniform vec2 dsz, osz;
+void main(){ ivec2 p = ivec2(gl_FragCoord.xy), ls = textureSize(l, 0), rs = textureSize(rt, 0);
+  ivec2 tile = clamp(ivec2((vec2(p) + 0.5) / osz * dsz) / 16, ivec2(0), rs - 1);
+  o = vec4(texelFetch(l, min(p, ls - 1), 0).rg, texelFetch(rt, tile, 0).rg); }`;
+// depth as RG8 (the 16-bit value, nothing else)
+const DCOPY_FS = `#version 300 es
+precision highp float; out vec4 o; uniform sampler2D d; void main(){ o = vec4(texelFetch(d, ivec2(gl_FragCoord.xy), 0).rg, 0.0, 1.0); }`;
+// colour into 16 bits (RGB565) for phones, with a 4x4 ordered dither so dark gradients don't band
+const C565_FS = `#version 300 es
+precision highp float; out vec4 o; uniform sampler2D d;
+const float M[16] = float[16](0., 8., 2., 10., 12., 4., 14., 6., 3., 11., 1., 9., 15., 7., 13., 5.);
+void main(){ ivec2 p = ivec2(gl_FragCoord.xy); float b = (M[(p.y & 3) * 4 + (p.x & 3)] + 0.5) / 16.0 - 0.5;
+  o = vec4(texelFetch(d, p, 0).rgb + vec3(b / 31.0, b / 63.0, b / 31.0), 1.0); }`;
 const P = { comp: prog(FSQ_VS, COMP_FS), smoke: prog(SMOKE_VS, SMOKE_FS), part: prog(PART_VS, PART_FS), film: prog(FSQ_VS, FILM_FS), tv: prog(SMOKE_VS, TV_FS), walk: prog(WALK_VS, WALK_FS), over: prog(FSQ_VS, OVER_FS) };
+Object.assign(P, { rangeA: prog(FSQ_VS, RANGE_A_FS), rangeB: prog(FSQ_VS, RANGE_B_FS), lr: prog(FSQ_VS, LR_FS), dcopy: prog(FSQ_VS, DCOPY_FS), c565: prog(FSQ_VS, C565_FS) });
+const RG = { fb: gl.createFramebuffer(), a: null, b: null, w: 0, h: 0 };
+function rawTex(w, h) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, w, h);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); return t; }
+function rangePass(pr, src, dst, w, h, src2) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, RG.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, dst, 0); gl.viewport(0, 0, w, h);
+  gl.useProgram(pr.p); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, src); gl.uniform1i(pr.u.d, 0);
+  if (src2) { gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, src2); gl.uniform1i(pr.u.rt, 1); }
+  fsq(pr);
+}
+// ---------- a view's textures, built on the GPU from its three files (Archer's log, 10-02: uploads mid-swipe were the stutter, and the
+// phone could hold only half the room, so it re-uploaded all the time). Each file goes into a shared staging texture, and passes write
+// the resident form: depth as RG8 (2 B a texel), the light map with the depth range in B, A, and on phones the colour as RGB565 with a
+// dither (2 B a texel). ~2.1 MB a view on a phone, so all 87 stay resident (~185 MB) and nothing uploads once the room is in.
+function fmtTex(fmt, w, h, linear) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texStorage2D(gl.TEXTURE_2D, 1, fmt, w, h);
+  const f = linear ? gl.LINEAR : gl.NEAREST; for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, f], [gl.TEXTURE_MAG_FILTER, f], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); return t; }
+function canRender(fmt) { try { const t = fmtTex(fmt, 4, 4, false); gl.bindFramebuffer(gl.FRAMEBUFFER, RG.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE; gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteTexture(t); return ok; } catch (e) { gl.bindFramebuffer(gl.FRAMEBUFFER, null); return false; } }
+const RG8_OK = canRender(gl.RG8) && !/[#&]rg8=0/.test(location.hash), C565_OK = canRender(gl.RGB565);   // #rg8=0: depth as RGBA8 (QA)
+const TMP = {};                                                          // staging textures, one per kind (every view's files are the same size)
+function stageTex(kind, img, raw) { const w = img.width || img.naturalWidth, h = img.height || img.naturalHeight; let s_ = TMP[kind];
+  if (!s_ || s_.w !== w || s_.h !== h) { if (s_) gl.deleteTexture(s_.t); s_ = TMP[kind] = { t: rawTex(w, h), w, h }; }
+  gl.bindTexture(gl.TEXTURE_2D, s_.t); gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, raw ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, img); return s_; }
+function gpuPass(pr, dst, w, h, srcs, set) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, RG.fb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, dst, 0); gl.viewport(0, 0, w, h); gl.useProgram(pr.p);
+  srcs.forEach(([name, t], i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(pr.u[name], i); });
+  if (set) set(pr); fsq(pr); }
+function viewColour(img) {                                               // desktop: as decoded (RGBA8); phones: RGB565
+  if (!COMPACT || !C565_OK) return viewTex(img);
+  const st_ = stageTex('c', img, false), out = fmtTex(gl.RGB565, st_.w, st_.h, true);
+  gpuPass(P.c565, out, st_.w, st_.h, [['d', st_.t]]); gl.bindFramebuffer(gl.FRAMEBUFFER, null); return out; }
+function viewDepthLight(l, d) {                                          // -> [light map + range (RGBA8, the light map's size), depth (RG8) or null]
+  try {
+    let dt = null, rb = black, dsz = [1, 1];
+    if (d) { const sd = stageTex('d', d, true); dsz = [sd.w, sd.h];
+      if (WARP_MARCH) { const tw = Math.ceil(sd.w / 16), th = Math.ceil(sd.h / 16);
+        if (RG.w !== tw || RG.h !== th) { if (RG.a) { gl.deleteTexture(RG.a); gl.deleteTexture(RG.b); } RG.a = rawTex(tw, th); RG.b = rawTex(tw, th); RG.w = tw; RG.h = th; }
+        rangePass(P.rangeA, sd.t, RG.a, tw, th); rangePass(P.rangeB, RG.a, RG.b, tw, th); rb = RG.b; }
+      dt = fmtTex(RG8_OK ? gl.RG8 : gl.RGBA8, sd.w, sd.h, false); gpuPass(P.dcopy, dt, sd.w, sd.h, [['d', sd.t]]); }
+    let lw = Math.max(1, dsz[0] >> 1), lh = Math.max(1, dsz[1] >> 1), ls = black;
+    if (l) { const sl = stageTex('l', l, false); lw = sl.w; lh = sl.h; ls = sl.t; }
+    const lt = fmtTex(gl.RGBA8, lw, lh, true);
+    gpuPass(P.lr, lt, lw, lh, [['l', ls], ['rt', rb]], pr => { gl.uniform2f(pr.u.dsz, dsz[0], dsz[1]); gl.uniform2f(pr.u.osz, lw, lh); });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); return [lt, dt];
+  } catch (e) { gl.bindFramebuffer(gl.FRAMEBUFFER, null); return [l ? tex(l) : black, d ? tex(d, true) : null]; }
+}
 const walkBuf = gl.createBuffer();
 const tvBuf = gl.createBuffer();
 const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -715,6 +866,19 @@ const smokeBuf = gl.createBuffer(), partBuf = gl.createBuffer();
 function fsq(p) { gl.useProgram(p.p); gl.bindBuffer(gl.ARRAY_BUFFER, quad); const loc = gl.getAttribLocation(p.p, 'a');
   gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.disableVertexAttribArray(loc); }
 
+// View textures are recycled: an evicted view's textures go to a pool keyed by size and filter and the next view of that size is
+// written into them (texSubImage2D into immutable storage) - creating and deleting GPU textures mid-swipe stalls phone GPUs.
+const POOL = new Map();
+function poolKey(w, h, raw) { return w + 'x' + h + (raw ? 'n' : 'l'); }
+function poolPut(t) { if (!t || t === black || !t.__k) { if (t && t !== black) gl.deleteTexture(t); return; } const a = POOL.get(t.__k) || []; if (a.length < 8) { a.push(t); POOL.set(t.__k, a); } else gl.deleteTexture(t); }
+function poolTex(w, h, raw) { const k = poolKey(w, h, raw), a = POOL.get(k); if (a && a.length) return a.pop();
+  const t = rawTex(w, h); if (!raw) { gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); } t.__k = k; return t; }
+function viewTex(img, raw) {   // like tex(), into a pooled texture
+  const w = img.width || img.naturalWidth, h = img.height || img.naturalHeight; if (!w || !h) return tex(img, raw);
+  const t = poolTex(w, h, raw); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, raw ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, img); return t;
+}
 function tex(img, raw) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
   gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, raw ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
@@ -726,22 +890,34 @@ const black = (() => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2
 
 // offscreen target for the film pass (mipmapped for glow and edge softness)
 let fbo = null, fboTex = null, W = 0, H = 0;
+// Resolution of the GL canvas. Phones used to run everything at 2.5x (6+ MP of shader work a frame on an iPhone) although the room's
+// 960 px frames fill the portrait band at ~1.2 source px per CSS px: the room now renders at 1.5x, and 2.5x only while a book is open
+// (the Bible's text is drawn into this canvas). #dpr=<n> overrides, for testing on a device.
+const DPR_FIX = /[#&]dpr=([\d.]+)/.exec(location.hash);
+const phoneScreen = () => Math.max(innerWidth, innerHeight) < 1000;   // asked each time: a window resized across 1000 px changes its treatment
+function wantDpr() {
+  const d = devicePixelRatio || 1; if (DPR_FIX) return Math.min(d, parseFloat(DPR_FIX[1]) || 1);
+  if (!phoneScreen()) return Math.min(d, 1.5);
+  const reading = cu && (cu.sub === 'bible' || cu.sub === 'album');
+  return Math.min(d, reading ? 2.5 : 1.5);
+}
+let bandAt = -1e9;
 function resize() {
-  measureBand();
-  const dpr = Math.min(devicePixelRatio || 1, Math.max(innerWidth, innerHeight) < 1000 ? 2.5 : 1.5);   // phones: sharper (few pixels, and the Bible's text must read)
+  const now = performance.now(); if (now - bandAt > 500) { bandAt = now; measureBand(); }   // it reads layout: twice a second, not every frame
+  const dpr = wantDpr();
   const w = Math.round(stage.clientWidth * dpr), h = Math.round(stage.clientHeight * dpr);
   if (w === W && h === H) return; W = canvas.width = w; H = canvas.height = h;
   if (fboTex) gl.deleteTexture(fboTex); if (fbo) gl.deleteFramebuffer(fbo);
   fboTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, fboTex);
-  gl.texStorage2D(gl.TEXTURE_2D, 1 + Math.floor(Math.log2(Math.max(W, H))), gl.RGBA8, W, H);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texStorage2D(gl.TEXTURE_2D, FILM_FX ? 1 + Math.floor(Math.log2(Math.max(W, H))) : 1, gl.RGBA8, W, H);   // the mips only feed the glow / edge looks
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, FILM_FX ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 }
 addEventListener('resize', resize);
 // last resort: if the browser takes the GL context away (memory), come back to the room rather than sit on a black picture
-canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 600); });
+canvas.addEventListener('webglcontextlost', e => { try { sessionStorage.setItem('vpm-lowmem', '1'); } catch (x) {} if (typeof LOG !== 'undefined' && LOG) { LOG.e('contextlost'); LOG.flush(true); } e.preventDefault(); setTimeout(() => location.reload(), 600); });
 
 // ---------- the view grid ----------
 let views = null, TS = [], TILTS = [], FA = 1.6;
@@ -750,29 +926,98 @@ const SMALL = Math.max(innerWidth, innerHeight) < 1000 || (navigator.connection 
 function vname(t, tilt) { const s = (t >= 0 ? '+' : '-') + String(Math.abs(t).toFixed(1)).padStart(4, '0'); return `${s}_${String(Math.round(tilt)).padStart(2, '0')}`; }
 // Phones (Josiah's iPhone went black after the case, 10-01): every view holds ~13 MB of textures and all 87 were kept (over 1 GB), so iOS dropped
 // the page's GL context. On small screens only the views nearest the camera stay in memory; the rest reload from the browser cache when needed.
-const VIEW_KEEP = 18;
-function shrink(img, w) { const c = document.createElement('canvas'); c.width = w; c.height = Math.round(w * img.naturalHeight / img.naturalWidth); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; }
-function evictViews() { if (cache.size <= VIEW_KEEP) return; const d = nm => Math.abs(parseFloat(nm.slice(0, 5)) - t) + Math.abs(+nm.slice(6) - tilt) * 1.5;
-  const far = [...cache.keys()].filter(nm => !cache.get(nm).pending).sort((a, b) => d(b) - d(a));
-  for (const nm of far) { if (cache.size <= VIEW_KEEP) break; if (d(nm) < 6) break; const e = cache.get(nm); cache.delete(nm);
-    if (e.b) gl.deleteTexture(e.b); if (e.l && e.l !== black) gl.deleteTexture(e.l); if (e.d) gl.deleteTexture(e.d); } }
+// #off=dust,sparks,smoke,warp: switch live layers off to see what a device is paying for (warp: the nearest rendered view, no blending)
+const OFF = new Set(((/[#&]off=([\w,]+)/.exec(location.hash) || [])[1] || '').split(',').filter(Boolean));
+const COMPACT = SMALL && !/[#&]rgb565=0/.test(location.hash);   // phones: 16-bit colour (#rgb565=0: as decoded, for comparison)
+let LOWMEM = false; try { LOWMEM = sessionStorage.getItem('vpm-lowmem') === '1'; } catch (e) {}
+const VIEW_KEEP = LOWMEM ? 28 : 999;   // phones keep every view (~2.1 MB each); after a lost GL context on this device, 28 (the old behaviour)
+// ---------- #log: a recorder for testing on a real device (Archer, 10-02). Every frame and the loading events go in batches to
+// tools/devserver.py (POST /__log), which writes qa/perf-logs/<session>.jsonl; tools/perf_report.py summarises a session. ----------
+const LOG = /[#&]log\b/.test(location.hash) ? (() => {
+  const L = { sid: new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '') + '-' + Math.random().toString(36).slice(2, 6), rows: [], ev: [], t0: performance.now() };
+  L.ms = () => Math.round(performance.now() - L.t0);
+  L.e = (type, d) => { L.ev.push([L.ms(), type, d === undefined ? null : d]); };
+  L.flush = final => { if (!L.rows.length && !L.ev.length) return; const body = JSON.stringify({ sid: L.sid, rows: L.rows, ev: L.ev }); L.rows = []; L.ev = [];
+    try { if (final && navigator.sendBeacon) navigator.sendBeacon('/__log', body); else fetch('/__log', { method: 'POST', body, keepalive: true }).catch(() => {}); } catch (e) {} };
+  setInterval(() => L.flush(), 2000);
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { L.e('hidden'); L.flush(true); } else L.e('visible'); });
+  addEventListener('pagehide', () => L.flush(true));
+  addEventListener('error', e => L.e('error', String(e.message)));
+  L.e('meta', { ua: navigator.userAgent, dpr: devicePixelRatio, screen: [screen.width, screen.height], inner: [innerWidth, innerHeight], hash: location.hash, small: SMALL, mem: navigator.deviceMemory || null,
+    cols: ['ms', 'interval', 'js', 'uploads', 'uploadMs', 'res', 't', 'tilt', 'gt', 'gtilt', 'hand', 'moving', 'views', 'queue', 'blended', 'mode', 'canvasW'] });
+  addEventListener('DOMContentLoaded', () => {}); setTimeout(() => { const d = document.createElement('div'); d.textContent = '● REC'; d.style.cssText = 'position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 60px);z-index:20;font:10px/1 ui-monospace,monospace;color:#e66;background:rgba(0,0,0,.6);padding:3px 5px;pointer-events:none'; document.body.appendChild(d); }, 0);
+  return L; })() : null;
+// The moving room's resolution adapts (Archer, 10-02: the phone still dropped rocking past the TV, where the warp's search is longest):
+// while the room moves, the frame interval is watched and the resolution steps down 0.05 when frames run long, back up when there is
+// room, between MOVE_MIN and the device's ceiling (phones 0.85, others 1). #movers=<n> pins it (1 = always full).
+const MOVE_FIX = parseFloat((/[#&]movers=([\d.]+)/.exec(location.hash) || [])[1]) || 0, MOVE_MIN = 0.5;
+const ADAPT = { rs: 0, ema: 16.7, base: 16.7, hold: 0 };
+let RS = 1;   // (was 18 with 720 px light maps; at 360 px a view is ~3.9 MB of textures, 28 of them ~110 MB)
+const WARP_MARCH = !/[#&]warp=old/.test(location.hash);   // #warp=old: the fixed-point warp everywhere (A/B against the march)
+function shrink(img, w) { const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; const c = document.createElement('canvas'); c.width = w; c.height = Math.round(w * ih / iw); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c; }
+function evictViews(keep) { keep = keep || VIEW_KEEP; if (cache.size <= keep) return;   // the farthest from both the camera and where the hand is heading (a flick's target is not thrown out as it lands)
+  const d = nm => { const a = parseFloat(nm.slice(0, 5)), b = +nm.slice(6); return Math.min(Math.abs(a - t) + Math.abs(b - tilt) * 1.5, Math.abs(a - gt) + Math.abs(b - gtilt) * 1.5); };
+  const far = [...cache.keys()].filter(nm => cache.get(nm).b).sort((a, b) => d(b) - d(a));
+  for (const nm of far) { if (cache.size <= keep) break; if (d(nm) < 6) break; const e = cache.get(nm); cache.delete(nm); if (LOG) LOG.e('evict', nm);
+    poolPut(e.b); poolPut(e.l); poolPut(e.d); } }
+// Phones lagged whenever a view came in mid-drag: an <img> is decoded on the main thread at its first texImage2D, and all three maps
+// of a view were uploaded in one frame. Now the files are decoded off the main thread (createImageBitmap, where the browser has it)
+// and the frame loop uploads at most one view per frame (upQ).
+const BITMAPS = typeof createImageBitmap === 'function' && !/[#&]bitmap=0/.test(location.hash);
+function decodeImg(url, raw, maxW) {
+  const viaImg = () => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(maxW && im.naturalWidth > maxW ? shrink(im, maxW) : im); im.onerror = no; im.src = url; });
+  if (!BITMAPS) return viaImg();
+  const o = { colorSpaceConversion: raw ? 'none' : 'default', premultiplyAlpha: 'none' };
+  return fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })   // a 404 / network error is final (no second request)
+    .then(b => createImageBitmap(b, o).then(bm => {
+      if (!maxW || bm.width <= maxW) return bm;
+      return createImageBitmap(bm, Object.assign({ resizeWidth: maxW, resizeHeight: Math.round(maxW * bm.height / bm.width), resizeQuality: 'medium' }, o))
+        .then(sm => { bm.close && bm.close(); return sm; }, () => { const c = shrink(bm, maxW); bm.close && bm.close(); return c; });
+    }, () => viaImg()));                                                         // only a decoder that cannot take the blob falls back to <img>
+}
+const upQ = [];
 function loadView(name) {
-  if (cache.has(name)) return cache.get(name);
-  const e = { b: null, l: null, d: null, pending: true }; cache.set(name, e);
-  const ib = new Image(), il = new Image(), id = new Image(); let n = 0;
-  const done = () => { if (++n === 3) { if (!cache.has(name) || cache.get(name) !== e) return;   // evicted while loading
-    e.b = tex(ib); e.l = il.naturalWidth ? tex(SMALL ? shrink(il, 720) : il) : black; e.d = id.naturalWidth ? tex(id, true) : null; e.pending = false; if (SMALL) evictViews(); } };
-  ib.onload = done; il.onload = done; il.onerror = done; id.onload = done; id.onerror = done; ib.onerror = () => { e.pending = false; };
-  id.src = `frames/d_${name}.png`;
-  ib.src = SMALL ? `frames/m/v_${name}.jpg` : `frames/v_${name}.jpg`; il.src = `frames/l_${name}.png`; return e;
+  let e = cache.get(name);
+  if (e && e.failed && performance.now() - e.failed > 8000) { cache.delete(name); e = null; }   // a dropped request (phone network): try again later
+  if (e) return e;
+  e = { b: null, l: null, d: null, pending: true, at: performance.now() }; cache.set(name, e); if (LOG) LOG.e('load', name);
+  const soft = p => p.catch(() => null);
+  Promise.all([decodeImg(SMALL ? `frames/m/v_${name}.jpg` : `frames/v_${name}.jpg`), soft(SMALL ? decodeImg(`frames/m/l_${name}.png`, false, 360).catch(() => decodeImg(`frames/l_${name}.png`, false, 360)) : decodeImg(`frames/l_${name}.png`)), soft(decodeImg(`frames/d_${name}.png`, true))])
+    .then(([b, l, d]) => { if (LOG) LOG.e('decoded', [name, Math.round(performance.now() - e.at)]); if (cache.get(name) === e) upQ.push({ name, e, b, l, d }); else for (const x of [b, l, d]) x && x.close && x.close(); },   // evicted while loading
+          () => { e.pending = false; e.failed = performance.now(); });
+  return e;
+}
+function uploadViews(budget) {   // called by the frame loop: `budget` textures a frame (a view = colour, glow, depth + its range pass); a view is used once all three are up
+  if (upQ.length > 1) { const d = q => Math.abs(parseFloat(q.name.slice(0, 5)) - t) + Math.abs(+q.name.slice(6) - tilt) * 1.5; upQ.sort((a, b) => (b.step ? 1 : 0) - (a.step ? 1 : 0) || d(a) - d(b)); }   // a view half-built first, then the one the camera needs
+  let n = 0;
+  while (budget > 0 && upQ.length) {
+    const q = upQ[0], { name, e, b, l, d } = q;
+    if (!e.pending || cache.get(name) !== e) { upQ.shift(); for (const x of [b, l, d]) x && x.close && x.close(); for (const x of [q.tb, q.tl, q.td]) poolPut(x); continue; }
+    q.step = q.step || 0;
+    if (q.step === 0) q.tb = viewColour(b);
+    else [q.tl, q.td] = viewDepthLight(l, d);
+    q.step++; budget--; n++;
+    if (q.step === 2) { upQ.shift(); e.b = q.tb; e.l = q.tl; e.d = q.td; e.pending = false; if (LOG) LOG.e('ready', [name, Math.round(performance.now() - e.at)]); for (const x of [b, l, d]) x && x.close && x.close(); if (SMALL) evictViews(); }
+  }
+  return n;
+}
+// phones keep only VIEW_KEEP views: fetch the cell the camera is in and the columns either side before the drag gets there
+function prefetchAround(it, ij) {
+  if (!SMALL || !TS.length) return; let n = 0;
+  for (const da of [0, 1, -1, 2, -2, 3]) for (const db of [0, 1]) {
+    const a = it + da, b = ij + db; if (a < 0 || a >= TS.length || b >= TILTS.length) continue;
+    const nm = vname(TS[a], TILTS[b]); if (!cache.has(nm) && n++ < 1) loadView(nm);   // one new request a frame
+  }
 }
 fetch('views.json').then(r => r.json()).then(j => {
   views = j.views; FA = j.res[0] / j.res[1]; FEATURES = j.features || {};
   TS = [...new Set(views.map(v => v.t))].sort((a, b) => a - b); TILTS = [...new Set(views.map(v => v.tilt))].sort((a, b) => a - b);
   // load the centre first, then outward; the far ends last
-  const order = views.slice().sort((a, b) => (Math.abs(a.t) + a.tilt * 1.5) - (Math.abs(b.t) + b.tilt * 1.5));
-  if (SMALL) order.length = Math.min(order.length, 12);   // phones: the nearest dozen up front, the rest as the camera gets there
-  let i = 0; const next = () => { if (i < order.length) { loadView(vname(order[i].t, order[i].tilt)); i++; setTimeout(next, i < 6 ? 0 : 40); } };
+  // nearest to where the hand is first, picked afresh each time (a swing to the lamp right after load no longer waits for the whole room)
+  const total = SMALL && LOWMEM ? 12 : views.length;   // the whole room, nearest first (phones too: it stays resident)
+  let i = 0; const next = () => { if (i >= total) return;
+    let best = null, bd = 1e9; for (const v of views) { const nm = vname(v.t, v.tilt); if (cache.has(nm)) continue; const d = Math.abs(v.t - gt) + Math.abs(v.tilt - gtilt) * 1.5; if (d < bd) { bd = d; best = nm; } }
+    if (!best) return; loadView(best); i++; setTimeout(next, i < 6 ? 0 : 40); };
   next();
   resize(); requestAnimationFrame(frame);
 });
@@ -783,16 +1028,43 @@ let vmap = null;
 let t = 0, tilt = 0, gt = 0, gtilt = 0, drag = null; var mode = 'room';   // g* = where the hand is, t/tilt = where the camera is (`var`: the Escape handler above reads mode/cu even on the no-WebGL page)
 const T_MAX = 35, TILT_MAX = 12;
 let pan = 0, panK = 0, panT = 0;                        // portrait only: sideways slide of the crop inside the frame, in frame widths
-function panGain() { if (stage.clientWidth >= stage.clientHeight) return 0; const k = 70 / Math.max(420, stage.clientWidth * 0.55); return (W / (PB.band * H * FA)) / (k * stage.clientWidth); }
-function panEase() { const now = performance.now(), dt = Math.min(0.1, (now - panT) / 1000); panT = now; panK = Math.max(0, Math.min(1, panK + (mode === 'room' ? dt : -dt) / 0.7)); return pan * panK * panK * (3 - 2 * panK); }
-stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui'); drag = { x: e.clientX, y: e.clientY, t0: gt - (panGain() ? pan / panGain() : 0), tilt0: gtilt, moved: 0 }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
+// Archer, 10-02 ("dragging left and right feels backwards, and it's a bit jumpy"; then "reversed in both modes"): the hand grabs the
+// room, mouse and finger alike: it follows the hand sideways as it always did up and down (the orbit's centre, the coffee table,
+// drifts a little the other way: parallax). A finger also gets 0.6x the speed, the axis it starts along (a sideways swipe no longer
+// tilts), no snapping mid-drag, and a flick glides on before it settles on the nearest rendered view.
+const TOUCH_K = 0.8, TOUCH_SLOP = 8;
+const TOUCH_FREE = /[#&]lock=0/.test(location.hash);   // #lock=0: no filtering at all for a finger (to compare)
+function dragK(touch) { return 70 / Math.max(420, stage.clientWidth * 0.55) * (touch ? TOUCH_K : 1); }   // degrees of swing per px
+function panGain(k) { if (stage.clientWidth >= stage.clientHeight) return 0; return (W / (PB.band * H * FA)) / ((k || dragK(false)) * stage.clientWidth); }
+let panS = 0;                                           // the slide as shown: eased like the swing (it followed the raw touch events, so past the last view the motion changed pace and stuttered)
+function panEase() { const now = performance.now(), dt = Math.min(0.1, (now - panT) / 1000); panT = now; panK = Math.max(0, Math.min(1, panK + (mode === 'room' ? dt : -dt) / 0.7));
+  panS = reduce ? pan : panS + (pan - panS) * (1 - Math.exp(-dt * 7.0)); if (Math.abs(pan - panS) < 1e-5) panS = pan;
+  return panS * panK * panK * (3 - 2 * panK); }
+stage.addEventListener('pointerdown', e => { autoSound(); if (mode !== 'room' || lite) return; document.body.classList.add('dragging-ui');
+  const touch = e.pointerType === 'touch' || e.pointerType === 'pen', k = dragK(touch), pg = panGain(k);
+  if (Math.abs(gt - t) > 2.5) gt = t, gtilt = tilt;                        // the camera was held back (views loading): grab it where it is, not where the last hand was heading
+  if (Math.abs(gt) < T_MAX - 0.01) pan = 0;                                 // a slide is only ever held at an end
+  if (LOG) LOG.e('down', { touch, t: +t.toFixed(2), gt: +gt.toFixed(2) });
+  drag = { x: e.clientX, y: e.clientY, touch, k, t0: gt - (pg && pan ? pan / pg : 0), tilt0: gtilt, moved: 0, axis: touch ? 'f' : 'xy', hist: [], px: e.clientX, py: e.clientY, ex: 0, ey: 0, fx: 0, fy: 0 };
+  stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
 stage.addEventListener('pointermove', e => {
   if (drag) {
-    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
-    const k = 70 / Math.max(420, stage.clientWidth * 0.55);
-    drag.last = performance.now();
-    const v = drag.t0 - dx * k; gt = Math.max(-T_MAX, Math.min(T_MAX, v));
-    const pg = panGain(); if (pg) { const f = framing(), hw = f.sc[0] / 2; pan = Math.max(Math.min(0, hw - 0.58), Math.min(Math.max(0, 1 - hw - 0.58), (gt - v) * pg)); } else pan = 0;   // portrait: past the last view the crop slides on to the frame's edge (the hand and watch, the vacuum)
+    let dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
+    if (drag.touch) {
+      // Archer's log, 10-02: a quarter of the swipes were locked to up/down by their first 8 px and then ignored sideways ("not responding
+      // to my drag"). Now every move is judged on its own: the finger's recent direction decides, wobble on the minor axis is dropped,
+      // and a swipe that turns is followed at once.
+      const ddx = e.clientX - drag.px, ddy = e.clientY - drag.py; drag.px = e.clientX; drag.py = e.clientY;
+      if (drag.moved < TOUCH_SLOP) return;                                  // a tap, or no direction yet (those px are not applied: no jump)
+      drag.fx = drag.fx * 0.6 + ddx * 0.4; drag.fy = drag.fy * 0.6 + ddy * 0.4;
+      const ax = Math.abs(drag.fx), ay = Math.abs(drag.fy);
+      drag.ex += TOUCH_FREE || ax >= ay * 0.5 ? ddx : 0; drag.ey += TOUCH_FREE || ay >= ax * 0.5 ? ddy : 0;
+      dx = drag.ex; dy = drag.ey;
+    }
+    const k = drag.k, now_ = performance.now(); drag.last = now_;
+    const v = drag.t0 + dx * k; gt = Math.max(-T_MAX, Math.min(T_MAX, v));
+    drag.hist.push([now_, v]); while (drag.hist.length > 2 && now_ - drag.hist[0][0] > 100) drag.hist.shift();   // the last 0.1 s, for the flick
+    const pg = panGain(k); if (pg) { const f = framing(), hw = f.sc[0] / 2; pan = Math.max(Math.min(0, hw - 0.58), Math.min(Math.max(0, 1 - hw - 0.58), (gt - v) * pg)); } else pan = 0;   // portrait: past the last view the crop slides on to the frame's edge (the hand and watch, the vacuum)
     gtilt = Math.max(0, Math.min(TILT_MAX, drag.tilt0 + dy * k * 0.8));
   } else if (mode === 'closeup') {
     const r = stage.getBoundingClientRect(), h = cuHotspot((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
@@ -805,11 +1077,21 @@ stage.addEventListener('pointermove', e => {
   }
 });
 function endDrag(e) {
+  if (LOG && drag) LOG.e('up', { moved: Math.round(drag.moved), axis: drag.axis, gt: +gt.toFixed(2) });
   document.body.classList.remove('dragging-ui');
   if (!drag) return; stage.classList.remove('dragging'); $('#tip').hidden = true;
-  if (drag.moved < 6) { const h = hit(e.clientX, e.clientY); if (h === 'window') enterWindow(); else if (h === 'tv') openTV(); else if (h && h.act) h.act(); }
+  if (drag.moved < 6) {
+    if (TS.length) { gt = TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]); gtilt = TILTS.reduce((a, b) => Math.abs(b - gtilt) < Math.abs(a - gtilt) ? b : a, TILTS[0]); }   // a tap that caught the room mid-settle lets it finish settling
+    const h = hit(e.clientX, e.clientY); if (h === 'window') enterWindow(); else if (h === 'tv') openTV(); else if (h && h.act) h.act(); }
   else if (TS.length) {   // stay here: settle on the nearest rendered view so the resting frame is a full render
-    gt = TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]);
+    // Archer's logs, 10-02: the flick glide added 10-13 deg to nearly every swipe (an iPhone reports a high speed as the finger lifts),
+    // the "jump to the end of the couch". No glide now: a finger still moving as it lifts settles on the next view that way (at most
+    // one step on), otherwise the nearest view.
+    const age = performance.now() - drag.last; let dir = 0;
+    if (drag.touch && drag.hist.length > 1 && age < 80) { const [a, b] = [drag.hist[0], drag.hist[drag.hist.length - 1]], vel = (b[1] - a[1]) / Math.max(0.016, (b[0] - a[0]) / 1000); if (Math.abs(vel) > 20) dir = Math.sign(vel); }
+    window.__fling = { age, dir };   // QA
+    gt = dir > 0 ? (TS.find(x => x >= gt - 0.01) ?? TS[TS.length - 1]) : dir < 0 ? ([...TS].reverse().find(x => x <= gt + 0.01) ?? TS[0])
+       : TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]);
     gtilt = TILTS.reduce((a, b) => Math.abs(b - gtilt) < Math.abs(a - gtilt) ? b : a, TILTS[0]);
   }
   drag = null;
@@ -860,23 +1142,28 @@ function measureBand() {
     const top = nm.getBoundingClientRect().bottom + 10, bot = cd.getBoundingClientRect().top - 8;
     if (bot - top < h * 0.3) return;
     PB.top = top / h; PB.band = Math.min(0.75, (bot - top) / h);
-    document.documentElement.style.setProperty('--bt', top + 'px'); document.documentElement.style.setProperty('--bh', PB.band * h + 'px');
+    const bt = top + 'px', bh = PB.band * h + 'px', st = document.documentElement.style;   // only on a change: a write restyles the page
+    if (st.getPropertyValue('--bt') !== bt) st.setProperty('--bt', bt); if (st.getPropertyValue('--bh') !== bh) st.setProperty('--bh', bh);
   } catch (e) {}
 }
 // portrait crop per subject: [centre x in the frame, width of the frame that must show]; anything else in close-up is centred
 const CU_CROP = { c_bible: [0.355, 0.62], c_tv: [0.5, 0.7], c_case: [0.5, 0.5] };
 const PF = { cx: null, w: 0, t: 0 };
 function portraitCrop() {
-  const nat = W / (PB.band * H * FA); let tc = 0.58 + panEase(), tw = nat, inCu = false;
+  const p_ = panEase(), atEnd = Math.max(0, Math.min(1, 1 - (T_MAX - Math.abs(t)) / 2.5));   // the slide past the last view shows only as the camera reaches that end
+  const nat = W / (PB.band * H * FA); let tc = 0.58 + (Math.sign(p_) === -Math.sign(t) ? p_ * atEnd : 0), tw = nat, inCu = false;
   try { if (cu) { inCu = true; const c = CU_CROP[cu.name] || [0.5, 0]; tc = c[0]; tw = Math.max(nat, c[1]); } } catch (e) {}
   const now = performance.now(), dt = Math.min(0.1, (now - PF.t) / 1000); PF.t = now;
   if (PF.cx === null || (!inCu && Math.abs(PF.w - tw) < 0.002)) { PF.cx = tc; PF.w = tw; }   // in the room the drag is followed directly
-  else { const a = 1 - Math.exp(-dt / 0.28); PF.cx += (tc - PF.cx) * a; PF.w += (tw - PF.w) * a; }
+  else { const a = 1 - Math.exp(-dt / 0.28); PF.cx += (tc - PF.cx) * a; PF.w += (tw - PF.w) * a;
+    if (Math.abs(tc - PF.cx) < 1e-4 && Math.abs(tw - PF.w) < 1e-4) { PF.cx = tc; PF.w = tw; } }   // land exactly: an endless ease kept the live props redrawing
   return PF;
 }
 addEventListener('resize', measureBand); addEventListener('orientationchange', () => setTimeout(measureBand, 300)); setTimeout(measureBand, 0); setTimeout(measureBand, 1200);
 try { document.fonts.ready.then(measureBand); } catch (e) {}
-function framing() {
+let frameFR = null;                                     // this frame's framing (set by the frame loop; events between frames see what is on screen)
+function framing() { return frameFR || framingNow(); }
+function framingNow() {
   const CA = W / H;
   if (CA < 1) {                                        // portrait: the room fills a band between the header and the title card, cropped around the table and TV
     const c = portraitCrop(), hpx = W / (c.w * FA), band = hpx / H;
@@ -885,7 +1172,8 @@ function framing() {
   return { sc: CA > FA ? [1, FA / CA] : [CA / FA, 1], fc: [0.5, 0.5], vc: [0.5, 0.5] };   // landscape: cover
 }
 let cur = { anchors: {}, w: [1, 0, 0, 0], keys: [] };
-function toScreen(p) { const f = framing(); return [f.vc[0] + (p[0] - f.fc[0]) / f.sc[0], 1 - (f.vc[1] + ((1 - p[1]) - f.fc[1]) / f.sc[1])]; }   // frame (y down) -> screen (y down)
+function screenXY(x, y, f, out) { out[0] = f.vc[0] + (x - f.fc[0]) / f.sc[0]; out[1] = 1 - (f.vc[1] + ((1 - y) - f.fc[1]) / f.sc[1]); return out; }   // frame (y down) -> screen (y down)
+function toScreen(p) { return screenXY(p[0], p[1], framing(), [0, 0]); }
 function A(name) { const p = cur.anchors[name]; return p ? toScreen(p) : null; }
 function hit(cx, cy) {
   const r = stage.getBoundingClientRect(), x = (cx - r.left) / r.width, y = (cy - r.top) / r.height;
@@ -1000,12 +1288,14 @@ function updateSurge(now, dt) {
   for (const p of parts) { p.life += dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
   for (let i = parts.length - 1; i >= 0; i--) if (parts[i].life > parts[i].max) parts.splice(i, 1);
 }
+let PV = new Float32Array(1 << 16), PN = 0;                 // x, y, r, g, b, a per vertex, refilled every frame
+function pv(x, y, r, g, b, a) { if (PN + 6 > PV.length) { const n = new Float32Array(PV.length * 2); n.set(PV); PV = n; } PV[PN++] = x; PV[PN++] = y; PV[PN++] = r; PV[PN++] = g; PV[PN++] = b; PV[PN++] = a; }
 function drawParticles(now, dt) {
-  const s = A('spark'); const verts = [];
-  drawDust(now, dt, verts);
-  const push = (x, y, r, g, b, a) => verts.push(x / W * 2 - 1, 1 - y / H * 2, r, g, b, a);
+  const s = A('spark'); PN = 0;
+  if (!OFF.has('dust')) drawDust(now, dt);
+  const push = (x, y, r, g, b, a) => pv(x / W * 2 - 1, 1 - y / H * 2, r, g, b, a);
   const wpx = Math.max(1, H / 900) * 1.3;
-  for (const p of parts) {
+  if (!OFF.has('sparks')) for (const p of parts) {
     const k = 1 - p.life / p.max, tail = 0.018;
     const hx = p.x, hy = p.y, tx = p.x - p.vx * tail, ty = p.y - p.vy * tail;
     let nx = -(hy - ty), ny = hx - tx; const l = Math.hypot(nx, ny) || 1; nx = nx / l * wpx; ny = ny / l * wpx;
@@ -1018,12 +1308,12 @@ function drawParticles(now, dt) {
     const seg = 18; for (let i = 0; i < seg; i++) { const a0 = i / seg * Math.PI * 2, a1 = (i + 1) / seg * Math.PI * 2;
       push(cx, cy, 1, 0.8, 0.5, a); push(cx + Math.cos(a0) * R, cy + Math.sin(a0) * R, 1, 0.5, 0.2, 0); push(cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 1, 0.5, 0.2, 0); }
   }
-  if (!verts.length) return;
-  const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.DYNAMIC_DRAW);
+  if (!PN) return;
+  const pr = P.part; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, partBuf); gl.bufferData(gl.ARRAY_BUFFER, PV.subarray(0, PN), gl.DYNAMIC_DRAW);
   const la = gl.getAttribLocation(pr.p, 'a'), lc = gl.getAttribLocation(pr.p, 'c');
   gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 24, 0);
   gl.enableVertexAttribArray(lc); gl.vertexAttribPointer(lc, 4, gl.FLOAT, false, 24, 8);
-  gl.drawArrays(gl.TRIANGLES, 0, verts.length / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc);
+  gl.drawArrays(gl.TRIANGLES, 0, PN / 6); gl.disableVertexAttribArray(la); gl.disableVertexAttribArray(lc);
 }
 function drawSmoke(now, bo, uo, gain) {
   const b = bo || A('smoke_base'), u = uo || A('smoke_up'); if (!b || !u) return;
@@ -1051,13 +1341,16 @@ for (let i = 0; i < 420; i++) {
   const tmax = Math.min(wz / -SUN_D[2], 3.4), tt = 0.15 + Math.random() * (tmax - 0.15);
   motes.push({ p: [4.6 + SUN_D[0] * tt, wy + SUN_D[1] * tt, wz + SUN_D[2] * tt], ph: Math.random() * 6.28, sp: 0.4 + Math.random(), s: 0.4 + Math.random() * 0.9 });
 }
-function project(p, K) {   // world point -> frame coords (0..1, y down) for the blended camera (or a given { cam, aim, lens }); null if behind
+function camFrame(K) {   // the blended camera (or a given { cam, aim, lens }) as a basis + lens, for projecting many points
   const c = K ? K.cam : cur.cam, a = K ? K.aim : cur.aim; if (!c) return null;
-  const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
-  const d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], z = dot(d, f); if (z < 0.05) return null;
-  const tx = 18 / (K && K.lens || 31), ty = tx / FA;
-  return [0.5 + dot(d, r) / z / tx * 0.5, 0.5 - dot(d, u) / z / ty * 0.5, z];
+  const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f), tx = 18 / (K && K.lens || 31);
+  return { c, f, r, u, tx, ty: tx / FA };
 }
+function projectF(F, p, out) {   // world point -> frame coords (0..1, y down) and depth through a camFrame, into `out` (or a new array); null if behind
+  const dx = p[0] - F.c[0], dy = p[1] - F.c[1], dz = p[2] - F.c[2], z = dx * F.f[0] + dy * F.f[1] + dz * F.f[2]; if (z < 0.05) return null;
+  const q = out || [0, 0, 0]; q[0] = 0.5 + (dx * F.r[0] + dy * F.r[1] + dz * F.r[2]) / z / F.tx * 0.5; q[1] = 0.5 - (dx * F.u[0] + dy * F.u[1] + dz * F.u[2]) / z / F.ty * 0.5; q[2] = z; return q;
+}
+function project(p, K) { const F = camFrame(K); return F && projectF(F, p); }
 function basis(c, a) {   // camera-to-world rotation, columns: right, up, back (Blender camera looks down -Z)
   const f = norm([a[0] - c[0], a[1] - c[1], a[2] - c[2]]), r = norm(cross(f, [0, 0, 1])), u = cross(r, f);
   return new Float32Array([r[0], r[1], r[2], u[0], u[1], u[2], -f[0], -f[1], -f[2]]);
@@ -1065,17 +1358,19 @@ function basis(c, a) {   // camera-to-world rotation, columns: right, up, back (
 function norm(v) { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
 function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
-function drawDust(now, dt, verts) {
+const HEX = [0, 1, 2, 3, 4, 5, 6].map(k => [Math.cos(k / 6 * 6.283), Math.sin(k / 6 * 6.283)]);
+const DQ = [0, 0, 0], DS = [0, 0];
+function drawDust(now, dt) {   // one camFrame a frame, then projectF / screenXY per mote into reused arrays (no garbage: ~420 motes a frame)
+  const F = camFrame(); if (!F) return; const fr = framing();
   for (const m of motes) {
     m.p[0] += (Math.sin(now * 0.21 * m.sp + m.ph) * 0.004 - 0.0015) * dt; m.p[1] += Math.cos(now * 0.17 * m.sp + m.ph * 1.3) * 0.004 * dt;
     m.p[2] += (Math.sin(now * 0.13 * m.sp + m.ph * 0.7) * 0.003 - 0.001) * dt;
-    const q = project(m.p); if (!q) continue;
-    const s = toScreen([q[0], q[1]]); if (s[0] < -0.02 || s[0] > 1.02 || s[1] < -0.02 || s[1] > 1.02) continue;
-    const x = s[0] * W, y = s[1] * H, R = Math.max(0.7, H / 900 * 1.6 * m.s / q[2] * 2.2);
+    if (!projectF(F, m.p, DQ)) continue; const z = DQ[2]; screenXY(DQ[0], DQ[1], fr, DS); const sx = DS[0], sy = DS[1];
+    if (sx < -0.02 || sx > 1.02 || sy < -0.02 || sy > 1.02) continue;
+    const x = sx * W, y = sy * H, R = Math.max(0.7, H / 900 * 1.6 * m.s / z * 2.2);
     const tw = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(now * (0.8 + m.sp) + m.ph * 3.0), 3.0), a = 0.55 * tw;
-    for (let k = 0; k < 6; k++) { const a0 = k / 6 * 6.283, a1 = (k + 1) / 6 * 6.283;
-      verts.push(x / W * 2 - 1, 1 - y / H * 2, 1, 0.9, 0.72, a, (x + Math.cos(a0) * R) / W * 2 - 1, 1 - (y + Math.sin(a0) * R) / H * 2, 1, 0.9, 0.72, 0,
-                 (x + Math.cos(a1) * R) / W * 2 - 1, 1 - (y + Math.sin(a1) * R) / H * 2, 1, 0.9, 0.72, 0); }
+    const X = x / W * 2 - 1, Y = 1 - y / H * 2, RX = R / W * 2, RY = R / H * 2;
+    for (let k = 0; k < 6; k++) { pv(X, Y, 1, 0.9, 0.72, a); pv(X + HEX[k][0] * RX, Y - HEX[k][1] * RY, 1, 0.9, 0.72, 0); pv(X + HEX[k + 1][0] * RX, Y - HEX[k + 1][1] * RY, 1, 0.9, 0.72, 0); }
   }
 }
 
@@ -1100,7 +1395,7 @@ function drawTV(now) {
   const band = top + ((now * 0.23) % 1.3) * (bot - top) / 1.0;
   const pr = P.tv; gl.useProgram(pr.p); gl.bindBuffer(gl.ARRAY_BUFFER, tvBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(v), gl.DYNAMIC_DRAW);
   const la = gl.getAttribLocation(pr.p, 'a'); gl.enableVertexAttribArray(la); gl.vertexAttribPointer(la, 2, gl.FLOAT, false, 16, 0);
-  gl.uniform1f(pr.u.bandY, H - band); gl.uniform1f(pr.u.bandH, (bot - top) * 0.09);
+  gl.uniform1f(pr.u.bandY, (H - band) * RS); gl.uniform1f(pr.u.bandH, (bot - top) * 0.09 * RS);   // gl_FragCoord space: scaled with the motion resolution
   gl.uniform1f(pr.u.amp, 0.028 * (0.8 + 0.2 * Math.sin(now * 120.0)) * (0.9 + 0.1 * Math.random()));
   gl.drawArrays(gl.TRIANGLES, 0, v.length / 4); gl.disableVertexAttribArray(la);
 }
@@ -1310,7 +1605,7 @@ window.__fl = {   // QA: step the clip that is on screen
 };
 // thread D: the crucifix is a live glTF (crucifix.js, loaded on demand) over the case still; the c_crucifix still is only a fallback
 let cruxLoad = null, cruxOK = false;
-function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js?v=44'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
+function loadCrux() { return cruxLoad || (cruxLoad = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'crucifix.js?v=46'; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); })); }
 function mountCrux() {
   const m = cuMeta.c_case; if (!m) return;
   loadCrux().then(() => window.crux.mount($('#crux3d'), { cam: m.cam, aim: m.aim, lens: m.lens || 30, res: [1920, 1200], framing, onState: (st) => {
@@ -1344,7 +1639,7 @@ const jget = (u) => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null)
 function loadBible() { return bibleLoad || (bibleLoad = Promise.all([loadScript('pagesnd.js'), loadScript('bible.js').then(() => loadScript('album.js')), jget('frames/bible.json'), jget('frames/bible_pages.json'), jget('frames/album.json'), jget('frames/album_pages.json')]).then(([, , bj, pj, aj, apj]) => {
   pj = pj || {}; const urls = {}; for (const k in pj) if (/_url$/.test(k) && pj[k]) urls[k.replace(/_url$/, '')] = pj[k];   // imdb_box, site_line, about_press, about_vimeo, ... (the poster has none: onLink)
   bibleMeta = { rest: bj && bj.rest, boxes: pj, urls }; albumMeta = aj; albumPages = apj; })); }
-const ASSET_V = '44';   // bumped with every change to a .js module, so browsers and GitHub's cache never serve an old copy
+const ASSET_V = '46';   // bumped with every change to a .js module, so browsers and GitHub's cache never serve an old copy
 function loadScript(src) { const one = (u) => new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = u; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); return one(src + '?v=' + ASSET_V).catch(() => one(src)); }
 const bookHints = { lifting: 'Back to the table · Esc', opening: 'Back to the table · Esc', leafing: 'Back to the table · Esc', open: 'Turn the pages · ← → · Click beside the book to put it back · Esc', closing: 'Back to the table', returning: 'Back to the table' };
 function mountBooks() {
@@ -1388,7 +1683,8 @@ window.__case = { get hotspots() { return cuMeta.c_case; }, open: () => cuClick(
   holdFrame: (src) => new Promise(res => { const im = new Image(); im.onload = () => { if (cu && cu.name === 'c_case') { cu.holdImg = tex(im); cu.holdFly = true; if (cruxOK) window.crux.hide(); } res(true); }; im.onerror = () => res(false); im.src = src; }) };   // for headless QA: hold a given rendered frame (the flight's last) as the still
 
 function enterCloseup(name, world) {
-  if (mode !== 'room') return;
+  if (mode !== 'room') return; if (LOG) LOG.e('closeup', name);
+  if (SMALL && LOWMEM) evictViews(20);   // a device that has lost its context before: room for the crucifix / Bible / album
   loadCU(name); if (name === 'c_case') { mountCrux(); loadArticle(); }
   if (name === 'c_bible') { loadCU('c_bible_empty'); if (cuMeta.c_bible_noalbum) loadCU('c_bible_noalbum'); loadCU('c_ashtray'); mountBooks(); flightVid('bible_ashtray'); flightVid('bible_ashtray', true); }
   if (name === 'c_ashtray' && FEATURES.ashfall) { loadCU('c_ashtray2'); flightVid('ashfall'); }
@@ -1434,7 +1730,9 @@ function startReturn() {
   cu.phase = 'return'; cu.t = 0; cu.holdFly = false; cu.returnFrom = from; cu.backStarted = false;
   if (back.ok) { vplay(back, from); cu.backStarted = true; }
 }
-Object.defineProperty(window, '__cu', { get: () => cu });   // QA: always the live close-up state (null in the room)
+Object.defineProperty(window, '__cu', { get: () => cu });
+window.__views = () => [...cache.entries()].map(([k, e]) => k + (e.b ? '' : e.failed ? '!' : '…')).sort();   // QA
+window.__cam = { set(t_, tilt_) { gt = t = t_; gtilt = tilt = tilt_; }, hand(t_, tilt_) { gt = t_; gtilt = tilt_; }, get: () => ({ t, tilt, gt, gtilt, pan }) };   // QA: hold the camera anywhere, between views too   // QA: always the live close-up state (null in the room)
 function closeupState(now, dt) {
   hubStrip();
   const spec = CLOSE[cu.name], fwd = flightVid(cu.fl), back = flightVid(cu.fl, true);
@@ -1499,6 +1797,7 @@ function onCloseupShown() {
   if (cu.name === 'c_case' && !cu.holdFly && cruxOK) window.crux.show();   // no rendered frame to hold: the live cross shows at once
 }
 function endCloseup() {
+  if (LOG) LOG.e('room');
   tvOff();
   if (window.crux) window.crux.unmount();                          // thread D
   if (window.bible) window.bible.unmount();                        // page thread
@@ -1887,17 +2186,25 @@ function extLoopStop() {
 // ---- end thread C ----
 
 // ---------- the live canvases, composited under the film pass (round 3 note 6) ----------
-let ovTex = null;
+// Each canvas keeps its own texture and is re-uploaded only when its module drew a new picture (`drawn`): copying a full-screen
+// canvas every frame was one of the phone's heaviest costs while a prop sat still. The canvases are premultiplied, and so is the blend.
+const ovTex = {};
 function drawOverlays() {
   for (const [id, api] of [['crux3d', window.crux], ['bible3d', window.bible], ['album3d', window.album]]) {
     if (!api || !api.visible) continue; const cv = $('#' + id); if (!cv || cv.hidden || !cv.width || !cv.height) continue;
-    if (!ovTex) { ovTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, ovTex);
+    let o = ovTex[id];
+    if (!o) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ovTex);
-    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); } catch (e) { continue; }
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      o = ovTex[id] = { t, drawn: -1, w: 0, h: 0 }; }
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, o.t);
+    const drawn = api.drawn === undefined ? NaN : api.drawn;   // a module without the counter is uploaded every frame
+    if (!(drawn === o.drawn && o.w === cv.width && o.h === cv.height)) {
+      gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      try { if (o.w === cv.width && o.h === cv.height) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, cv); else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); }
+      catch (e) { gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); continue; }
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); o.drawn = drawn; o.w = cv.width; o.h = cv.height;
+    }
     gl.useProgram(P.over.p); gl.uniform1i(P.over.u.s, 0);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); fsq(P.over); gl.disable(gl.BLEND);
   }
@@ -1960,31 +2267,62 @@ let last = performance.now() / 1000, grainT = 0, weave = [0, 0], firstShown = fa
 function frame() {
   requestAnimationFrame(frame);
   if (lite) return;
-  const now = performance.now() / 1000, dt = Math.min(0.05, now - last); last = now;
+  const now = performance.now() / 1000, rawDt = now - last, dt = Math.min(0.05, rawDt); last = now;
   if (!vmap) vmap = VIEWMAP();
-  resize();
+  const t0_ = performance.now();
+  const bi = (arr, x) => { if (arr.length < 2) return [0, 0]; let i = 0; while (i < arr.length - 2 && arr[i + 1] < x) i++; const f = arr.length > 1 ? (x - arr[i]) / (arr[i + 1] - arr[i]) : 0; return [i, Math.max(0, Math.min(1, f))]; };
+  // the views around (T, TILT) that carry weight are all in (each is requested on the way)
+  // (a view that failed, or has been loading 10 s - a stalled request - does not hold the camera for ever)
+  const viewsIn = (T, TL) => { if (!TS.length) return false; const [a, f] = bi(TS, T), [b, g] = bi(TILTS, TL), now_ = performance.now();
+    for (const [x, y, w] of [[a, b, (1 - f) * (1 - g)], [a + 1, b, f * (1 - g)], [a, b + 1, (1 - f) * g], [a + 1, b + 1, f * g]]) {
+      if (w <= 0) continue; const e = loadView(vname(TS[Math.min(x, TS.length - 1)], TILTS[Math.min(y, TILTS.length - 1)]));
+      if (!e.b && !e.failed && now_ - e.at < 10000) return false; } return true; };
+  const waiting = TS.length && !viewsIn(gt, gtilt);   // where the hand is: its views go up first and faster
+  const still_ = !drag && t === gt && tilt === gtilt;
+  const tu = performance.now(), nUp = uploadViews(SMALL ? (waiting || still_ ? 2 : 1) : 4), upMs = performance.now() - tu;   // a phone spinning past its loaded views: a whole view a frame
+  resize(); frameFR = null; frameFR = framingNow();
   // released: the camera stays where it was left (settled on the nearest rendered view); it follows the hand with a damped lag
   // while the hand rests, settle on the nearest rendered view so nothing is shown double
   let st = gt, stilt = gtilt;
-  if (drag && TS.length && performance.now() - (drag.last || 0) > 140) {
+  if (drag && !drag.touch && TS.length && performance.now() - (drag.last || 0) > 140) {   // (a finger that pauses is not snapped: it read as a jump)
     st = TS.reduce((a, b) => Math.abs(b - gt) < Math.abs(a - gt) ? b : a, TS[0]);
     stilt = TILTS.reduce((a, b) => Math.abs(b - gtilt) < Math.abs(a - gtilt) ? b : a, TILTS[0]);
   }
-  { const k = reduce ? 1 : 1 - Math.exp(-dt * 7.0); t += (st - t) * k; tilt += (stilt - tilt) * k; if (Math.abs(t - st) < 0.005) t = st; if (Math.abs(tilt - stilt) < 0.005) tilt = stilt; }
+  const pt = t, ptl = tilt;
+  // a finger is followed more closely than a mouse (the lag read as 'too slow')
+  { const k = reduce ? 1 : 1 - Math.exp(-dt * (drag && drag.touch ? 12.0 : 7.0)); t += (st - t) * k; tilt += (stilt - tilt) * k; if (Math.abs(t - st) < 0.005) t = st; if (Math.abs(tilt - stilt) < 0.005) tilt = stilt; }
+  // Archer, 10-02 (the lamp and the vacuum "horrible the first time"): the camera never moves onto views that have not loaded; it waits at
+  // the edge of what has (a moment, on a fast swing) and catches up. Drawing that room from a farther view was what looked broken.
+  if (!viewsIn(t, tilt) && viewsIn(pt, ptl)) { t = pt; tilt = ptl; }
   // the four nearest views and their weights
-  const bi = (arr, x) => { if (arr.length < 2) return [0, 0]; let i = 0; while (i < arr.length - 2 && arr[i + 1] < x) i++; const f = arr.length > 1 ? (x - arr[i]) / (arr[i + 1] - arr[i]) : 0; return [i, Math.max(0, Math.min(1, f))]; };
-  const [it, ft] = bi(TS, t), [ij, fj] = bi(TILTS, tilt);
+  let [it, ft] = bi(TS, t), [ij, fj] = bi(TILTS, tilt);
+  if (OFF.has('warp')) { ft = Math.round(ft); fj = Math.round(fj); }
   const cand = [[it, ij, (1 - ft) * (1 - fj)], [it + 1, ij, ft * (1 - fj)], [it, ij + 1, (1 - ft) * fj], [it + 1, ij + 1, ft * fj]];
-  const use = []; let wsum = 0;
+  // slots in a fixed order (the shader marches once per yaw column): 0 = (yaw a, tilt lo), 1 = (b, lo), 2 = (a, hi), 3 = (b, hi).
+  // A loaded view keeps its slot at zero weight too: its depth map still serves the march for its column.
+  const use = [], slots = []; let wsum = 0;
   for (const [a, b, w] of cand) {
     const ta = TS[Math.min(a, TS.length - 1)], tb = TILTS[Math.min(b, TILTS.length - 1)]; const nm = vname(ta, tb);
-    const e = loadView(nm); if (e.b && w > 0) { use.push([e, w, vmap.get(nm)]); wsum += w; }
+    const e = loadView(nm), ok = !!e.b && w > 0; slots.push({ e: e.b ? e : null, w: ok ? w : 0, v: vmap.get(nm) });
+    if (ok) { use.push([e, w, vmap.get(nm)]); wsum += w; }
   }
-  if (!use.length) { const e = cache.get(vname(0, 0)); if (e && e.b) { use.push([e, 1, vmap.get(vname(0, 0))]); wsum = 1; } else return; }
+  const complete = cand.every(([a, b, w], i) => w <= 0 || slots[i].w > 0);
+  let standIn = false;
+  if (!use.length) {   // nothing around the camera is in yet (just after load): the nearest view that is, as it is (was: the centre view, a jump across the room)
+    standIn = true;
+    let best = null, bd = 1e9; for (const [nm, e] of cache) if (e.b) { const d = Math.abs(parseFloat(nm.slice(0, 5)) - t) + Math.abs(+nm.slice(6) - tilt) * 1.5; if (d < bd) { bd = d; best = nm; } }
+    if (!best) return; const e = cache.get(best), v = vmap.get(best);
+    use.push([e, 1, v]); wsum = 1; slots.length = 0; slots.push({ e, w: 1, v }, { e: null, w: 0 }, { e: null, w: 0 }, { e: null, w: 0 }); }
+  { const [ta] = bi(TS, gt), [tb] = bi(TILTS, gtilt); prefetchAround(ta, tb); }   // around where the hand is heading, not where the camera is
   // blended anchors
-  const an = {}; for (const [, w, v] of use) for (const k in v.anchors) { const p = v.anchors[k]; if (!an[k]) an[k] = [0, 0]; an[k][0] += p[0] * w / wsum; an[k][1] += p[1] * w / wsum; }
+  // the camera and the anchors come from where the camera is (every view's camera is in views.json), not from whichever of its views have
+  // loaded: on a phone mid-swipe often only one has, and the picture (warped to this camera) and everything drawn on it must agree
+  const geo = []; let gsum = 0, rawMax = 0;
+  for (const [a, b, w] of cand) { const v = vmap.get(vname(TS[Math.min(a, TS.length - 1)], TILTS[Math.min(b, TILTS.length - 1)])); rawMax = Math.max(rawMax, w); if (v && w > 0) { geo.push([null, w, v]); gsum += w; } }
+  if (!gsum || !complete || standIn) { geo.length = 0; geo.push(...use); gsum = wsum; }   // incomplete: the camera of the views on screen, so the picture is theirs, unwarped
+  const an = {}; for (const [, w, v] of geo) for (const k in v.anchors) { const p = v.anchors[k]; if (!an[k]) an[k] = [0, 0]; an[k][0] += p[0] * w / gsum; an[k][1] += p[1] * w / gsum; }
   cur.anchors = an;
-  const cam = [0, 0, 0], aim = [0, 0, 0]; for (const [, w, v] of use) for (let i = 0; i < 3; i++) { cam[i] += (v.cam ? v.cam[i] : 0) * w / wsum; aim[i] += (v.aim ? v.aim[i] : 0) * w / wsum; }
+  const cam = [0, 0, 0], aim = [0, 0, 0]; for (const [, w, v] of geo) for (let i = 0; i < 3; i++) { cam[i] += (v.cam ? v.cam[i] : 0) * w / gsum; aim[i] += (v.aim ? v.aim[i] : 0) * w / gsum; }
   cur.cam = cam; cur.aim = aim;
   if (!firstShown) { firstShown = true; loading.hidden = true; poster.hidden = true; if (!cu && mode === 'room') { hintCycle(); dragCue(); }
     const q = /[#&]cu=(c_\w+)/.exec(location.hash);                  // QA hook: #cu=c_case opens that close-up
@@ -1993,19 +2331,27 @@ function frame() {
   updateSurge(now, dt);
   const ws_ = windowState(now, dt); zoom = ws_.zoom; altMix = ws_.altMix;
 
+  // While the room moves it is drawn into the corner of the target at the adaptive resolution (moveRes) and the film pass scales it up;
+  // sharp again the frame it settles. (Not with the mirror figure: its clip uses pixel coords.)
+  const moving = mode === 'room' && !cu && !walkTex && (!!drag || t !== st || tilt !== stilt);
+  if (!moving && mode === 'room' && !cu) ADAPT.base += (Math.min(50, dt * 1000) - ADAPT.base) * 0.05;   // the room's pace at rest
+  RS = moving ? moveRes(dt, ADAPT.prevUp) : 1; ADAPT.prevUp = nUp; const RW = Math.max(1, Math.round(W * RS)), RH = Math.max(1, Math.round(H * RS));
   // pass 1: composite into the offscreen target
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, W, H); gl.disable(gl.BLEND);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo); gl.viewport(0, 0, RW, RH); gl.disable(gl.BLEND);
   const pc = P.comp; gl.useProgram(pc.p);
   const hd = [0, 0, 0, 0];
-  for (let i = 0; i < 4; i++) { const u = use[Math.min(i, use.length - 1)];
-    gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].b); gl.uniform1i(pc.u['b' + i], i);
-    gl.activeTexture(gl.TEXTURE4 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].l || black); gl.uniform1i(pc.u['l' + i], 4 + i);
-    gl.activeTexture(gl.TEXTURE9 + i); gl.bindTexture(gl.TEXTURE_2D, u[0].d || black); gl.uniform1i(pc.u['d' + i], 9 + i);
-    const v = u[2]; if (u[0].d && v && v.cam && cur.cam) { hd[i] = 1; gl.uniform3fv(pc.u['cp' + i], v.cam); gl.uniformMatrix3fv(pc.u['vr' + i], false, basis(v.cam, v.aim)); } }
-  gl.uniform4fv(pc.u.hasD, hd);
+  for (let i = 0; i < 4; i++) { const e = slots[i].e, v = slots[i].v;
+    gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, e ? e.b : black); gl.uniform1i(pc.u['b' + i], i);
+    gl.activeTexture(gl.TEXTURE4 + i); gl.bindTexture(gl.TEXTURE_2D, (e && e.l) || black); gl.uniform1i(pc.u['l' + i], 4 + i);
+    gl.activeTexture(gl.TEXTURE9 + i); gl.bindTexture(gl.TEXTURE_2D, (e && e.d) || black); gl.uniform1i(pc.u['d' + i], 9 + i);
+    if (e && v && v.cam) { hd[i] = e.d ? 1 : 0; gl.uniform3fv(pc.u['cp' + i], v.cam); gl.uniformMatrix3fv(pc.u['vr' + i], false, basis(v.cam, v.aim)); } }
+  gl.uniform4fv(pc.u.hasD, hd); gl.uniform1i(pc.u.marchOn, WARP_MARCH ? 1 : 0);
+  gl.uniform1i(pc.u.onGrid, rawMax > 0.999 || !complete || standIn ? 1 : 0); 
+  { const same = i => { const v = slots[i].v || slots[i + 2].v; return !!(v && v.cam && Math.hypot(v.cam[0] - cam[0], v.cam[1] - cam[1], v.cam[2] - cam[2]) < 1e-4); };
+    gl.uniform2i(pc.u.sameC, same(0) ? 1 : 0, same(1) ? 1 : 0); }
   if (cur.cam) { gl.uniform3fv(pc.u.cc, cur.cam); gl.uniformMatrix3fv(pc.u.cr, false, basis(cur.cam, cur.aim)); }
   gl.uniform1f(pc.u.tx, 18 / 31); gl.uniform1f(pc.u.ty, 18 / 31 / FA);
-  const ws = [0, 1, 2, 3].map(i => i < use.length ? use[i][1] / wsum : 0);
+  const ws = slots.map(sl => sl.w / wsum);
   gl.uniform4f(pc.u.w, ws[0], ws[1], ws[2], ws[3]);
   const fr = framing(); gl.uniform2f(pc.u.sc, fr.sc[0], fr.sc[1]); gl.uniform2f(pc.u.fc, fr.fc[0], fr.fc[1]); gl.uniform2f(pc.u.vc, fr.vc[0], fr.vc[1]);
   gl.uniform2f(pc.u.zc, zc[0], zc[1]); gl.uniform1f(pc.u.zoom, zoom);
@@ -2022,7 +2368,7 @@ function frame() {
   if (altMix < 0.99) {
     if (zoom < 1.02) drawWalker(now);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
-    if (zoom < 1.02) { drawTV(now); drawSmoke(now); drawParticles(now, dt); }
+    if (zoom < 1.02) { drawTV(now); if (!OFF.has('smoke')) drawSmoke(now); drawParticles(now, dt); }
     gl.disable(gl.BLEND);
   }
   drawTVChannel(now, dt);
@@ -2031,17 +2377,41 @@ function frame() {
   { const K = liveAshCam(); if (K) drawLiveAsh(now, K); }
   drawOverlays();                                                // the live crucifix / Bible / album over everything, under the film
   // pass 3: lens and print to the screen
-  gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.generateMipmap(gl.TEXTURE_2D);
+  if (FILM_FX) { gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.generateMipmap(gl.TEXTURE_2D); }
   gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
   const pf = P.film, L = LOOKS[look]; gl.useProgram(pf.p);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fboTex); gl.uniform1i(pf.u.s, 0);
-  gl.uniform2f(pf.u.res, W, H);
+  gl.uniform2f(pf.u.res, W, H); gl.uniform2f(pf.u.rsc, RW / W, RH / H);
   grainT += dt; if (grainT > 1 / 24) { grainT = 0; weave = [(Math.random() - 0.5) * L.weave, (Math.random() - 0.5) * L.weave * 1.6]; }
   gl.uniform1f(pf.u.t, Math.floor(now * 24) % 997);
   gl.uniform2f(pf.u.weave, weave[0], weave[1]);
   for (const k of ['distort', 'fringe', 'edge', 'vig', 'bloom', 'hal', 'sat', 'con', 'grain']) gl.uniform1f(pf.u[k], L[k]);
   gl.uniform3fv(pf.u.halc, L.halc); gl.uniform3fv(pf.u.lift, L.lift); gl.uniform3fv(pf.u.gam, L.gam); gl.uniform3fv(pf.u.gain, L.gain);
   fsq(pf);
+  if (PERF) perfTick(now, performance.now() - t0_, use.length, nUp, upMs, RS);
+  if (LOG) LOG.rows.push([LOG.ms(), +(rawDt * 1000).toFixed(1), +(performance.now() - t0_).toFixed(1), nUp, +upMs.toFixed(1), RS, +t.toFixed(2), +tilt.toFixed(1), +gt.toFixed(2), +gtilt.toFixed(1),
+    drag ? (drag.touch ? 2 : 1) : 0, moving ? 1 : 0, cache.size, upQ.length, use.length, cu ? cu.name + ':' + cu.phase : mode, W]);
+}
+function moveRes(dt, upBefore) {
+  const top = 1; if (MOVE_FIX) return Math.min(1, MOVE_FIX);
+  if (!ADAPT.rs) ADAPT.rs = phoneScreen() ? 0.7 : 1;
+  if (!upBefore) ADAPT.ema += (dt * 1000 - ADAPT.ema) * 0.15;               // a frame after an upload is slow for that reason; blurring would not help it                                   // ~7 frames of memory
+  if (ADAPT.base > 28) return ADAPT.rs;                                         // the room at rest already runs ~30 fps: a capped display (Low Power Mode); lowering the resolution would only blur it
+  if (ADAPT.hold > 0) ADAPT.hold--;                                              // let a step show in the timing before the next
+  else if (ADAPT.ema > 18.5 && ADAPT.rs > MOVE_MIN) { ADAPT.rs = Math.max(MOVE_MIN, Math.round(ADAPT.rs * 20 - 1) / 20); ADAPT.hold = 8; }
+  else if (ADAPT.ema < 17.0 && ADAPT.rs < top) { ADAPT.rs = Math.min(top, Math.round(ADAPT.rs * 20 + 1) / 20); ADAPT.hold = 30; }   // up slowly, down fast
+  return ADAPT.rs;
+}
+// #fps: a small readout for testing on a device (frames a second, the script's ms a frame, canvas size, views in memory, the warp)
+const PERF = /[#&]fps/.test(location.hash) ? { el: null, n: 0, t: 0, js: 0, worst: 0 } : null;
+function perfTick(now, js, nv, nUp, upMs, rs) {
+  const P_ = PERF; if (!P_.el) { P_.el = document.createElement('div'); P_.el.style.cssText = 'position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 60px);z-index:20;font:11px/1.35 ui-monospace,monospace;color:#9fc2a3;background:rgba(0,0,0,.65);padding:4px 6px;pointer-events:none;white-space:pre'; document.body.appendChild(P_.el); P_.t = now; }
+  const gap = now - (P_.last || now); P_.n++; P_.js += js; P_.last = now;
+  if (gap > P_.worst) { P_.worst = gap; P_.why = P_.prev || ''; }                        // the gap before this frame = the previous frame's work
+  P_.prev = `js ${js.toFixed(1)} up ${nUp}/${upMs.toFixed(1)}ms q ${upQ.length}${rs < 1 ? ' moving' : ''}`;
+  if (now - P_.t >= 0.5) { const f = P_.n / (now - P_.t);
+    P_.el.textContent = `${f.toFixed(0)} fps  worst ${(P_.worst * 1000).toFixed(0)} ms\n  (${P_.why})\njs ${(P_.js / P_.n).toFixed(1)} ms  ${W}x${H} @${(W / stage.clientWidth).toFixed(2)} x${rs}\nviews ${cache.size} (${nv} blended)  warp ${WARP_MARCH ? 'march' : 'old'}`;
+    P_.n = 0; P_.js = 0; P_.t = now; P_.worst = 0; }
 }
 })();
 </script>
