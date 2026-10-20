@@ -520,10 +520,10 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 .srcs a{color:var(--dtc-ink)}
 
 /* analysis report (opens on first visit, reopens from the top bar) */
-.an-btn{font:inherit;background:#2F5596;color:#fff;border:0;border-radius:999px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.an-btn:hover{background:#244680}
-.an-btn i{width:7px;height:7px;border-radius:50%;background:#BFD0F2;animation:pulse2 2s ease-out infinite}
-@keyframes pulse2{0%{box-shadow:0 0 0 0 rgba(191,208,242,.8)}100%{box-shadow:0 0 0 8px rgba(191,208,242,0)}}
+.an-btn{font-family:Geist,"Helvetica Neue",Arial,sans-serif;font-size:15px;font-weight:600;letter-spacing:0;background:linear-gradient(135deg,#F7D27A 0%,#F2B33D 100%);color:#2A0715;border:1px solid #D99A1E;border-radius:999px;padding:11px 20px 11px 16px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;box-shadow:0 6px 18px -8px rgba(217,154,30,.8);transition:transform .2s ease,box-shadow .2s ease;animation:anGlow 2.6s ease-in-out infinite}
+.an-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(217,154,30,.9)}
+.an-btn svg{width:18px;height:18px;flex:none}
+@keyframes anGlow{0%,100%{box-shadow:0 6px 18px -8px rgba(217,154,30,.8),0 0 0 0 rgba(242,179,61,.45)}50%{box-shadow:0 6px 18px -8px rgba(217,154,30,.8),0 0 0 7px rgba(242,179,61,0)}}
 .modal{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));background:rgba(12,6,10,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;animation:fadeIn .3s ease both}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .report{position:relative;background:#FFFFFF;color:#1A0B10;width:100%;max-width:780px;margin:3vh 0 6vh;border-radius:22px;box-shadow:0 40px 90px -30px rgba(0,0,0,.6);overflow:hidden;font-family:Geist,"Helvetica Neue",Arial,sans-serif;animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
@@ -600,7 +600,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
       <button type="button" role="radio" aria-checked="false" data-design="bento"><i style="background:linear-gradient(135deg,#F7C873,#4A1D3F)"></i>3 · Bento</button>
       <button type="button" role="radio" aria-checked="true" data-design="wine"><i style="background:linear-gradient(135deg,#2A0715,#E3B04B)"></i>4 · Wine</button>
     </div>
-    <button type="button" class="an-btn" id="openReport"><i></i>Analysis report</button>
+    <button type="button" class="an-btn" id="openReport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>Read the analysis report</button>
     <label class="tog" for="notesToggle"><input type="checkbox" id="notesToggle"> Concept notes</label>
     <a href="#brand">Brand system</a>
     <span class="pos-why" id="designWhy"></span>
@@ -662,7 +662,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
       <div class="report-foot">
         <button type="button" class="btn" id="closeReport">Explore the redesign <span class="arr">→</span></button>
-        <span>Reopen it anytime from “Analysis report” at the top.</span>
+        <span>Reopen it anytime from “Read the analysis report” at the top.</span>
       </div>
     </div>
   </div>
