@@ -66,23 +66,26 @@ figcaption { display:flex; align-items:baseline; justify-content:space-between; 
 .out:hover { color:var(--ink); }
 footer { display:flex; justify-content:space-between; gap:16px; padding:22px max(16px,3vw) calc(env(safe-area-inset-bottom,0px) + 22px); font-size:13px; color:var(--dim); }
 @media (max-width:720px) { .brand { flex-direction:column; gap:2px; } .tag { white-space:normal; } }
-/* warning dialog */
-dialog { border:0; padding:0; border-radius:20px; max-width:min(30rem, calc(100vw - 32px)); background:var(--card); color:var(--ink); box-shadow:0 30px 80px -20px rgba(11,18,32,.5); }
-dialog::backdrop { background:rgba(11,18,32,.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
-dialog[open] { animation:pop .22s cubic-bezier(.2,.9,.3,1.2); }
-@keyframes pop { from { transform:translateY(8px) scale(.97); opacity:0; } to { transform:none; opacity:1; } }
-.dlg { padding:28px 26px 22px; text-align:center; }
-.sign { width:64px; height:64px; margin:0 auto 14px; display:block; }
-.dlg h2 { font-family:var(--head); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0 0 10px; }
-.dlg p { margin:0 0 6px; color:var(--mid); font-size:15.5px; }
-.dlg em { font-style:italic; color:var(--warn); font-weight:500; }
-.acts { display:flex; gap:10px; margin-top:20px; }
-.acts button, .acts a { flex:1; font:inherit; font-weight:500; font-size:14.5px; border-radius:10px; padding:12px 14px; min-height:46px; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; }
+/* leave note: a grid line grows from the click, a card grows at its end */
+#tether { position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:40; overflow:visible; }
+#tether path { fill:none; stroke:var(--accent); stroke-width:1.25; vector-effect:non-scaling-stroke; }
+#tether .guide { stroke:rgba(47,91,255,.22); stroke-width:1; stroke-dasharray:2 4; }
+#tether rect { fill:var(--card); stroke:var(--accent); stroke-width:1.25; }
+#scrim { position:fixed; inset:0; z-index:39; background:transparent; }
+#warn { position:fixed; z-index:41; width:min(21rem, calc(100vw - 32px)); background:var(--card); color:var(--ink); border:1px solid var(--accent); border-radius:14px;
+  box-shadow:0 1px 2px rgba(11,18,32,.06), 0 18px 50px -18px rgba(11,18,32,.35); padding:18px 18px 16px; text-align:left; }
+#warn .ttl { font-size:11.5px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin:0 0 8px; display:flex; align-items:center; gap:8px; }
+#warn .ttl::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent-2); box-shadow:0 0 0 3px rgba(0,179,155,.18); }
+#warn h2 { font-family:var(--head); font-weight:600; font-size:19px; line-height:1.2; letter-spacing:-.02em; margin:0 0 8px; }
+#warn p { margin:0; color:var(--mid); font-size:14.5px; line-height:1.5; }
+#warn em { font-style:italic; color:var(--warn); font-weight:500; }
+#warn .fine { margin-top:8px; font-size:13px; color:var(--dim); }
+.acts { display:flex; gap:8px; margin-top:16px; }
+.acts button, .acts a { flex:1; font:inherit; font-weight:500; font-size:14px; border-radius:9px; padding:10px 12px; min-height:42px; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; text-align:center; }
 .stay { background:var(--ink); color:#fff; border:0; }
 .stay:hover { background:var(--accent); }
 .risk { background:transparent; color:var(--warn); border:1px solid rgba(229,72,77,.35); }
 .risk:hover { background:rgba(229,72,77,.08); border-color:var(--warn); }
-@media (prefers-reduced-motion:reduce) { dialog[open] { animation:none; } }
 </style></head><body>
 <header>
   <div class="brand">
@@ -115,21 +118,21 @@ dialog[open] { animation:pop .22s cubic-bezier(.2,.9,.3,1.2); }
   </section>
 </main>
 <footer><span>© 2026 Josiah Walker</span><button class="out" id="out" type="button" hidden>Lock page</button></footer>
-<dialog id="warn" aria-labelledby="warnh" aria-describedby="warnp">
-  <div class="dlg">
-    <svg class="sign" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 L60 56 H4 Z" fill="#ffd23f" stroke="#0b1220" stroke-width="3.5" stroke-linejoin="round"/><rect x="29.2" y="22" width="5.6" height="20" rx="2.8" fill="#0b1220"/><circle cx="32" cy="48.5" r="3.4" fill="#0b1220"/></svg>
-    <h2 id="warnh">Leaving corporate video</h2>
-    <p id="warnp">Are you sure you want to go to Josiah's homepage? This will take you away from corporate video and into a narrative world full of mystery and&hellip; <em>murder</em>.</p>
-    <p>Click at your own risk&hellip;</p>
-    <div class="acts">
-      <button class="stay" type="button" id="stay">Stay here</button>
-      <a class="risk" id="risk" href="../">Enter at my own risk</a>
-    </div>
+<div id="scrim" hidden></div>
+<svg id="tether" hidden aria-hidden="true"><path class="guide" id="tguide" d=""/><path id="tline" d=""/><rect id="tnode" width="7" height="7" x="0" y="0"/><rect id="tjoint" width="7" height="7" x="0" y="0"/></svg>
+<div id="warn" role="dialog" aria-modal="true" aria-labelledby="warnh" aria-describedby="warnp" hidden>
+  <p class="ttl">Before you go</p>
+  <h2 id="warnh">Are you sure about this decision?</h2>
+  <p id="warnp">This will take you away from corporate video and into a narrative world full of mystery and&hellip; <em>murder</em>.</p>
+  <p class="fine">Click at your own risk&hellip;</p>
+  <div class="acts">
+    <button class="stay" type="button" id="stay">Stay here</button>
+    <a class="risk" id="risk" href="../">Enter at my own risk</a>
   </div>
-</dialog>
+</div>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "Nbw+2gtB9o5qe1baCL9AFQ==", "iv": "L8dQE8+qroI5fXDi", "ct": "+E8Ye3w7DZSRnHll3QkA/b19bPglJZjdJtM1J3Z8j2UwUOf27dx7/CSOjzcfkn31lzBUoG2jMYZcIxoWQzxiWCKO8qKa8ySC0pWjx5a2csgTYPsoGxbAaxSDT58/ZHobpRxjhiXaeReAnCduq/AO8JSniG7OXbGAYejn/ykg3LSroA0f/AYjv0CRq+zMelDAK47kPpDrYQEcSC/6og2P+GyWaCcfOMzdi6tQQ3cOiZw3gHydgCreOun1TbCalqTAbarI4A76x/9i7vLKHAzoeQsFntSRhl3SxLfXSy/OGf+eERzzos3wexzfxei7uVM7g3VGrQg82tt/8Fv2/kazUyq/hRTAn7ZBllAC/KCWqcVYl93hnAPbKKNUTsUlBcwx3EBwyQmOeEbmAVxNGzqkMGSWT2N+krB4B4ziMraxmTNEAMYSBXc71ZkQ/4BSFGuOx1rcb7Yn6Jv0nY9+TUpP7joZn1gn2qnCN0ITcGT6fANIzG6mFK/8"};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "0Ph301AABPP93GJJljR8qA==", "iv": "iuWeViI9AXcBO/o4", "ct": "7gU21NinRv3rpidjgcsiY/6tC4cQp6Vb0biElDkFmli8uLpuYtS362OCuObsBNd0lDacE+1vYt/KbCeI/pd06pKgwR2ErgEDsOmQ6T8XeaKriDYx4pSxEja49F7MWlz7Sjkubq2BOi691VVxmZsHG4hGq/Kxb3WWwOCdskIhevW7YkaP1MWSvGC2UldM69kFAVm1A6JASkf/1sGDxhHEg8bPhQ/oYBZoDA9zYfYohAWGeck3M3UGg4VpV2lfZ0D7IHsotWWnQyr0/mHNP5smT/ira496kMxyE4C49dxAkk0xYkrx9sJ7Ij2q7H4lD5XYEakNoCOx4ZimgNXFVZDqZHDaku0yZUj88M3gRGWzL++cW/tP8ITwW6ybSRWr/Pm34fT7VRSjLAlQVM5Len03ZnRFbBbp8wfR325MiUKl0/GRzblRLrlFFPGZjzxYG7yNbB9zegF/2d3PvrI2EkBZDv5MLYgMYWLcS/ucnW8pIGMX7xS5S4w5"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -238,13 +241,84 @@ dialog[open] { animation:pop .22s cubic-bezier(.2,.9,.3,1.2); }
 </script>
 <script>
 (() => {
-  const dlg = document.getElementById('warn'), risk = document.getElementById('risk');
+  const warn = document.getElementById('warn'), risk = document.getElementById('risk'), stay = document.getElementById('stay');
+  const svg = document.getElementById('tether'), line = document.getElementById('tline'), guide = document.getElementById('tguide');
+  const node = document.getElementById('tnode'), joint = document.getElementById('tjoint'), scrim = document.getElementById('scrim');
+  const INCH = 96, EASE = 'cubic-bezier(.22,.9,.24,1)';
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let open = false, anims = [], opener = null;
+
+  function place(x, y) {
+    const vw = innerWidth, vh = innerHeight, w = warn.offsetWidth, h = warn.offsetHeight, m = 16;
+    // The card sits about an inch below the click (above it if there is no room), its edge near the click's column.
+    let below = y + INCH + h + m <= vh || y < vh / 2;
+    let top = below ? y + INCH : y - INCH - h;
+    top = Math.max(m, Math.min(vh - h - m, top));
+    let left = x - 28; if (x > vw / 2) left = x - w + 28;
+    left = Math.max(m, Math.min(vw - w - m, left));
+    // The line leaves the click straight down (or up) like a grid rule, turns once if the card is offset, and meets the card's edge.
+    const ey = below ? top : top + h;
+    const ex = Math.max(left + 18, Math.min(left + w - 18, x));
+    const midY = y + (ey - y) * 0.55;
+    const d = ex === x ? `M${x},${y} L${x},${ey}` : `M${x},${y} L${x},${midY} L${ex},${midY} L${ex},${ey}`;
+    return { top, left, d, ex, ey, below };
+  }
+
+  function show(x, y, href) {
+    if (open) return; open = true; risk.href = href;
+    warn.hidden = false; warn.style.visibility = 'hidden';
+    const g = place(x, y);
+    warn.style.top = g.top + 'px'; warn.style.left = g.left + 'px';
+    warn.style.transformOrigin = `${g.ex - g.left}px ${g.below ? 0 : warn.offsetHeight}px`;
+    line.setAttribute('d', g.d);
+    guide.setAttribute('d', `M${x},0 L${x},${innerHeight} M0,${y} L${innerWidth},${y}`);
+    node.setAttribute('x', x - 3.5); node.setAttribute('y', y - 3.5);
+    joint.setAttribute('x', g.ex - 3.5); joint.setAttribute('y', g.ey - 3.5);
+    svg.removeAttribute('hidden'); scrim.hidden = false; warn.style.visibility = '';
+    const len = line.getTotalLength();
+    line.style.strokeDasharray = len; line.style.strokeDashoffset = still ? 0 : len;
+    anims.forEach(a => a.cancel()); anims = [];
+    if (still) { stay.focus(); return; }
+    const T = 380;
+    anims.push(guide.animate([{ opacity: 0 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 900, easing: 'ease-out', fill: 'forwards' }));
+    anims.push(node.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'ease-out', fill: 'both' }));
+    anims.push(line.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: T, delay: 80, easing: EASE, fill: 'both' }));
+    anims.push(joint.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, delay: 80 + T - 60, fill: 'both' }));
+    const r = 14;
+    const from = g.below ? `inset(0 ${100 - ((g.ex - g.left) / warn.offsetWidth * 100)}% 100% ${((g.ex - g.left) / warn.offsetWidth * 100)}% round ${r}px)`
+                         : `inset(100% ${100 - ((g.ex - g.left) / warn.offsetWidth * 100)}% 0 ${((g.ex - g.left) / warn.offsetWidth * 100)}% round ${r}px)`;
+    anims.push(warn.animate([{ clipPath: from, opacity: .4, transform: 'scale(.96)' }, { clipPath: `inset(0 0 0 0 round ${r}px)`, opacity: 1, transform: 'scale(1)' }],
+      { duration: 460, delay: 80 + T - 40, easing: EASE, fill: 'both' }));
+    [...warn.children].forEach((c, i) => anims.push(c.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 300, delay: 80 + T + 160 + i * 45, easing: 'ease-out', fill: 'both' })));
+    setTimeout(() => open && stay.focus({ preventScroll: true }), 80 + T + 200);
+  }
+
+  function hide() {
+    if (!open) return; open = false;
+    const done = () => { warn.hidden = true; svg.setAttribute('hidden', ''); scrim.hidden = true; anims.forEach(a => a.cancel()); anims = []; if (opener) opener.focus({ preventScroll: true }); };
+    if (still) return done();
+    const len = line.getTotalLength();
+    warn.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    joint.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' });
+    node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, delay: 200, fill: 'forwards' });
+    const a = line.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: len }], { duration: 240, delay: 100, easing: 'ease-in', fill: 'forwards' });
+    a.onfinish = done;
+  }
+
   document.querySelectorAll('.leave').forEach(a => a.addEventListener('click', e => {
-    if (!dlg.showModal) return;              // very old browsers: just follow the link
-    e.preventDefault(); risk.href = a.dataset.dest || a.getAttribute('href'); dlg.showModal(); document.getElementById('stay').focus();
+    e.preventDefault(); opener = a;
+    let x = e.clientX, y = e.clientY;
+    if (!x && !y) { const r = a.getBoundingClientRect(); x = r.left + r.width / 2; y = r.bottom; }   // keyboard: from the link itself
+    show(x, y, a.dataset.dest || a.getAttribute('href'));
   }));
-  document.getElementById('stay').addEventListener('click', () => dlg.close());
-  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // click outside the card
+  stay.addEventListener('click', hide);
+  scrim.addEventListener('click', hide);
+  addEventListener('keydown', e => {
+    if (!open) return;
+    if (e.key === 'Escape') { e.preventDefault(); hide(); }
+    if (e.key === 'Tab') { const f = [stay, risk], i = f.indexOf(document.activeElement); e.preventDefault(); f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus(); }
+  });
+  addEventListener('resize', () => { if (open) { anims.forEach(a => a.finish && a.finish()); warn.hidden = true; svg.setAttribute('hidden', ''); scrim.hidden = true; open = false; } });
 })();
 </script>
 </body></html>
