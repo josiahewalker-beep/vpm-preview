@@ -11,6 +11,7 @@
 [hidden] { display:none !important; }
 body { margin:0; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:13px; min-height:100vh; display:flex; flex-direction:column; }
 a { color:var(--paper); } a:hover { color:var(--green); } :focus-visible { outline:2px solid var(--green); outline-offset:3px; }
+[tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline:none; }
 header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,2.2vw) 14px; border-bottom:1px solid var(--rule); }
 .name { font-family:var(--display); font-size:clamp(21px,2.4vw,34px); letter-spacing:.02em; text-decoration:none; line-height:1.05; display:inline-flex; flex-direction:column; }
 .name small { font-family:var(--mono); font-size:clamp(9.5px,1vw,11px); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-top:4px; white-space:nowrap; }
@@ -81,7 +82,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
 <footer><span>© 2026 Walker Motion Pictures</span><button class="out" id="out" type="button" hidden>Lock</button></footer>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "6P79VHMtzEXFyJH9Lsf2KA==", "iv": "5K9/btAkaChP8tBO", "ct": "Uo52PD2kQbfnXTeVV8s5dVOSah+NPG30FbLpzOeGeNunZHoDPYSCWg4A0tBDhZrtZ6Go5heUlmQYT6qHKXIVk7pWp4APWE3GcQUhxK4ejIQBYmph+Bg5j6MVzPK4i7KyakHEbpkTOT1x2Hp9Ezl4NJHdtTZ3Lx0RGxfXxaYhQMmW+O83td/FrKxpwdieS+BUiAKMrQtRBDZ09gm8X1o6o5t836iRaOAkiS6VnnR39KESa/Kjii6JD86unJt3cu0DAOaPEqQiVL77cWhGe6TZ0iOBrcYWsHK6l8v4JMb1f/yfQiLtfUqz/O4+4Me2b3HkX7CxWk1wBpmODc/t+acYSYuWdulKp4PN/nOlFaXJRnXlAcAPfC68rL61vX7szQzMH9SbDpueXdPEzHumch2yAteDDbFURWxCPdG6hbbPs89v0d6KCaSKTJHOtlF3L9/SqxTz/ZXqNQhd76et5cV0VHde8S5qYxilxzBETsB5Fhl9xaIuD40YJkoWNhq8yY6n7nqdrwY/OdsSIomISRiFfPF9KXMontv3k3iMgeNHxkh16NjClZdv6RiTPylnmKYH4m46vSZtILIppjrB+k2+DkCgJS/ZUi7orLwCPjj9VVVwR3ItMrxwJ2qodkGRq5AoRwjMyu3MtXdafP8CTB5MqR6YNyDmVpbd7g=="};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "2PQhwJI25hg5+AZTCYjJRw==", "iv": "SOuq+rWCMpytsR0G", "ct": "kny8WukH3T9cKf6MRVDpVRcliIQipvt8X+lTU7caRWE0AP2y/1M/dPOBJjDzmO5+qR68lZfHcFCzm6WZnhMF0rwqlStQd5YPX0kYwApOdhaE6FahgLAG41RwbBwHZ/1cRQcjkC9mJz9GZNhN/PAUxrZzsVTsB+BDcJCggdl8hexbaZLIxdGYycMyOHPWbD8h7BUeE/PPmsCB7V9SIz9iKeCHEVTSGZypgTCJrMDSgHCmLRnYpTxAXLJ4O7CBNIZSpe6C3eWc3imA/xex9ZH9VWuwKV+vZ3HVKMaK0JaAlFEGaIXyjYAUFOlJAS4Bx+MscK1EVS+i0CS6G5/jQPftnqjapyjgkeamL0WfFfpRTKyIocv7Ck2io0FaRmxleO/B4H4BcFQfjDR2fR9NSdoBTJq1bAcPWPpLhYqx/Eb59YvxjFFKwun3DybZdrsTCWFyaDCe2Scv+FgouG59Zz0BBKrw5/PcsiAxy6fqkNICmV9/+xTfSZc375V6SDIrnjNB10e0vfX2m+jtgWLE0AwOcUPc685xTLpJeURNSuU2DXRsRzMWY1g+4oXO0GQQ0J8QIHL+eZRL1V2aEXdXV7tXlbsvhIYILI+i9TEb9V/ezxXSvpKPbWwMelZj40dmmDGNacz0bUu5+mxIR4n8ZgNkcVY/OCmuqJRZxA=="};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));

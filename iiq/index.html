@@ -16,6 +16,7 @@ body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--body)
 body::before { content:''; position:fixed; inset:0; pointer-events:none; background:radial-gradient(1200px 600px at 85% -10%, rgba(47,91,255,.10), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(0,179,155,.08), transparent 60%), linear-gradient(180deg, rgba(246,247,249,.55), rgba(246,247,249,.92)); }
 body > * { position:relative; }
 a { color:inherit; } :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+[tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline:none; }
 header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,3vw) 18px; }
 .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; min-width:0; }
 .name { font-family:var(--head); font-weight:700; font-size:clamp(18px,1.6vw,21px); letter-spacing:-.01em; text-decoration:none; background:none; border:0; padding:0; color:var(--ink); cursor:pointer; }
@@ -132,7 +133,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:22px max
 </div>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "0Ph301AABPP93GJJljR8qA==", "iv": "iuWeViI9AXcBO/o4", "ct": "7gU21NinRv3rpidjgcsiY/6tC4cQp6Vb0biElDkFmli8uLpuYtS362OCuObsBNd0lDacE+1vYt/KbCeI/pd06pKgwR2ErgEDsOmQ6T8XeaKriDYx4pSxEja49F7MWlz7Sjkubq2BOi691VVxmZsHG4hGq/Kxb3WWwOCdskIhevW7YkaP1MWSvGC2UldM69kFAVm1A6JASkf/1sGDxhHEg8bPhQ/oYBZoDA9zYfYohAWGeck3M3UGg4VpV2lfZ0D7IHsotWWnQyr0/mHNP5smT/ira496kMxyE4C49dxAkk0xYkrx9sJ7Ij2q7H4lD5XYEakNoCOx4ZimgNXFVZDqZHDaku0yZUj88M3gRGWzL++cW/tP8ITwW6ybSRWr/Pm34fT7VRSjLAlQVM5Len03ZnRFbBbp8wfR325MiUKl0/GRzblRLrlFFPGZjzxYG7yNbB9zegF/2d3PvrI2EkBZDv5MLYgMYWLcS/ucnW8pIGMX7xS5S4w5"};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "N/PTGMEJKbaph+MsmmDPWw==", "iv": "cR7FKe6qtuEm7zGy", "ct": "Ond4cO+dU7BeH9uDNNUwZMydJQMwTag6LFVjbvfRNUBAeFsXUrNs8uhUERoo0fn6H4tclgI//ZBOt1/x/3GBjRtNARg2WWpen3D4gmPWk+u5AT5OtAZttkl4+qYiCAAoKkYG7h4jVzm9XNOFWvUpXw8T+HHhczJFjUuDb0tNEJPO6z7QwjA6vBs+kle70zsXJtsrEEhzA7YlRpheAojl6exL2LGAfjxQAgQ6EGXRmRJqD5B9gh12RYQlX8EzNcv8s8id2++81xFB+QKQBVztpq3papbHGr9lMLQzHc47D5iQG0+FsnEpdubwgZ1wwgPSVSn+x3m1MZPD4gwbuC3ezfIYM49KCN/ygK6SZ+09xqrOCul5eSKOvueqwib1ItmvKKZZ3fWQJINhIBJjrLG/V9p1ULRgrp8feIEqmnAEnkk3A2oOMGjzmP4/KAb1hn00qW05GzEPGsHTdZltftN+vaWAubq2CZHVZVXkixDN9U2JBIkewW4q"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
