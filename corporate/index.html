@@ -74,7 +74,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
 <footer><span>© 2026 Walker Motion Pictures</span><button class="out" id="out" type="button" hidden>Lock</button></footer>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "6wUjjKUVQxH58loyiLdyUg==", "iv": "0qsDiIY7Ie0Kykbs", "ct": "rpHJhKE6vEsVxAhRivWj82gYMWb+7/qv9AynKys9h3KPc65gPO/CsHmxYnOscvEI9F1HEEHhViVg63x3Dd4YENCHgLMWhkBsSV857TaxGuSP/mvEzdgyyQn1HXoGwlFGnT6XyTWptlrNBu9CAs0oXPP3kh5+2M7wmyFaGgKPaVIKK09543LXpbLjfh2DQlQCp0TCZ3vvqMIc2fdxpJME3Ze+KQWbP9waL4tW1U68cqRSsktPz0if4/NEU+m+8Weo7BoNkGv5EmNVBZnPq/s/No8opipcey5bmToCDsqgXagho24N6P3nhkF4Thn4KWeWod3/lFrOjB9Id4+wGbQ+4OVSl4lpMpIUbNtvkW6YEp0+lRjEc41q4lRX+OyyjObRjKZ0P+iLn3WAc/xFpzHfgquAqKytmZFd47WLrsWboM8DPBGX75roS9rtgqrzrrtAovzQf/d+JQzZXcg9M8FUVtrasfHDOZGnOfCUZ0bCBOZlO3kUexloTy22cA=="};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "5o+VfOqOslOfrWpa7EzQNw==", "iv": "DpzJBJov2ibsHWLO", "ct": "c99z61dX0uAT0kT15nWxuDbEZh6nAQda2IgkOwVyjT6xdNFBg73cSoIsy84t8BSo/loi+TFRNNA7r2LMy6YT/0X97hTV+6dFUch/JC0BJId913nAjywDWpYEvpKCntVz9ORXSlGMz4M7OBo4xXdR9QfxQ6pe1LI9WxHfaLY1hz0MM7KSb0FCiNvMDJlqVYiXLafdyvRHDJ4j8cBJ60AbstnYg7JL8AnjNkQ82Kb60jtYCvewUyQr4P0onTByD+CNmL/lsV0z7cnqbsSZuCS/tlF1SzjUjv/HuuCFXYHJ1W6Wv1R/ulWvfUlcrrwko+WD9Vir4hmEI1OXwLUkMTCMVclYI7qK2Q0GVjp7bhiWkRs+fd+vFOh3KzwC7o3spKDWdIXZRvccwEXSuu3grahHVnTjxcXL4tjAs8hd+jrgICbJ623aSqWmZw3suaI/MP2tV+kU4p4Y+pe8tmComiuZTnjQEOzvMMx1jd1G27nkBNlJrC3T0dqQy3b6TGk9b0k9ceHx3qiqokAIWIOMw4yrBtR1LUgusnIbMJL93ev8xTBlO1q1cBKvQNga6ZzmDdGv"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw';
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -98,7 +98,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
     const list = $('list'); list.textContent = '';
     d.videos.forEach((v, i) => {
       const fig = el('figure'), frame = el('div', 'frame'), f = el('iframe');
-      const q = new URLSearchParams({ h: v.h, title: '0', byline: '0', portrait: '0', dnt: '1', playsinline: '1' });
+      const q = new URLSearchParams({ title: '0', byline: '0', portrait: '0', dnt: '1', playsinline: '1' }); if (v.h) q.set('h', v.h);
       f.src = 'https://player.vimeo.com/video/' + encodeURIComponent(v.vimeo) + '?' + q;
       f.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write';
       f.allowFullscreen = true;
