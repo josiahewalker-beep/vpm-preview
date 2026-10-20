@@ -662,7 +662,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
       <div class="report-foot">
         <button type="button" class="btn" id="closeReport">Explore the redesign <span class="arr">→</span></button>
-        <span>You can reopen this anytime from “Analysis report” at the top.</span>
+        <span>Reopen it anytime from “Analysis report” at the top.</span>
       </div>
     </div>
   </div>
@@ -1317,15 +1317,14 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
   // Analysis report: opens on first visit, reopens from the top bar
   var modal=document.getElementById('report'), lastFocus=null;
   function openReport(){ lastFocus=document.activeElement; modal.hidden=false; document.body.style.overflow='hidden'; modal.scrollTop=0; setTimeout(function(){ document.getElementById('closeReport').focus({preventScroll:true}); },50); }
-  function closeReport(){ modal.hidden=true; document.body.style.overflow=''; try{ localStorage.setItem('cfw-report-seen','1'); }catch(e){} if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+  function closeReport(){ modal.hidden=true; document.body.style.overflow=''; if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
   document.getElementById('openReport').addEventListener('click',openReport);
   document.getElementById('closeReport').addEventListener('click',closeReport);
   document.getElementById('closeReportX').addEventListener('click',closeReport);
   modal.addEventListener('click',function(e){ if(e.target===modal) closeReport(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!modal.hidden) closeReport(); });
-  var seen=false; try{ seen=localStorage.getItem('cfw-report-seen')==='1'; }catch(e){}
-  try{ if(new URLSearchParams(location.search).get('report')==='1') seen=false; }catch(e){}
-  if(!seen) openReport();
+  var skip=false; try{ skip=new URLSearchParams(location.search).get('report')==='0'; }catch(e){}
+  if(!skip) openReport();
 
   document.getElementById('demoForm').addEventListener('submit',function(e){
     e.preventDefault();
