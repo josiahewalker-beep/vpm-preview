@@ -19,7 +19,7 @@ nav a { text-decoration:none; text-transform:uppercase; letter-spacing:.12em; fo
 nav a:hover { color:var(--paper); }
 main { flex:1; width:100%; margin:0 auto; padding:clamp(28px,6vw,72px) max(16px,2.2vw); }
 #lock { max-width:26rem; margin:0 auto; }
-#reel { max-width:64rem; margin:0 auto; }
+#reel { max-width:96rem; margin:0 auto; }
 .kicker { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); margin:0 0 10px; }
 h1 { margin:0 0 22px; font-family:var(--display); font-weight:400; font-size:clamp(32px,5vw,52px); line-height:1; letter-spacing:-.01em; }
 p { font-family:var(--display); font-size:clamp(16px,1.5vw,19px); line-height:1.55; margin:0 0 16px; }
@@ -30,12 +30,14 @@ input:focus { border-color:var(--paper); outline:none; }
 .btn:hover { background:var(--green); border-color:var(--green); }
 .btn[disabled] { opacity:.6; cursor:progress; }
 .msg { min-height:1.4em; margin-top:12px; font-size:12px; color:var(--red); }
-.list { display:grid; gap:clamp(36px,5vw,64px); margin-top:clamp(20px,3vw,36px); }
+.list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(28px,3vw,44px) clamp(16px,2vw,28px); margin-top:clamp(20px,3vw,36px); }
+@media (max-width:1000px) { .list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:620px) { .list { grid-template-columns:1fr; gap:32px; } }
 figure { margin:0; }
 .frame { position:relative; width:100%; aspect-ratio:16/9; background:#1a1612; border:1px solid var(--rule); }
 .frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
-figcaption { display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:12px; }
-.t { font-family:var(--display); font-size:clamp(19px,2vw,24px); }
+figcaption { display:flex; align-items:baseline; justify-content:space-between; gap:6px 14px; flex-wrap:wrap; margin-top:10px; }
+.t { font-family:var(--display); font-size:clamp(17px,1.35vw,20px); }
 .c { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
 .n { font-size:11px; letter-spacing:.14em; color:var(--dim); margin-right:10px; }
 .placeholder { color:var(--green); font-family:var(--mono); font-size:13px; }
@@ -74,7 +76,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
 <footer><span>© 2026 Walker Motion Pictures</span><button class="out" id="out" type="button" hidden>Lock</button></footer>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "5o+VfOqOslOfrWpa7EzQNw==", "iv": "DpzJBJov2ibsHWLO", "ct": "c99z61dX0uAT0kT15nWxuDbEZh6nAQda2IgkOwVyjT6xdNFBg73cSoIsy84t8BSo/loi+TFRNNA7r2LMy6YT/0X97hTV+6dFUch/JC0BJId913nAjywDWpYEvpKCntVz9ORXSlGMz4M7OBo4xXdR9QfxQ6pe1LI9WxHfaLY1hz0MM7KSb0FCiNvMDJlqVYiXLafdyvRHDJ4j8cBJ60AbstnYg7JL8AnjNkQ82Kb60jtYCvewUyQr4P0onTByD+CNmL/lsV0z7cnqbsSZuCS/tlF1SzjUjv/HuuCFXYHJ1W6Wv1R/ulWvfUlcrrwko+WD9Vir4hmEI1OXwLUkMTCMVclYI7qK2Q0GVjp7bhiWkRs+fd+vFOh3KzwC7o3spKDWdIXZRvccwEXSuu3grahHVnTjxcXL4tjAs8hd+jrgICbJ623aSqWmZw3suaI/MP2tV+kU4p4Y+pe8tmComiuZTnjQEOzvMMx1jd1G27nkBNlJrC3T0dqQy3b6TGk9b0k9ceHx3qiqokAIWIOMw4yrBtR1LUgusnIbMJL93ev8xTBlO1q1cBKvQNga6ZzmDdGv"};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "MLrdPFy1OfQCijRuIEcgdw==", "iv": "b9ajinkqeNO9dXaI", "ct": "9Wi/gahko0ueSATv51izy5hyr/ZAt2pIVYhcMIeZMyU7nMRXx02Kf2p99cM8+LjH0P0nxPWpd8ZOGSmcUnLpq7FdskY3zJfszIZUPhi1Aq7a8NbH/dtaAHIuzE8oSiP23fwSrkyJXAKzwJltMALUYL5ctq92xhHpuU+NpR83EUx/CEmlrcaajM/rNPdOdweBxtTjp+58oZThlfwuqhPBtFDc+DMnV2rhH2zgNZ0NZEshuE6CJ1CTsqp1lJPaffnlnRx/DdGzEKSsBjUyp20dP9gGS36me7BTXZ8uDT7ox8tnYaZP4KtjsbautcO/mVg407QIBmp7DzDsBp0gctCxtLABrkUUUuGrXAZ5M14YnAcuFgUU4Udofk8XWLnoYM1ms6tdlCZUTGVNp/J/NiPMZj5s4mTWesHd0/c2qlGhlU43Chg8F40ge2vuqzJTgwXzea7256dHBaFmLytTFV+lCkq0Up5w5P1HOm+A0Tc0tQwg0MIBkdR/6snQeV8XhGmiQ0Wgf32CI6slXQHHLVyMtIks767x/bncSBmmxCb8fqKN8sNWa0Zq7GTygbIDXP+5"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw';
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -108,7 +110,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
       frame.append(f);
       const cap = el('figcaption'), left = el('div');
       left.append(el('span', 'n', String(i + 1).padStart(2, '0')));
-      left.append(v.title ? el('span', 't', v.title) : el('span', 'placeholder', '[Title ' + (i + 1) + ']'));
+      if (v.title) left.append(el('span', 't', v.title));
       cap.append(left);
       if (v.client) cap.append(el('span', 'c', v.client));
       fig.append(frame, cap); list.append(fig);
