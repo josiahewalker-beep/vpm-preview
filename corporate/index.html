@@ -33,6 +33,7 @@ input:focus { border-color:var(--paper); outline:none; }
 .list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(28px,3vw,44px) clamp(16px,2vw,28px); margin-top:clamp(20px,3vw,36px); }
 @media (max-width:1000px) { .list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:620px) { .list { grid-template-columns:1fr; gap:32px; } }
+.list.one { grid-template-columns:1fr; max-width:64rem; }
 figure { margin:0; }
 .frame { position:relative; width:100%; aspect-ratio:16/9; background:#1a1612; border:1px solid var(--rule); }
 .frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
@@ -76,9 +77,9 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
 <footer><span>© 2026 Walker Motion Pictures</span><button class="out" id="out" type="button" hidden>Lock</button></footer>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "pZI/8HpYTkz23dCalZBKLQ==", "iv": "yvlk19v/ObEEBHQO", "ct": "4vBDJHnYCQpAWYx8kHIrue9cJ5mRhB6atll0naYnuBw3o4A7mglQ33sRwDUw1qw1OTiJ2ve8M2iJUMUgMb7mAs7xHq5nqK4alTFUmjjaGU6pBrGh/KSAkov29Vl32S5igMlwtD6tbqZg90bAJIAS1UtiWo8/ljJpYRTBHPImuqSU6a3d4B3frtsiO49BMjPnHwQUkMVt7vrsb5X8VgqoSe1V7Fjxs1CVYHfJ3ib2sYk0+flHDyq+BLoNp4NmmnKPj86sP1qEkTCNUcEX0KE3e3+uDlmUe6JYGKBVRivRBqzyQrxH0BFMnsNid1JNc4dO9pDokRIul20NcV3XIuROiXDfuaMfhl0Bv9L0G8SMGAYZMjn8I0jsA+U54ZsnX3eTcWGJTmE3hk5c5kn6kQCpjG+SrTRyr2/trCcgCPu5l2kSjqgYh89lZdJ6W6m7Q44X9U4+M7S4LSVEMKadh7Ly/CCku5sWKfP/cOv9ADoDGAyq7cBhp52Wy3QWvh4oV9hJ64TNdp1dD5DBgijnvU6h0bCzKPwEPqg0MOLiAbuurrLIAZhEI/ZeuoSeIwScM0PkoMTn1I+Qc+8p/ClepLfEvXTmYxsgrQ9ZxDCTcYi8Yg8AIgBUpFGfdFLKtVUSnYNRXBAyJEX68z41rI7naISEbVNJS/mW7Bb+Dg=="};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "urQRYWCcG9W0gCYsRtoBug==", "iv": "OtOyTN4580dWsI8J", "ct": "Hzr5aoEaUuNGLsDVtDb59Nexav+fohdfQqC4SWjl2vHHUbvME/dDlL626Q79l/+XhAuMnyP8y6/fyqGciQvgCDViL+Pmqi+Ow4MhYbElfw7umCmCYSje0ZxtucBTrqw09XJ59fogFcuBiuiKtmqHKWlwVKHQ+PnqlVq+C2kFrpPDxxg2ZUl/l2cdSl/v827b9m4X5lRWMcDaNdg3VdKJ+XfAjQKKVUqXaS8FL6C/HTIa5sydvTBL03JMPN3RUV6Zy9BnN6M6jU/AkrFhvQsrJMRJ7Dj0mh24YH+lB6HzA1dA/PLub8wW/sLGqqTfBdHc/V/nYYTrwJF+nK5+IfkVmvCXvj0WZa0TP+XxRiCmJ8HdD1mZ7iIK0+Djpz41jppmMrtDaDHGop8cefjAQm+l/4ALQttXzsnHQt05UKXXPVkO/Gml/85i7QX5k8NiuTEOq98E5PWqaqQ8RsIaoCxQqbhbEc/O8wyMrbPs3Xmz3feCNkw5DF+wgW19g1kwYfGDXIGwJI1HQ0Wki5bau20HI40FEHZp+JgD1QKfjn0R6S5VKJqctp8XT4wWS/NR3xRJ9wl6DMb1hpa4II2/v45WbcpRbbUz89a+edJFLyaVPbpl9qupGr/x1jee/613RRPnF98O6bRQFEXknzPhDWt3zGtSkLIGqsvj8w=="};
   const $ = id => document.getElementById(id);
-  const KEY = 'corp-pw';
+  const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const store = { get() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } },
                   set(v) { try { sessionStorage.setItem(KEY, v); } catch (e) {} },
@@ -97,7 +98,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
   function render(d) {
     if (d.title) { $('reelh').textContent = d.title; document.title = d.title + ' · Josiah Walker'; }
     if (d.intro) { $('intro').textContent = d.intro; $('intro').hidden = false; }
-    const list = $('list'); list.textContent = '';
+    const list = $('list'); list.textContent = ''; const one = d.videos.length === 1; list.classList.toggle('one', one);
     d.videos.forEach((v, i) => {
       const fig = el('figure'), frame = el('div', 'frame'), f = el('iframe');
       const q = new URLSearchParams({ title: '0', byline: '0', portrait: '0', dnt: '1', playsinline: '1' }); if (v.h) q.set('h', v.h);
@@ -109,7 +110,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
       f.title = v.title || ('Video ' + (i + 1));
       frame.append(f);
       const cap = el('figcaption'), left = el('div');
-      left.append(el('span', 'n', String(i + 1).padStart(2, '0')));
+      if (!one) left.append(el('span', 'n', String(i + 1).padStart(2, '0')));
       if (v.title) left.append(el('span', 't', v.title));
       cap.append(left);
       if (v.client) cap.append(el('span', 'c', v.client));
