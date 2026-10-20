@@ -545,6 +545,18 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 .srcline{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .srcline a{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px;color:#5E4C52;text-decoration:none;border:1px solid #E2D6D9;border-radius:999px;padding:3px 9px}
 .srcline a:hover{color:#1A0B10;border-color:#1A0B10}
+.rsec{display:flex;flex-direction:column;gap:6px}
+.rsec>h3{font-size:calc(22px * var(--d-scale));margin-bottom:4px}
+.posgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:8px}
+.pos{border:1px solid #EFE5E7;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px;background:#FFFFFF}
+.pos-l{align-self:flex-start;font-family:"Geist Mono",ui-monospace,monospace;font-size:12px;color:#fff;background:var(--dark);border-radius:999px;padding:2px 9px}
+.pos h4{margin:0;font-family:var(--f-display);font-stretch:var(--d-stretch);font-weight:var(--d-weight);font-size:calc(18px * var(--d-scale));letter-spacing:-.015em;line-height:1.2}
+.pos p{font-size:14.5px;line-height:1.55;color:#4A3A40}
+.pos .trade b{font-weight:600;color:#1A0B10}
+.pos .ask{margin-top:auto;padding-top:8px;border-top:1px solid #EFE5E7;font-style:italic;color:#1A0B10}
+.rnote{font-size:15px;line-height:1.6;color:#4A3A40;margin-top:8px}
+.plain{margin:0;padding-left:18px;font-size:15.5px;line-height:1.7;color:#4A3A40}
+.cant p{font-size:15px;line-height:1.6;color:#4A3A40}
 .cant{background:#FCF9F9;border:1px solid #EFE5E7;border-radius:16px;padding:18px 20px}
 .cant h4{margin:0 0 8px;font-size:16px;font-weight:600}
 .cant ul{margin:0;padding-left:18px;font-size:15px;line-height:1.6;color:#4A3A40}
@@ -599,61 +611,54 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
   <div class="report">
     <div class="report-top prism" data-prism="mini">
       <button type="button" class="report-x" id="closeReportX" aria-label="Close the analysis and view the site">×</button>
-      <p class="kicker">For James Walker · Prepared by Josiah Walker · October 2026</p>
-      <h2 id="reportTitle">Six observations behind this redesign.</h2>
+      <p class="kicker">For James Walker · From Josiah Walker · October 2026</p>
+      <h2 id="reportTitle">An outside read on CRM for Wineries.</h2>
     </div>
     <div class="report-body">
-      <p class="salt"><b>A quick note before you look.</b> This is a brief, AI-assisted analysis built only from public sources: your website, your Commerce7 listing, your G2 profile, a partner directory and recent industry reports. It hasn't seen your client list, your pricing or how your integration works inside. Take it with a grain of salt. It's here to spark ideas, and you know your business far better than any outside read can.</p>
+      <p class="salt">This is a brief AI-assisted analysis I put together from public sources only: your site, your Commerce7 listing, G2 and recent industry reports. You know the market and your clients far better than this can. I'm sharing it because an outside read sometimes connects things that are hard to see from inside the work. Take what's useful and set aside the rest.</p>
 
-      <ol class="findings">
-        <li><div>
-          <h4>Google may be showing “Account suspended” under your company name.</h4>
-          <p>The homepage's search description currently reads: “Account suspended notice. Contact web hosting support for assistance and resolve issues quickly.” A winery that searches for you may see that and assume the business is closed.</p>
-          <p class="why"><b>The fix:</b> a five-minute change in your site settings. A suggested replacement is on the Brand system page.</p>
-          <div class="srcline"><a href="https://crmforwineries.com/" target="_blank" rel="noopener">crmforwineries.com ↗</a></div>
-        </div></li>
-        <li><div>
-          <h4>Commerce7 is moving into reporting and analytics itself.</h4>
-          <p>Commerce7 acquired WineDirect's software business in January 2025 and WinePulse, the wine industry's analytics tool, in September 2025. Reporting, dashboards and club analytics are becoming part of what Commerce7 customers get from Commerce7 directly.</p>
-          <p class="why"><b>Why it might matter:</b> your G2 profile leads with reports, dashboards and club-cancellation automation, which is now ground Commerce7 covers itself. What Commerce7 doesn't cover is wholesale. That's why this redesign leads with DTC and wholesale in one system, and positions you as Commerce7's complement rather than its competitor.</p>
-          <div class="srcline"><a href="https://wineindustryadvisor.com/2025/01/16/commerce7-acquires-winedirects-saas-division/" target="_blank" rel="noopener">WineDirect SaaS ↗</a><a href="https://wineindustryadvisor.com/2025/09/09/commerce7-acquires-winepulse-bringing-industry-leading-analytics-to-wineries-worldwide/" target="_blank" rel="noopener">WinePulse ↗</a><a href="https://www.g2.com/products/crm-for-wineries/discuss" target="_blank" rel="noopener">G2 ↗</a></div>
-        </div></li>
-        <li><div>
-          <h4>A market opening: wineries selling to trade without a distributor.</h4>
-          <p>BMO's 2026 Wine Market Report found nearly one in four wineries lost a primary distributor, with more wineries doing their own selling. DTC shipments also fell 15% by volume in 2025. Wineries in that position suddenly need trade order-taking, invoicing, compliance reporting and inventory across locations.</p>
-          <p class="why"><b>Why it might matter:</b> your G2 profile already lists invoicing, compliance reporting and inventory. Bundled as a “self-distribution” package, they speak directly to a problem a lot of wineries just acquired.</p>
-          <div class="srcline"><a href="https://commercial.bmo.com/en/us/insights/higher-wine-spending-masks-ongoing-industry-challenges-2026-bmo-wine-market-report" target="_blank" rel="noopener">BMO 2026 ↗</a><a href="https://wineindustryadvisor.com/2026/01/27/2026-dtc-wine-shipping-report-reveals-record-declines-as-market-downturn-deepens/" target="_blank" rel="noopener">Sovos DTC report ↗</a></div>
-        </div></li>
-        <li><div>
-          <h4>Owners buy answers more readily than integrations.</h4>
-          <p>“Bi-directional integration” describes how the product works. A GM or CFO decides on what it lets them see: which sommeliers are also club members, where the winery lost restaurant placements near its members, whether a by-the-glass placement drives DTC orders nearby, and what real inventory looks like across every warehouse.</p>
-          <p class="why"><b>Why it might matter:</b> neither Commerce7 nor wholesale-only tools can answer those questions alone. Framed this way, your product sells as the answers rather than the plumbing.</p>
-        </div></li>
-        <li><div>
-          <h4>Proof is the biggest thing a buyer can't find.</h4>
-          <p>The current site has no named clients, results, screenshots or prices, and the G2 profile has no reviews yet. Competitors on the same marketplace and in wholesale software show specifics and named customers. A cautious buyer reads that gap as risk.</p>
-          <p class="why"><b>Why it might matter:</b> the bracketed placeholders throughout the mockup mark exactly what's needed. One client willing to be named, with one measurable result, would do more than any design.</p>
-          <div class="srcline"><a href="https://commerce7.com/partners/apps/commerce7-to-salesforce-integration/" target="_blank" rel="noopener">Assemblage listing ↗</a><a href="https://www.vinosmith.com/" target="_blank" rel="noopener">Vinosmith ↗</a></div>
-        </div></li>
-        <li><div>
-          <h4>Your strongest credential isn't on your own site.</h4>
-          <p>Your MBA in Wine Business from Sonoma State appears on a partner directory but nowhere on crmforwineries.com. Someone deciding who works inside their Salesforce org wants to know who that person is.</p>
-          <p class="why"><b>Why it might matter:</b> the redesign puts you on the homepage and gives you an About page.</p>
-          <div class="srcline"><a href="https://aprika.com/partners/crm-for-wineries/" target="_blank" rel="noopener">Aprika listing ↗</a></div>
-        </div></li>
-      </ol>
-
-      <div class="cant">
-        <h4>What this analysis can't know</h4>
-        <ul>
-          <li>How depletion reports get into Salesforce in your setup today.</li>
-          <li>Whether every question above can be answered with your current build.</li>
-          <li>Which packages you offer, what they cost and how long they take.</li>
-          <li>Which clients could be named, and what results they've seen.</li>
-        </ul>
+      <div class="rsec">
+        <h3>The outside read: three pressures</h3>
+        <ol class="findings">
+          <li><div>
+            <h4>The ground under the product has moved.</h4>
+            <p>With WineDirect's software business and WinePulse now part of Commerce7, reporting and club analytics are becoming things Commerce7 customers get from Commerce7. Your public description still leads with those capabilities, which puts it in a space your platform partner now covers. The part of your offer Commerce7 doesn't touch, wholesale alongside DTC, is the most defensible and the least visible from outside.</p>
+            <div class="srcline"><a href="https://wineindustryadvisor.com/2025/01/16/commerce7-acquires-winedirects-saas-division/" target="_blank" rel="noopener">WineDirect SaaS ↗</a><a href="https://wineindustryadvisor.com/2025/09/09/commerce7-acquires-winepulse-bringing-industry-leading-analytics-to-wineries-worldwide/" target="_blank" rel="noopener">WinePulse ↗</a></div>
+          </div></li>
+          <li><div>
+            <h4>The buyer for that part is specific, and has little to evaluate yet.</h4>
+            <p>One system for DTC and wholesale matters most to a winery with a sales team, several distributors and a CFO who buys on evidence. From outside, that person can't yet find named work, results, a sense of scope and cost, or who they'd be working with. Competitors on the same marketplace show those specifics.</p>
+            <div class="srcline"><a href="https://commerce7.com/partners/apps/commerce7-to-salesforce-integration/" target="_blank" rel="noopener">Assemblage listing ↗</a><a href="https://www.vinosmith.com/" target="_blank" rel="noopener">Vinosmith ↗</a></div>
+          </div></li>
+          <li><div>
+            <h4>The market is creating demand nobody has claimed.</h4>
+            <p>Nearly one in four wineries lost a primary distributor (BMO, 2026), and DTC shipments fell 15% by volume in 2025 (Sovos). Wineries now selling to trade themselves need what you already build: order-taking, invoicing, compliance and inventory across locations. Nobody has packaged or named that for them yet.</p>
+            <div class="srcline"><a href="https://commercial.bmo.com/en/us/insights/higher-wine-spending-masks-ongoing-industry-challenges-2026-bmo-wine-market-report" target="_blank" rel="noopener">BMO 2026 ↗</a><a href="https://wineindustryadvisor.com/2026/01/27/2026-dtc-wine-shipping-report-reveals-record-declines-as-market-downturn-deepens/" target="_blank" rel="noopener">Sovos DTC report ↗</a></div>
+          </div></li>
+        </ol>
       </div>
 
-      <p style="font-size:15px;line-height:1.6;color:#4A3A40">On the site, the switch at the top shows four design directions for the same content, and “Concept notes” explains the thinking section by section.</p>
+      <div class="rsec">
+        <h3>Three ways to position the business</h3>
+        <div class="posgrid">
+          <div class="pos"><span class="pos-l">A</span><h4>The other half of Commerce7</h4><p>“Keep Commerce7 for DTC. We bring wholesale in beside it.” Rides Commerce7's growth and makes you a natural referral from its team.</p><p class="trade"><b>Trade-off:</b> ties your fortunes to one platform.</p><p class="ask">How many of your clients came through Commerce7?</p></div>
+          <div class="pos"><span class="pos-l">B</span><h4>One system for the whole winery</h4><p>Lead with the questions that need both channels: which sommeliers are club members, where placements were lost near members, whether a by-the-glass placement lifts DTC nearby, what inventory looks like across every warehouse.</p><p class="trade"><b>Trade-off:</b> needs to be shown working, with a walkthrough and one client story.</p><p class="ask">Which of these do your clients actually use?</p></div>
+          <div class="pos"><span class="pos-l">C</span><h4>The self-distribution partner</h4><p>A defined package for wineries that lost or left a distributor. A new market with an urgent, clear trigger.</p><p class="trade"><b>Trade-off:</b> new scope to define, support and price.</p><p class="ask">Is this work you want more of?</p></div>
+        </div>
+        <p class="rnote">The redesign uses B as the main story, keeps A on the integration page, and offers C as a package. Which one leads is your call.</p>
+      </div>
+
+      <div class="rsec">
+        <h3>What makes any of them work</h3>
+        <ul class="plain"><li>One named client with one result.</li><li>A first package with a starting price and timeline.</li><li>You on the page, so a buyer knows who they'd be talking to.</li></ul>
+      </div>
+
+      <div class="cant">
+        <h4>What I couldn't see from outside</h4>
+        <p>How depletions reach Salesforce today, which of those questions your current build answers, typical scope and pricing, and which clients could be named.</p>
+      </div>
+
+      <p class="rnote">Behind this window is one way to put these ideas on a page, with four visual directions to compare at the top. Happy to talk through any of it.</p>
 
       <div class="report-foot">
         <button type="button" class="btn" id="closeReport">Explore the redesign <span class="arr">→</span></button>
@@ -727,7 +732,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
   <section class="band" id="problem">
     <div class="wrap">
-      <aside class="note"><b>Note</b>Leads with the problem in the buyer's words. Colour carries meaning on every page: one colour for DTC, one for wholesale, and the dark bands where they meet. The sample figures avoid DTC reporting and churn, which Commerce7 now covers itself.</aside>
+      <aside class="note"><b>Note</b>Opens on the problem as a GM or CFO would put it. Colour carries meaning on every page: one colour for DTC, one for wholesale, dark bands where they meet. The sample figures stay on cross-channel numbers, since Commerce7 now covers DTC reporting.</aside>
       <div class="head" data-rv>
         <p class="kicker">The problem</p>
         <h2>Two businesses under one roof that don't talk to each other.</h2>
@@ -843,7 +848,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
   <section class="prism" data-prism="band" id="why">
     <div class="wrap band">
-      <aside class="note"><b>Note</b>Both figures are checked against their sources. A third figure from the brief (same volume as 2012 with about 50% more wineries) could not be verified, so it is left off.</aside>
+      <aside class="note"><b>Note</b>Both figures link to their original sources.</aside>
       <div class="why-head" data-rv>
         <div style="display:flex;flex-direction:column;gap:16px"><p class="kicker">Why this matters now</p><h2>More wineries are selling to trade themselves.</h2></div>
         <p class="muted">Wineries are doing more of their own selling and treating wholesalers as fulfillment partners rather than growth engines, while DTC alone is no longer a dependable source of growth. That means managing trade accounts and club members together.</p>
@@ -858,7 +863,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
   <section class="band" id="proof">
     <div class="wrap">
-      <aside class="note"><b>Note</b>The current site's biggest gap, so the design is built around it. Nothing here is invented: every bracket is something James supplies. One named client with one measurable result carries the whole site.</aside>
+      <aside class="note"><b>Note</b>Built to hold named proof. Every bracket marks something only you can supply, and nothing here is invented. One named client with one result would carry the page.</aside>
       <div class="head" data-rv><p class="kicker">Proof</p><h2>Running at wineries that sell both ways.</h2></div>
       <div class="proof">
         <a class="cs-card lift" href="#case-study" data-rv>
@@ -875,7 +880,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 
   <section class="band white" id="packages">
     <div class="wrap">
-      <aside class="note"><b>Note</b>Three defined packages framed as outcomes, each with scope, timeline and a starting price. Package two needs its scope confirmed. Package three appears only if James confirms he does this work and can support it.</aside>
+      <aside class="note"><b>Note</b>Three packages framed as outcomes, each with a scope, timeline and starting price. The second and third are proposals to keep, change or cut.</aside>
       <div class="head" data-rv><p class="kicker">Packages</p><h2>Three ways to start, each with a defined scope.</h2></div>
       <div class="offers">
         <article class="offer core lift" data-rv>
@@ -890,10 +895,10 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
           <h3>Self-distribution</h3>
           <p class="out">For wineries that lost a distributor or now sell direct to trade: take orders, invoice and stay compliant without another system.</p>
           <ul><li>Trade order-taking</li><li>Invoicing</li><li>Compliance reporting</li><li>Multi-location inventory</li></ul>
-          <div class="ofoot"><div><span>Scope</span><span class="tbd">[CONFIRM SCOPE WITH JAMES]</span></div><div><span>Timeline</span><span class="tbd">[WEEKS]</span></div><div><span>Starting at</span><span class="tbd">[PRICE]</span></div></div>
+          <div class="ofoot"><div><span>Scope</span><span class="tbd">[SCOPE TO CONFIRM]</span></div><div><span>Timeline</span><span class="tbd">[WEEKS]</span></div><div><span>Starting at</span><span class="tbd">[PRICE]</span></div></div>
         </article>
         <article class="offer maybe lift" data-rv>
-          <span class="otag pen">Include only if James confirms</span>
+          <span class="otag pen">Proposal</span>
           <h3>Trade spend recovery</h3>
           <p class="out">Reconcile depletion allowances and distributor billbacks against actual depletions, and recover what you paid for but didn't get.</p>
           <ul><li>Depletion allowance reconciliation</li><li>Billback matching by account and SKU</li><li>Claims ready to send to distributors</li></ul>
@@ -945,7 +950,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
   </section>
   <section class="band">
     <div class="wrap">
-      <aside class="note"><b>Note</b>The old site wrote “Commerce 7”. The platform is Commerce7, one word, and a buyer who uses it every day notices. Rows marked for confirmation come from the brief rather than the public listing.</aside>
+      <aside class="note"><b>Note</b>The integration gets its own page: what moves, in which direction, and what it enables. Rows marked for confirmation are my assumptions.</aside>
       <div class="flow" data-rv>
         <div class="sys">
           <h3><span class="dot dtc"></span>Commerce7</h3>
@@ -996,7 +1001,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
         <div><span class="kicker">Channels</span><span>Club, tasting room, <span class="tbd">[N]</span> distributors</span></div>
         <div><span class="kicker">Package</span><span>The whole winery in Salesforce</span></div>
       </div>
-      <aside class="note"><b>Note</b>The structure is ready and the content is not: problem, build, outcome, quote. If no client can be named, an anonymised description such as “a 40,000-case Sonoma winery” works, but only if James confirms it is accurate.</aside>
+      <aside class="note"><b>Note</b>Ready for a real client story: problem, build, outcome, quote. If a client can't be named, an accurate anonymised description works too.</aside>
     </div>
   </section>
   <section class="band">
@@ -1022,7 +1027,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
     <div class="wrap about">
       <div class="portrait" data-rv><span class="tbd">[PHOTO]</span><span class="ini">JW</span></div>
       <div data-rv>
-        <aside class="note"><b>Note</b>The founder's MBA was the strongest trust signal the company had, and it appeared only on a <a href="https://aprika.com/partners/crm-for-wineries/" target="_blank" rel="noopener">third-party directory</a>. A cautious buyer is choosing who works inside their Salesforce org, so the person goes on the page.</aside>
+        <aside class="note"><b>Note</b>A buyer choosing who works inside their Salesforce org wants to know the person, so the founder gets a page of his own.</aside>
         <p class="lede">James Walker runs CRM for Wineries from Napa. He started it to give wineries that sell both ways one system for the whole business. <span class="tbd">[FOUNDER STORY: one or two sentences on why, in James's words]</span></p>
         <ul class="facts">
           <li><span>Education</span><span>MBA in Wine Business, Sonoma State University</span></li>
@@ -1047,7 +1052,7 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
   <section class="band">
     <div class="wrap contact">
       <div class="contact-l" data-rv>
-        <aside class="note"><b>Note</b>Replaces the GoDaddy “Drop us a line!” form with its Attach Files field. This page says what happens next, how long the demo takes, and who they'll talk to.</aside>
+        <aside class="note"><b>Note</b>Tells a buyer what happens next, how long the demo takes, and who they'll talk to.</aside>
         <h3>What happens next</h3>
         <ol class="next-list">
           <li><span>James replies within <span class="tbd">[RESPONSE TIME]</span> to set a time.</span></li>
@@ -1153,22 +1158,21 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
         </table></div>
       </div>
       <div data-rv>
-        <h3>Fix this week</h3>
+        <h3>Housekeeping</h3>
         <div class="listbox"><ul class="fixes">
-          <li><span class="sev hi">Urgent</span><span>The homepage meta description reads <code>Account suspended notice. Contact web hosting support for assistance and resolve issues quickly.</code> Google can show it under the company name. Replace it with the home description above.</span></li>
-          <li><span class="sev">High</span><span>Remove the GoDaddy stock images and the “Powered by GoDaddy” footer link.</span></li>
-          <li><span class="sev">High</span><span>Spell the platform “Commerce7” everywhere.</span></li>
-          <li><span class="sev">Medium</span><span>Ask one client for a review on <a href="https://www.g2.com/products/crm-for-wineries/discuss" target="_blank" rel="noopener" class="c-dtc">G2</a>, which currently shows none.</span></li>
+          <li><span class="sev">Site</span><span>Replace the template's stock images and the “Powered by GoDaddy” link when the new site goes up.</span></li>
+          <li><span class="sev">Copy</span><span>Commerce7 as one word throughout, matching the platform's own spelling.</span></li>
+          <li><span class="sev">Proof</span><span>A first client review on <a href="https://www.g2.com/products/crm-for-wineries/discuss" target="_blank" rel="noopener" class="c-dtc">G2</a> would give the listing something to show.</span></li>
         </ul></div>
       </div>
       <div data-rv>
-        <h3>Open questions for James</h3>
+        <h3>Open questions</h3>
         <div class="listbox"><ul class="openq">
-          <li>Which clients can be named, and what results can be stated?</li>
-          <li>Which of the three packages does he deliver today? Is trade spend recovery real and supportable?</li>
+          <li>Which clients could be named, and what results can be stated?</li>
+          <li>Which of the three packages do you offer today, and is trade-spend recovery work you would want to support?</li>
           <li>What does a typical engagement cost, and how long does it take?</li>
           <li>How do depletions get into Salesforce today: distributor portals, a depletion platform, or manual upload?</li>
-          <li>Years in wine and Salesforce, certifications, and how long the demo runs.</li>
+          <li>Your years in wine and Salesforce, certifications, and how long a demo runs.</li>
         </ul></div>
       </div>
       <div data-rv>
