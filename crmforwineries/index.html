@@ -519,6 +519,39 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
 .srcs{display:flex;flex-direction:column;gap:8px;font-size:15px}
 .srcs a{color:var(--dtc-ink)}
 
+/* analysis report (opens on first visit, reopens from the top bar) */
+.an-btn{font:inherit;background:#2F5596;color:#fff;border:0;border-radius:999px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.an-btn:hover{background:#244680}
+.an-btn i{width:7px;height:7px;border-radius:50%;background:#BFD0F2;animation:pulse2 2s ease-out infinite}
+@keyframes pulse2{0%{box-shadow:0 0 0 0 rgba(191,208,242,.8)}100%{box-shadow:0 0 0 8px rgba(191,208,242,0)}}
+.modal{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));background:rgba(12,6,10,.58);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);overflow-y:auto;animation:fadeIn .3s ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.report{position:relative;background:#FFFFFF;color:#1A0B10;width:100%;max-width:780px;margin:3vh 0 6vh;border-radius:22px;box-shadow:0 40px 90px -30px rgba(0,0,0,.6);overflow:hidden;font-family:Geist,"Helvetica Neue",Arial,sans-serif;animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+.report-top{position:relative;padding:clamp(24px,4vw,40px) clamp(20px,4vw,44px) 26px;background:var(--pz-bg);color:var(--pz-fg);overflow:hidden;isolation:isolate}
+.report-top .kicker{color:var(--pz-muted);padding-right:48px}
+.report-top h2{font-size:calc(clamp(28px,3.4vw,42px) * var(--d-scale));margin-top:10px;max-width:20ch}
+.report-x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-size:20px;line-height:1;cursor:pointer;z-index:2}
+:root[data-design="daylight"] .report-x{color:#101014;border-color:rgba(16,16,20,.15);background:#fff}
+.report-body{padding:clamp(20px,4vw,40px) clamp(20px,4vw,44px) clamp(24px,4vw,40px);display:flex;flex-direction:column;gap:24px}
+.salt{font-size:15px;line-height:1.55;color:#2E3A55;background:#EEF2FA;border:1px solid #D6DFF0;border-radius:14px;padding:14px 16px}
+.salt b{font-weight:600}
+.findings{list-style:none;margin:0;padding:0;counter-reset:f}
+.findings li{counter-increment:f;display:grid;grid-template-columns:2.4rem minmax(0,1fr);gap:4px 10px;padding:18px 0;border-top:1px solid #EFE5E7}
+.findings li::before{content:counter(f,decimal-leading-zero);font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;color:var(--dtc);padding-top:3px}
+.findings h4{margin:0 0 6px;font-family:var(--f-display);font-stretch:var(--d-stretch);font-weight:var(--d-weight);font-size:calc(20px * var(--d-scale));letter-spacing:-.02em;line-height:1.2}
+.findings p{font-size:15.5px;line-height:1.6;color:#4A3A40}
+.findings .why{margin-top:8px;font-size:14px;color:#1A0B10}
+.findings .why b{font-weight:600}
+.srcline{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.srcline a{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px;color:#5E4C52;text-decoration:none;border:1px solid #E2D6D9;border-radius:999px;padding:3px 9px}
+.srcline a:hover{color:#1A0B10;border-color:#1A0B10}
+.cant{background:#FCF9F9;border:1px solid #EFE5E7;border-radius:16px;padding:18px 20px}
+.cant h4{margin:0 0 8px;font-size:16px;font-weight:600}
+.cant ul{margin:0;padding-left:18px;font-size:15px;line-height:1.6;color:#4A3A40}
+.report-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-top:6px}
+.report-foot .btn{background:var(--dark);border-color:var(--dark);color:#fff}
+.report-foot span{font-size:13px;color:#5E4C52}
+
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.45s}
 
 @media (prefers-reduced-motion: reduce){
@@ -555,9 +588,78 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
       <button type="button" role="radio" aria-checked="false" data-design="bento"><i style="background:linear-gradient(135deg,#F7C873,#4A1D3F)"></i>3 · Bento</button>
       <button type="button" role="radio" aria-checked="true" data-design="wine"><i style="background:linear-gradient(135deg,#2A0715,#E3B04B)"></i>4 · Wine</button>
     </div>
+    <button type="button" class="an-btn" id="openReport"><i></i>Analysis report</button>
     <label class="tog" for="notesToggle"><input type="checkbox" id="notesToggle"> Concept notes</label>
     <a href="#brand">Brand system</a>
     <span class="pos-why" id="designWhy"></span>
+  </div>
+</div>
+
+<div class="modal" id="report" role="dialog" aria-modal="true" aria-labelledby="reportTitle" hidden>
+  <div class="report">
+    <div class="report-top prism" data-prism="mini">
+      <button type="button" class="report-x" id="closeReportX" aria-label="Close the analysis and view the site">×</button>
+      <p class="kicker">For James Walker · Prepared by Josiah Walker · October 2026</p>
+      <h2 id="reportTitle">Six observations behind this redesign.</h2>
+    </div>
+    <div class="report-body">
+      <p class="salt"><b>A quick note before you look.</b> This is a brief, AI-assisted analysis built only from public sources: your website, your Commerce7 listing, your G2 profile, a partner directory and recent industry reports. It hasn't seen your client list, your pricing or how your integration works inside. Take it with a grain of salt. It's here to spark ideas, and you know your business far better than any outside read can.</p>
+
+      <ol class="findings">
+        <li><div>
+          <h4>Google may be showing “Account suspended” under your company name.</h4>
+          <p>The homepage's search description currently reads: “Account suspended notice. Contact web hosting support for assistance and resolve issues quickly.” A winery that searches for you may see that and assume the business is closed.</p>
+          <p class="why"><b>The fix:</b> a five-minute change in your site settings. A suggested replacement is on the Brand system page.</p>
+          <div class="srcline"><a href="https://crmforwineries.com/" target="_blank" rel="noopener">crmforwineries.com ↗</a></div>
+        </div></li>
+        <li><div>
+          <h4>Commerce7 is moving into reporting and analytics itself.</h4>
+          <p>Commerce7 acquired WineDirect's software business in January 2025 and WinePulse, the wine industry's analytics tool, in September 2025. Reporting, dashboards and club analytics are becoming part of what Commerce7 customers get from Commerce7 directly.</p>
+          <p class="why"><b>Why it might matter:</b> your G2 profile leads with reports, dashboards and club-cancellation automation, which is now ground Commerce7 covers itself. What Commerce7 doesn't cover is wholesale. That's why this redesign leads with DTC and wholesale in one system, and positions you as Commerce7's complement rather than its competitor.</p>
+          <div class="srcline"><a href="https://wineindustryadvisor.com/2025/01/16/commerce7-acquires-winedirects-saas-division/" target="_blank" rel="noopener">WineDirect SaaS ↗</a><a href="https://wineindustryadvisor.com/2025/09/09/commerce7-acquires-winepulse-bringing-industry-leading-analytics-to-wineries-worldwide/" target="_blank" rel="noopener">WinePulse ↗</a><a href="https://www.g2.com/products/crm-for-wineries/discuss" target="_blank" rel="noopener">G2 ↗</a></div>
+        </div></li>
+        <li><div>
+          <h4>A market opening: wineries selling to trade without a distributor.</h4>
+          <p>BMO's 2026 Wine Market Report found nearly one in four wineries lost a primary distributor, with more wineries doing their own selling. DTC shipments also fell 15% by volume in 2025. Wineries in that position suddenly need trade order-taking, invoicing, compliance reporting and inventory across locations.</p>
+          <p class="why"><b>Why it might matter:</b> your G2 profile already lists invoicing, compliance reporting and inventory. Bundled as a “self-distribution” package, they speak directly to a problem a lot of wineries just acquired.</p>
+          <div class="srcline"><a href="https://commercial.bmo.com/en/us/insights/higher-wine-spending-masks-ongoing-industry-challenges-2026-bmo-wine-market-report" target="_blank" rel="noopener">BMO 2026 ↗</a><a href="https://wineindustryadvisor.com/2026/01/27/2026-dtc-wine-shipping-report-reveals-record-declines-as-market-downturn-deepens/" target="_blank" rel="noopener">Sovos DTC report ↗</a></div>
+        </div></li>
+        <li><div>
+          <h4>Owners buy answers more readily than integrations.</h4>
+          <p>“Bi-directional integration” describes how the product works. A GM or CFO decides on what it lets them see: which sommeliers are also club members, where the winery lost restaurant placements near its members, whether a by-the-glass placement drives DTC orders nearby, and what real inventory looks like across every warehouse.</p>
+          <p class="why"><b>Why it might matter:</b> neither Commerce7 nor wholesale-only tools can answer those questions alone. Framed this way, your product sells as the answers rather than the plumbing.</p>
+        </div></li>
+        <li><div>
+          <h4>Proof is the biggest thing a buyer can't find.</h4>
+          <p>The current site has no named clients, results, screenshots or prices, and the G2 profile has no reviews yet. Competitors on the same marketplace and in wholesale software show specifics and named customers. A cautious buyer reads that gap as risk.</p>
+          <p class="why"><b>Why it might matter:</b> the bracketed placeholders throughout the mockup mark exactly what's needed. One client willing to be named, with one measurable result, would do more than any design.</p>
+          <div class="srcline"><a href="https://commerce7.com/partners/apps/commerce7-to-salesforce-integration/" target="_blank" rel="noopener">Assemblage listing ↗</a><a href="https://www.vinosmith.com/" target="_blank" rel="noopener">Vinosmith ↗</a></div>
+        </div></li>
+        <li><div>
+          <h4>Your strongest credential isn't on your own site.</h4>
+          <p>Your MBA in Wine Business from Sonoma State appears on a partner directory but nowhere on crmforwineries.com. Someone deciding who works inside their Salesforce org wants to know who that person is.</p>
+          <p class="why"><b>Why it might matter:</b> the redesign puts you on the homepage and gives you an About page.</p>
+          <div class="srcline"><a href="https://aprika.com/partners/crm-for-wineries/" target="_blank" rel="noopener">Aprika listing ↗</a></div>
+        </div></li>
+      </ol>
+
+      <div class="cant">
+        <h4>What this analysis can't know</h4>
+        <ul>
+          <li>How depletion reports get into Salesforce in your setup today.</li>
+          <li>Whether every question above can be answered with your current build.</li>
+          <li>Which packages you offer, what they cost and how long they take.</li>
+          <li>Which clients could be named, and what results they've seen.</li>
+        </ul>
+      </div>
+
+      <p style="font-size:15px;line-height:1.6;color:#4A3A40">On the site, the switch at the top shows four design directions for the same content, and “Concept notes” explains the thinking section by section.</p>
+
+      <div class="report-foot">
+        <button type="button" class="btn" id="closeReport">Explore the redesign <span class="arr">→</span></button>
+        <span>You can reopen this anytime from “Analysis report” at the top.</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1207,6 +1309,19 @@ input:focus,select:focus{border-color:var(--dtc);outline:none;box-shadow:0 0 0 3
     try{ navigator.clipboard.writeText(el.textContent).then(function(){ btn.textContent='Copied'; },pick); }catch(e){ pick(); }
     setTimeout(function(){ btn.textContent='Copy'; },2000);
   });
+
+  // Analysis report: opens on first visit, reopens from the top bar
+  var modal=document.getElementById('report'), lastFocus=null;
+  function openReport(){ lastFocus=document.activeElement; modal.hidden=false; document.body.style.overflow='hidden'; modal.scrollTop=0; setTimeout(function(){ document.getElementById('closeReport').focus({preventScroll:true}); },50); }
+  function closeReport(){ modal.hidden=true; document.body.style.overflow=''; try{ localStorage.setItem('cfw-report-seen','1'); }catch(e){} if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+  document.getElementById('openReport').addEventListener('click',openReport);
+  document.getElementById('closeReport').addEventListener('click',closeReport);
+  document.getElementById('closeReportX').addEventListener('click',closeReport);
+  modal.addEventListener('click',function(e){ if(e.target===modal) closeReport(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!modal.hidden) closeReport(); });
+  var seen=false; try{ seen=localStorage.getItem('cfw-report-seen')==='1'; }catch(e){}
+  try{ if(new URLSearchParams(location.search).get('report')==='1') seen=false; }catch(e){}
+  if(!seen) openReport();
 
   document.getElementById('demoForm').addEventListener('submit',function(e){
     e.preventDefault();
