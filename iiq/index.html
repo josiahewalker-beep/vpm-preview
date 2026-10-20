@@ -50,6 +50,7 @@ input:focus { border-color:var(--accent); background:#fff; outline:none; box-sha
 @media (max-width:1000px) { .list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:620px) { .list { grid-template-columns:1fr; } }
 .list.one { grid-template-columns:1fr; max-width:60rem; }
+#intro[hidden] + .list { margin-top:clamp(22px,2.8vw,36px); }
 figure { margin:0; }
 .frame { position:relative; width:100%; aspect-ratio:16/9; background:#0b1220; border-radius:16px; overflow:hidden; box-shadow:0 1px 2px rgba(11,18,32,.06), 0 24px 60px -24px rgba(11,18,32,.35); }
 .frame iframe, .frame video { position:absolute; inset:0; width:100%; height:100%; border:0; background:#0b1220; }
@@ -133,7 +134,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:22px max
 </div>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "N/PTGMEJKbaph+MsmmDPWw==", "iv": "cR7FKe6qtuEm7zGy", "ct": "Ond4cO+dU7BeH9uDNNUwZMydJQMwTag6LFVjbvfRNUBAeFsXUrNs8uhUERoo0fn6H4tclgI//ZBOt1/x/3GBjRtNARg2WWpen3D4gmPWk+u5AT5OtAZttkl4+qYiCAAoKkYG7h4jVzm9XNOFWvUpXw8T+HHhczJFjUuDb0tNEJPO6z7QwjA6vBs+kle70zsXJtsrEEhzA7YlRpheAojl6exL2LGAfjxQAgQ6EGXRmRJqD5B9gh12RYQlX8EzNcv8s8id2++81xFB+QKQBVztpq3papbHGr9lMLQzHc47D5iQG0+FsnEpdubwgZ1wwgPSVSn+x3m1MZPD4gwbuC3ezfIYM49KCN/ygK6SZ+09xqrOCul5eSKOvueqwib1ItmvKKZZ3fWQJINhIBJjrLG/V9p1ULRgrp8feIEqmnAEnkk3A2oOMGjzmP4/KAb1hn00qW05GzEPGsHTdZltftN+vaWAubq2CZHVZVXkixDN9U2JBIkewW4q"};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "ICnY62CuMFOb2wBTXJLRAQ==", "iv": "T3thGrB6zVJHhBJp", "ct": "q52s94Zo9xlkR1gaqL8sZhmeX5FFfNwnFM+S9AONOw1H8Q1bA9pP5BtUE2fsOJvae5XwdL476wGX90BpKM4nCrmzkeMvWlBY6j4UBIDaBteUnMHrs6I8wC1hT9+OavQSWMjocmzPgyyOClIP5UrqGcqN+FnFlpF8Dqtey4rhmZQSfzuXF8Qc2gferp6yTn83cad0YvlFn/uRO5r9Y+Haytjgv5CuZbqDv+wBbWc8pEPOl4SyIqgiY/azpmVJYzYTTJpL8CI3uYrXEe9qToAfZXdykmcxLn4Ki8ehqkWkKHoKKna3LBYucGdqtECDePZvJf2yHqIH0pETA8W/xH2+8ws6rAuA"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
