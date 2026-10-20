@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Stage Pro — Concept A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Inter+Tight:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0A0A0B}
+a{color:#EDEBE6}a:hover{color:#FF8A1F}
+@keyframes eq{0%{transform:scaleY(.18)}100%{transform:scaleY(1)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes meter{0%{transform:scaleY(.35)}30%{transform:scaleY(.9)}55%{transform:scaleY(.6)}80%{transform:scaleY(.95)}100%{transform:scaleY(.4)}}
+.sp-bar{transform-origin:bottom;animation:eq ease-in-out infinite alternate;animation-play-state:var(--play)}
+.sp-track{animation:marquee 48s linear infinite;animation-play-state:var(--play)}
+.sp-dot{animation:blink 1.6s ease-in-out infinite;animation-play-state:var(--play)}
+.sp-meter{transform-origin:bottom;animation:meter 2.4s ease-in-out infinite;animation-play-state:var(--play)}
+@media (prefers-reduced-motion: reduce){.sp-bar,.sp-track,.sp-dot,.sp-meter{animation:none}}
+</style>
+<style>html{scroll-behavior:smooth}</style>
+</head>
+<body>
+<div style="--play: running; background: #0A0A0B; color: #EDEBE6; font-family: 'Inter Tight', system-ui, sans-serif; min-height: 100vh; overflow: hidden">
+
+<header style="max-width: 1360px; margin: 0 auto; padding: 24px 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #26262A">
+<a href="#top" style="text-decoration: none; display: flex; align-items: baseline; gap: 14px">
+<span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 34px; letter-spacing: 0.02em; color: #EDEBE6; white-space: nowrap">STAGE PRO</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #9A9893">CONCERT PRODUCTION</span>
+</a>
+<nav aria-label="Main" style="display: flex; flex-wrap: wrap; align-items: center; gap: 28px; font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.08em">
+<a href="#services" style="text-decoration: none">SERVICES</a>
+<a href="#rig" style="text-decoration: none">RIG</a>
+<a href="#team" style="text-decoration: none">TEAM</a>
+<a href="#clients" style="text-decoration: none">CLIENTS</a>
+<a href="#book" style="text-decoration: none; padding: 13px 18px; background: #FF8A1F; color: #0A0A0B; font-weight: 700">BOOK A SHOW</a>
+</nav>
+</header>
+
+<section id="top" style="max-width: 1360px; margin: 0 auto; padding: 72px 40px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px; align-items: end">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #9A9893">
+<span class="sp-dot" style="width: 9px; height: 9px; border-radius: 50%; background: #FF8A1F; display: inline-block"></span>
+<span>LIVE SOUND · RECORDING · SYSTEM TUNING — WEST COAST</span>
+</div>
+<h1 style="margin: 0; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: clamp(64px, 10vw, 168px); line-height: 0.84; letter-spacing: -0.01em; text-transform: uppercase">Concert sound<br>for 500<br><span style="color: #FF8A1F">to 10,000.</span></h1>
+<p style="margin: 0; max-width: 560px; font-size: 19px; line-height: 1.55; color: #C9C7C1">We design, deliver and run scalable PA systems for mid to large live events: line arrays, monitors, consoles, wireless and site-specific tuning, with experienced engineers on the desk.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<a href="#book" style="text-decoration: none; padding: 16px 24px; background: #FF8A1F; color: #0A0A0B; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; letter-spacing: 0.06em">BOOK A SHOW →</a>
+<a href="#services" style="text-decoration: none; padding: 15px 23px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.06em">WHAT WE RUN</a>
+</div>
+</div>
+
+<div style="justify-self: end; width: 100%; max-width: 420px; border: 1px solid #2A2A2E; background: #121214; display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #2A2A2E; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; color: #9A9893">
+<span>CH 01 · FOH</span><span style="color: #FF8A1F">● REC</span>
+</div>
+<div style="display: flex; gap: 14px; padding: 16px">
+<div role="img" aria-label="Photo placeholder: James Walker at the FOH console" style="flex: 1 1 auto; aspect-ratio: 4 / 5; background: #1C1C20; border: 1px dashed #3A3A40; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: #9A9893">[PHOTO: SWJ.JPG<br>James at FOH<br>cropped 4:5, ~320px]</div>
+<div aria-hidden="true" style="width: 18px; display: flex; gap: 4px; align-items: flex-end">
+<div class="sp-meter" style="width: 7px; height: 100%; background: linear-gradient(to top, #EDEBE6 0 70%, #FF8A1F 70% 100%); animation-delay: -0.4s"></div>
+<div class="sp-meter" style="width: 7px; height: 100%; background: linear-gradient(to top, #EDEBE6 0 70%, #FF8A1F 70% 100%); animation-delay: -1.3s"></div>
+</div>
+</div>
+<div style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 26px; text-transform: uppercase">James Walker</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9893; letter-spacing: 0.06em">LEAD ENGINEER · 40 YEARS ON THE DESK</span>
+</div>
+</div>
+</section>
+
+<section aria-label="Signal analyzer" style="max-width: 1360px; margin: 0 auto; padding: 24px 40px 56px">
+<div aria-hidden="true" style="height: 150px; display: flex; align-items: flex-end; gap: 4px; border-bottom: 1px solid #2A2A2E">
+
+<div class="sp-bar" style="flex: 1 1 0; height: 69%; background: #3A3A40; animation-duration: 0.60s; animation-delay: 0.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 88%; background: #3A3A40; animation-duration: 1.00s; animation-delay: -0.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 66%; background: #3A3A40; animation-duration: 1.40s; animation-delay: -0.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 55%; background: #3A3A40; animation-duration: 0.70s; animation-delay: -0.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 82%; background: #FF8A1F; animation-duration: 1.10s; animation-delay: -0.80s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 88%; background: #3A3A40; animation-duration: 1.50s; animation-delay: -1.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 62%; background: #3A3A40; animation-duration: 0.80s; animation-delay: -1.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 65%; background: #3A3A40; animation-duration: 1.20s; animation-delay: -1.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 92%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -1.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 85%; background: #3A3A40; animation-duration: 0.90s; animation-delay: -0.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 61%; background: #3A3A40; animation-duration: 1.30s; animation-delay: -0.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 76%; background: #3A3A40; animation-duration: 0.60s; animation-delay: -0.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 98%; background: #3A3A40; animation-duration: 1.00s; animation-delay: -0.70s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 78%; background: #FF8A1F; animation-duration: 1.40s; animation-delay: -0.90s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 63%; background: #3A3A40; animation-duration: 0.70s; animation-delay: -1.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 87%; background: #3A3A40; animation-duration: 1.10s; animation-delay: -1.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 97%; background: #3A3A40; animation-duration: 1.50s; animation-delay: -1.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 71%; background: #3A3A40; animation-duration: 0.80s; animation-delay: 0.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 68%; background: #3A3A40; animation-duration: 1.20s; animation-delay: -0.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 95%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -0.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 91%; background: #3A3A40; animation-duration: 0.90s; animation-delay: -0.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 65%; background: #3A3A40; animation-duration: 1.30s; animation-delay: -0.80s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 76%; background: #FF8A1F; animation-duration: 0.60s; animation-delay: -1.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 99%; background: #3A3A40; animation-duration: 1.00s; animation-delay: -1.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 81%; background: #3A3A40; animation-duration: 1.40s; animation-delay: -1.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 62%; background: #3A3A40; animation-duration: 0.70s; animation-delay: -1.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 83%; background: #3A3A40; animation-duration: 1.10s; animation-delay: -0.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 96%; background: #3A3A40; animation-duration: 1.50s; animation-delay: -0.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 70%; background: #3A3A40; animation-duration: 0.80s; animation-delay: -0.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 63%; background: #3A3A40; animation-duration: 1.20s; animation-delay: -0.70s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 89%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -0.90s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 87%; background: #FF8A1F; animation-duration: 0.90s; animation-delay: -1.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 59%; background: #3A3A40; animation-duration: 1.30s; animation-delay: -1.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 66%; background: #3A3A40; animation-duration: 0.60s; animation-delay: -1.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 89%; background: #3A3A40; animation-duration: 1.00s; animation-delay: 0.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 74%; background: #3A3A40; animation-duration: 1.40s; animation-delay: -0.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 52%; background: #3A3A40; animation-duration: 0.70s; animation-delay: -0.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 69%; background: #3A3A40; animation-duration: 1.10s; animation-delay: -0.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 84%; background: #3A3A40; animation-duration: 1.50s; animation-delay: -0.80s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 59%; background: #3A3A40; animation-duration: 0.80s; animation-delay: -1.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 47%; background: #FF8A1F; animation-duration: 1.20s; animation-delay: -1.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 72%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -1.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 74%; background: #3A3A40; animation-duration: 0.90s; animation-delay: -1.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 45%; background: #3A3A40; animation-duration: 1.30s; animation-delay: -0.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 46%; background: #3A3A40; animation-duration: 0.60s; animation-delay: -0.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 71%; background: #3A3A40; animation-duration: 1.00s; animation-delay: -0.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 59%; background: #3A3A40; animation-duration: 1.40s; animation-delay: -0.70s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 33%; background: #3A3A40; animation-duration: 0.70s; animation-delay: -0.90s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 47%; background: #3A3A40; animation-duration: 1.10s; animation-delay: -1.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 65%; background: #FF8A1F; animation-duration: 1.50s; animation-delay: -1.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 42%; background: #3A3A40; animation-duration: 0.80s; animation-delay: -1.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 26%; background: #3A3A40; animation-duration: 1.20s; animation-delay: 0.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 48%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -0.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 54%; background: #3A3A40; animation-duration: 0.90s; animation-delay: -0.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 25%; background: #3A3A40; animation-duration: 1.30s; animation-delay: -0.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 22%; background: #3A3A40; animation-duration: 0.60s; animation-delay: -0.80s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 47%; background: #3A3A40; animation-duration: 1.00s; animation-delay: -1.00s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 39%; background: #3A3A40; animation-duration: 1.40s; animation-delay: -1.20s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 22%; background: #FF8A1F; animation-duration: 0.70s; animation-delay: -1.40s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 22%; background: #3A3A40; animation-duration: 1.10s; animation-delay: -1.60s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 42%; background: #3A3A40; animation-duration: 1.50s; animation-delay: -0.10s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 22%; background: #3A3A40; animation-duration: 0.80s; animation-delay: -0.30s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 22%; background: #3A3A40; animation-duration: 1.20s; animation-delay: -0.50s"></div>
+
+<div class="sp-bar" style="flex: 1 1 0; height: 23%; background: #3A3A40; animation-duration: 1.60s; animation-delay: -0.70s"></div>
+
+</div>
+<div style="display: flex; justify-content: space-between; padding-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9893; letter-spacing: 0.08em">
+<span>20 HZ</span><span>63</span><span>250</span><span>1K</span><span>4K</span><span>16K</span><span>SMAART-TUNED, EVERY ROOM</span>
+</div>
+</section>
+
+<section id="clients" aria-label="Artists we have mixed" style="border-top: 1px solid #26262A; border-bottom: 1px solid #26262A; padding: 22px 0; overflow: hidden">
+<div class="sp-track" style="display: flex; width: max-content; gap: 48px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 52px; text-transform: uppercase; white-space: nowrap">
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Jefferson Starship</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Robin Trower</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>The Monkees</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Pablo Cruise</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Geoff Tate</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Richie Ramone</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Filter</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Alien Ant Farm</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>The Ataris</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Vixen</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Canaan Smith</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Tyler Rich</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Jeremy McComb</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Cory Asbury</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Jefferson Starship</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Robin Trower</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>The Monkees</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Pablo Cruise</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Geoff Tate</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Richie Ramone</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Filter</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Alien Ant Farm</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>The Ataris</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Vixen</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Canaan Smith</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Tyler Rich</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Jeremy McComb</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+<span style="display: flex; align-items: center; gap: 48px"><span>Cory Asbury</span><span aria-hidden="true" style="color: #FF8A1F; font-size: 28px">◆</span></span>
+
+</div>
+</section>
+
+<section id="services" style="max-width: 1360px; margin: 0 auto; padding: 112px 40px 40px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 40px">
+<h2 style="margin: 0; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: clamp(48px, 6vw, 88px); line-height: 0.9; text-transform: uppercase">Input list</h2>
+<p style="margin: 0; max-width: 420px; color: #9A9893; font-size: 16px; line-height: 1.55">Book the whole package or pull a single channel. Everything is sized to the crowd and the room.</p>
+</div>
+<div role="table" aria-label="Services" style="border-top: 1px solid #3A3A40">
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 0; border-bottom: 1px solid #2A2A2E; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #9A9893">
+<span role="columnheader" style="width: 64px">CH</span><span role="columnheader" style="flex: 1 1 280px">SERVICE</span><span role="columnheader" style="flex: 1 1 360px">NOTES</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">01</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Turnkey audio packages</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Modular rigs sized for your crowd, from line arrays and monitors to consoles and wireless.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">02</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">FOH &amp; monitor engineering</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Experienced engineers delivering the mix your show deserves.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">03</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">System design &amp; tuning</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Site-specific coverage, delay zones and acoustic optimization by a certified Smaart operator.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">04</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Rental &amp; logistics</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Line arrays, amps, processors, wireless, cabling and transport.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">05</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Concert &amp; event recording</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Up to 64 simultaneous channels, each source on its own track for studio mixdown.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">06</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Mobile studio</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Studio-grade gear in your room: band room, church, college, living room or garage.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">07</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Production &amp; stage management</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Full advance and show-day support working directly with artists.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">08</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Backline</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Amplifiers to drum sets, arranged for the artist.</span>
+</div>
+
+<div role="row" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 22px 0; border-bottom: 1px solid #2A2A2E; align-items: baseline">
+<span role="cell" style="width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #FF8A1F">09</span>
+<span role="cell" style="flex: 1 1 280px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 34px; line-height: 1; text-transform: uppercase">Add-ons</span>
+<span role="cell" style="flex: 1 1 360px; color: #B8B6B0; font-size: 16px; line-height: 1.55">Live recording feeds, broadcast mix, in-ear monitoring, safe-listening and acoustic consulting.</span>
+</div>
+
+</div>
+</section>
+
+<section style="max-width: 1360px; margin: 0 auto; padding: 96px 40px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 56px">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #9A9893">WHO WE SERVE</span>
+<h2 style="margin: 0; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 64px; line-height: 0.92; text-transform: uppercase">Consistent coverage. Vocals you can understand.</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px">
+<span style="padding: 10px 14px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 13px">PROMOTERS</span>
+<span style="padding: 10px 14px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 13px">TOURING ARTISTS</span>
+<span style="padding: 10px 14px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 13px">FESTIVAL STAGES</span>
+<span style="padding: 10px 14px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 13px">MIDSIZE VENUES</span>
+<span style="padding: 10px 14px; border: 1px solid #3A3A40; font-family: 'JetBrains Mono', monospace; font-size: 13px">CORPORATE EVENTS</span>
+</div>
+</div>
+<div style="align-self: end; display: flex; flex-direction: column; gap: 14px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #9A9893">AUDIENCE SIZE</span>
+<div aria-hidden="true" style="position: relative; height: 56px; border-left: 1px solid #3A3A40; border-right: 1px solid #3A3A40; display: flex; align-items: center">
+<div style="height: 14px; width: 100%; background: repeating-linear-gradient(90deg, #FF8A1F 0 6px, transparent 6px 10px)"></div>
+</div>
+<div style="display: flex; justify-content: space-between; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 44px">
+<span>500</span><span>2,500</span><span>5,000</span><span style="color: #FF8A1F">10,000</span>
+</div>
+<p style="margin: 0; color: #9A9893; font-size: 15px; line-height: 1.55">Backyard and conference rooms on request. Modular rigs scale between.</p>
+</div>
+</section>
+
+<section id="rig" style="max-width: 1360px; margin: 0 auto; padding: 112px 40px 40px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #9A9893">THE RIG</span>
+<div style="display: flex; flex-wrap: wrap; gap: 0; margin-top: 20px; border-top: 1px solid #3A3A40; border-bottom: 1px solid #3A3A40">
+<div style="flex: 1 1 300px; padding: 36px 24px 36px 0; border-right: 1px solid #2A2A2E; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 64px; line-height: 0.9">L-ACOUSTICS</div>
+<div style="flex: 1 1 300px; padding: 36px 24px; border-right: 1px solid #2A2A2E; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 64px; line-height: 0.9">MEYER SOUND</div>
+<div style="flex: 1 1 200px; padding: 36px 24px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 64px; line-height: 0.9">EAW</div>
+</div>
+<p style="margin: 20px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 2; color: #9A9893; letter-spacing: 0.06em">ALSO ON THE TRUCK — AKG · AUDIX · MOJAVE · RF VENUE · WHIRLWIND · K&amp;M · TRIAD-ORBIT · INDU ELECTRIC POWER</p>
+</section>
+
+<section style="max-width: 1360px; margin: 0 auto; padding: 96px 40px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px">
+<div style="border: 1px solid #2A2A2E; padding: 28px; display: flex; flex-direction: column; gap: 14px; background: #121214">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #FF8A1F">CERT · RATIONAL ACOUSTICS</span>
+<span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 36px; line-height: 1; text-transform: uppercase">Smaart Operator, Level 1</span>
+<span style="color: #9A9893; font-size: 15px; line-height: 1.55">System analysis and tuning: coverage, delay zones and acoustic optimization measured, not guessed.</span>
+</div>
+<div style="border: 1px solid #2A2A2E; padding: 28px; display: flex; flex-direction: column; gap: 14px; background: #121214">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #FF8A1F">CERT · HELA</span>
+<span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 36px; line-height: 1; text-transform: uppercase">Safe listening consulting</span>
+<span style="color: #9A9893; font-size: 15px; line-height: 1.55">Loud where it should be, safe for the audience and crew.</span>
+</div>
+<div style="border: 1px solid #2A2A2E; padding: 28px; display: flex; flex-direction: column; gap: 14px; background: #121214">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #FF8A1F">CERT · L-ACOUSTICS</span>
+<span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 36px; line-height: 1; text-transform: uppercase">System engineer certified</span>
+<span style="color: #9A9893; font-size: 15px; line-height: 1.55">[LIST WHICH L-ACOUSTICS MODULES]</span>
+</div>
+</section>
+
+<section style="max-width: 1360px; margin: 0 auto; padding: 112px 40px 40px">
+<h2 style="margin: 0 0 40px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: clamp(48px, 6vw, 88px); line-height: 0.9; text-transform: uppercase">Plan. Ready. Go.</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0; border-top: 1px solid #3A3A40">
+<div style="padding: 32px 32px 32px 0; border-right: 1px solid #2A2A2E; display: flex; flex-direction: column; gap: 12px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FF8A1F">01 / PLAN</span>
+<span style="font-size: 17px; line-height: 1.55; color: #C9C7C1">A shared project plan everyone can see. Stage plots, input lists and power drops settled before load-in.</span>
+</div>
+<div style="padding: 32px; border-right: 1px solid #2A2A2E; display: flex; flex-direction: column; gap: 12px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FF8A1F">02 / READY</span>
+<span style="font-size: 17px; line-height: 1.55; color: #C9C7C1">System designed for the site, flown or stacked, then measured and tuned.</span>
+</div>
+<div style="padding: 32px; display: flex; flex-direction: column; gap: 12px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #FF8A1F">03 / GO</span>
+<span style="font-size: 17px; line-height: 1.55; color: #C9C7C1">FOH and monitor engineers mixing the show, with multitrack recording if you want the tapes.</span>
+</div>
+</div>
+</section>
+
+<section id="team" style="max-width: 1360px; margin: 0 auto; padding: 112px 40px 40px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #9A9893">CREW</span>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-top: 20px">
+<div style="display: flex; gap: 16px; align-items: center; border: 1px solid #2A2A2E; padding: 16px">
+<div role="img" aria-label="Photo placeholder" style="width: 88px; height: 88px; flex: none; background: #1C1C20; border: 1px dashed #3A3A40; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #9A9893">[PHOTO]</div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">James Walker</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9893">ENGINEER · PRODUCTION MGR</span></div>
+</div>
+<div style="display: flex; gap: 16px; align-items: center; border: 1px solid #2A2A2E; padding: 16px">
+<div role="img" aria-label="Photo placeholder" style="width: 88px; height: 88px; flex: none; background: #1C1C20; border: 1px dashed #3A3A40; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #9A9893">[PHOTO]</div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">Paul Wenning</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9893">PRODUCTION ASSISTANT</span></div>
+</div>
+<div style="display: flex; gap: 16px; align-items: center; border: 1px solid #2A2A2E; padding: 16px">
+<div role="img" aria-label="Photo placeholder" style="width: 88px; height: 88px; flex: none; background: #1C1C20; border: 1px dashed #3A3A40; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #9A9893">[NEEDED]</div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 28px; text-transform: uppercase">Julissa Walker</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9893">PRODUCTION ASSISTANT</span></div>
+</div>
+</div>
+</section>
+
+<section id="book" style="margin-top: 112px; background: #FF8A1F; color: #0A0A0B">
+<div style="max-width: 1360px; margin: 0 auto; padding: 96px 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 56px">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: clamp(56px, 8vw, 128px); line-height: 0.86; text-transform: uppercase">Book the show.</h2>
+<p style="margin: 0; font-size: 18px; line-height: 1.55; max-width: 460px">Booking a show, planning a festival stage, or need a rig for a single night anywhere on the West Coast. Call James directly.</p>
+<a href="tel:+17072990167" style="color: #0A0A0B; text-decoration: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: clamp(44px, 5vw, 72px); line-height: 1">(707) 299-0167</a>
+</div>
+<form onsubmit="return false" aria-label="Booking request" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px; align-content: start; font-family: 'JetBrains Mono', monospace">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: 0.1em; font-weight: 700">NAME<input type="text" name="name" style="padding: 14px; border: 2px solid #0A0A0B; background: transparent; font: inherit; font-size: 15px"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: 0.1em; font-weight: 700">EMAIL<input type="email" name="email" required style="padding: 14px; border: 2px solid #0A0A0B; background: transparent; font: inherit; font-size: 15px"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: 0.1em; font-weight: 700">EVENT DATE<input type="date" name="date" style="padding: 14px; border: 2px solid #0A0A0B; background: transparent; font: inherit; font-size: 15px"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: 0.1em; font-weight: 700">EXPECTED CROWD<select name="crowd" style="padding: 14px; border: 2px solid #0A0A0B; background: transparent; font: inherit; font-size: 15px"><option>Under 500</option><option>500 – 2,500</option><option>2,500 – 5,000</option><option>5,000 – 10,000</option></select></label>
+<label style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; font-size: 12px; letter-spacing: 0.1em; font-weight: 700">VENUE, CITY, NOTES<textarea name="notes" rows="4" style="padding: 14px; border: 2px solid #0A0A0B; background: transparent; font: inherit; font-size: 15px; resize: vertical"></textarea></label>
+<button type="submit" style="grid-column: 1 / -1; min-height: 56px; border: none; background: #0A0A0B; color: #EDEBE6; font: inherit; font-weight: 700; font-size: 15px; letter-spacing: 0.08em; cursor: pointer">SEND THE ADVANCE →</button>
+</form>
+</div>
+</section>
+
+<footer style="max-width: 1360px; margin: 0 auto; padding: 32px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9893; letter-spacing: 0.06em">
+<span>© 2026 STAGE PRODUCTION PRO</span><span>LIVE SOUND · RECORDING · SYSTEM TUNING · WEST COAST</span>
+</footer>
+</div>
+</body>
+</html>
