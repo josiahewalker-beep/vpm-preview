@@ -1,87 +1,135 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Corporate Work · Josiah Walker</title>
+<title>Private screening · Josiah Walker</title>
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#f6f7f9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://player.vimeo.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500&display=swap">
 <style>
-:root { --ink:#0d0b09; --paper:#efe6d4; --dim:#b7ab95; --green:#9fc2a3; --red:#e2a08f; --rule:rgba(239,230,212,0.22); --display:'Newsreader','Iowan Old Style',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace; color-scheme:dark; }
+:root { --bg:#f6f7f9; --card:#ffffff; --ink:#0b1220; --mid:#4a5568; --dim:#8a94a6; --line:#e3e7ee; --accent:#2f5bff; --accent-2:#00b39b; --warn:#e5484d;
+  --head:'Inter Tight','Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif; --body:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif; color-scheme:light; }
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
-body { margin:0; background:var(--ink); color:var(--paper); font-family:var(--mono); font-size:13px; min-height:100vh; display:flex; flex-direction:column; }
-a { color:var(--paper); } a:hover { color:var(--green); } :focus-visible { outline:2px solid var(--green); outline-offset:3px; }
-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,2.2vw) 14px; border-bottom:1px solid var(--rule); }
-.name { font-family:var(--display); font-size:clamp(21px,2.4vw,34px); letter-spacing:.02em; text-decoration:none; line-height:1.05; display:inline-flex; flex-direction:column; }
-.name small { font-family:var(--mono); font-size:clamp(9.5px,1vw,11px); letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin-top:4px; white-space:nowrap; }
-nav { display:flex; gap:clamp(9px,1.4vw,18px); }
-nav a { text-decoration:none; text-transform:uppercase; letter-spacing:.12em; font-size:clamp(9.5px,1vw,11px); color:var(--dim); }
-nav a:hover { color:var(--paper); }
-main { flex:1; width:100%; margin:0 auto; padding:clamp(28px,6vw,72px) max(16px,2.2vw); }
-#lock { max-width:26rem; margin:0 auto; }
-#reel { max-width:96rem; margin:0 auto; }
-.kicker { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); margin:0 0 10px; }
-h1 { margin:0 0 22px; font-family:var(--display); font-weight:400; font-size:clamp(32px,5vw,52px); line-height:1; letter-spacing:-.01em; }
-p { font-family:var(--display); font-size:clamp(16px,1.5vw,19px); line-height:1.55; margin:0 0 16px; }
-label { display:block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); margin:16px 0 6px; }
-input { width:100%; font:inherit; font-size:16px; color:var(--paper); background:transparent; border:1px solid var(--rule); padding:10px 12px; border-radius:0; }
-input:focus { border-color:var(--paper); outline:none; }
-.btn { font:inherit; font-size:11px; letter-spacing:.12em; text-transform:uppercase; background:var(--paper); color:var(--ink); border:1px solid var(--paper); padding:10px 14px; min-height:44px; cursor:pointer; margin-top:14px; width:100%; }
-.btn:hover { background:var(--green); border-color:var(--green); }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.5; min-height:100vh; display:flex; flex-direction:column;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size:64px 64px; background-position:-1px -1px; }
+body::before { content:''; position:fixed; inset:0; pointer-events:none; background:radial-gradient(1200px 600px at 85% -10%, rgba(47,91,255,.10), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(0,179,155,.08), transparent 60%), linear-gradient(180deg, rgba(246,247,249,.55), rgba(246,247,249,.92)); }
+body > * { position:relative; }
+a { color:inherit; } :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:calc(env(safe-area-inset-top,0px) + 18px) max(16px,3vw) 18px; }
+.brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; min-width:0; }
+.name { font-family:var(--head); font-weight:700; font-size:clamp(18px,1.6vw,21px); letter-spacing:-.01em; text-decoration:none; background:none; border:0; padding:0; color:var(--ink); cursor:pointer; }
+.name:hover { color:var(--accent); }
+.tag { font-size:clamp(12px,1vw,13.5px); color:var(--mid); white-space:nowrap; }
+.tag b { font-weight:500; color:var(--ink); }
+.tag .sep { color:var(--dim); margin:0 6px; }
+nav { display:flex; gap:6px; flex-shrink:0; }
+nav a, nav button { font:inherit; font-size:13.5px; font-weight:500; color:var(--mid); text-decoration:none; padding:8px 12px; border-radius:999px; border:1px solid transparent; background:none; cursor:pointer; }
+nav a:hover, nav button:hover { color:var(--ink); border-color:var(--line); background:var(--card); }
+nav .cta { color:#fff; background:var(--ink); }
+nav .cta:hover { color:#fff; background:var(--accent); border-color:var(--accent); }
+main { flex:1; width:100%; margin:0 auto; padding:clamp(28px,6vw,80px) max(16px,3vw); }
+#lock { max-width:25rem; margin:clamp(10px,5vh,60px) auto 0; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:clamp(22px,3vw,32px); box-shadow:0 1px 2px rgba(11,18,32,.04), 0 12px 40px -12px rgba(11,18,32,.14); }
+#reel { max-width:72rem; margin:0 auto; }
+#reel .list.one ~ .meta, #reel .lede { max-width:60rem; }
+.kicker { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; font-weight:500; color:var(--accent); background:rgba(47,91,255,.08); border:1px solid rgba(47,91,255,.18); padding:5px 11px; border-radius:999px; margin:0 0 18px; }
+.kicker::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent-2); box-shadow:0 0 0 3px rgba(0,179,155,.18); }
+h1 { margin:0 0 10px; font-family:var(--head); font-weight:600; font-size:clamp(34px,5.4vw,64px); line-height:1.02; letter-spacing:-.035em; }
+#lock h1 { font-size:clamp(26px,3vw,32px); letter-spacing:-.02em; }
+.lede { font-size:clamp(15px,1.3vw,17.5px); color:var(--mid); max-width:40rem; margin:0 0 clamp(24px,3.5vw,40px); }
+#lock .lede { margin-bottom:6px; }
+label { display:block; font-size:13px; font-weight:500; color:var(--mid); margin:18px 0 6px; }
+input { width:100%; font:inherit; font-size:16px; color:var(--ink); background:var(--bg); border:1px solid var(--line); padding:11px 13px; border-radius:10px; }
+input:focus { border-color:var(--accent); background:#fff; outline:none; box-shadow:0 0 0 4px rgba(47,91,255,.12); }
+.btn { font:inherit; font-weight:500; font-size:15px; color:#fff; background:var(--ink); border:0; border-radius:10px; padding:12px 16px; min-height:46px; cursor:pointer; margin-top:14px; width:100%; }
+.btn:hover { background:var(--accent); }
 .btn[disabled] { opacity:.6; cursor:progress; }
-.msg { min-height:1.4em; margin-top:12px; font-size:12px; color:var(--red); }
-.list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(28px,3vw,44px) clamp(16px,2vw,28px); margin-top:clamp(20px,3vw,36px); }
+.msg { min-height:1.4em; margin-top:12px; font-size:13px; color:var(--warn); }
+.list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(24px,3vw,40px) clamp(16px,2vw,24px); }
 @media (max-width:1000px) { .list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media (max-width:620px) { .list { grid-template-columns:1fr; gap:32px; } }
-.list.one { grid-template-columns:1fr; max-width:64rem; }
+@media (max-width:620px) { .list { grid-template-columns:1fr; } }
+.list.one { grid-template-columns:1fr; max-width:60rem; }
 figure { margin:0; }
-.frame { position:relative; width:100%; aspect-ratio:16/9; background:#1a1612; border:1px solid var(--rule); }
-.frame iframe, .frame video { position:absolute; inset:0; width:100%; height:100%; border:0; background:#000; }
-.load { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
-.bar { width:min(240px,60%); height:2px; background:var(--rule); }
-.bar i { display:block; height:100%; width:0; background:var(--paper); transition:width .2s; }
-.load button { font:inherit; color:var(--paper); background:none; border:1px solid var(--rule); padding:8px 12px; cursor:pointer; }
-figcaption { display:flex; align-items:baseline; justify-content:space-between; gap:6px 14px; flex-wrap:wrap; margin-top:10px; }
-.t { font-family:var(--display); font-size:clamp(17px,1.35vw,20px); }
-.c { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); }
-.n { font-size:11px; letter-spacing:.14em; color:var(--dim); margin-right:10px; }
-.placeholder { color:var(--green); font-family:var(--mono); font-size:13px; }
-.out { font:inherit; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); background:none; border:0; padding:0; cursor:pointer; text-decoration:underline; }
-.out:hover { color:var(--paper); }
-footer { display:flex; justify-content:space-between; gap:16px; padding:18px max(16px,2.2vw) calc(env(safe-area-inset-bottom,0px) + 18px); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--dim); border-top:1px solid var(--rule); }
+.frame { position:relative; width:100%; aspect-ratio:16/9; background:#0b1220; border-radius:16px; overflow:hidden; box-shadow:0 1px 2px rgba(11,18,32,.06), 0 24px 60px -24px rgba(11,18,32,.35); }
+.frame iframe, .frame video { position:absolute; inset:0; width:100%; height:100%; border:0; background:#0b1220; }
+.load { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; font-size:13px; font-weight:500; color:#c9d1e0; }
+.bar { width:min(260px,60%); height:3px; border-radius:3px; background:rgba(255,255,255,.14); overflow:hidden; }
+.bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .2s; }
+.load button { font:inherit; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); padding:8px 14px; border-radius:999px; cursor:pointer; }
+figcaption { display:flex; align-items:baseline; justify-content:space-between; gap:6px 14px; flex-wrap:wrap; margin-top:12px; }
+.t { font-family:var(--head); font-weight:600; font-size:17px; letter-spacing:-.01em; }
+.c, .n { font-size:13px; color:var(--dim); }
+.n { margin-right:10px; font-variant-numeric:tabular-nums; }
+.meta { display:flex; gap:8px; flex-wrap:wrap; margin:clamp(18px,2.4vw,26px) 0 0; padding:0; list-style:none; }
+.meta li { font-size:13px; color:var(--mid); background:var(--card); border:1px solid var(--line); padding:6px 12px; border-radius:999px; }
+.out { font:inherit; font-size:13px; color:var(--dim); background:none; border:0; padding:0; cursor:pointer; }
+.out:hover { color:var(--ink); }
+footer { display:flex; justify-content:space-between; gap:16px; padding:22px max(16px,3vw) calc(env(safe-area-inset-bottom,0px) + 22px); font-size:13px; color:var(--dim); }
+@media (max-width:720px) { .brand { flex-direction:column; gap:2px; } .tag { white-space:normal; } }
+/* warning dialog */
+dialog { border:0; padding:0; border-radius:20px; max-width:min(30rem, calc(100vw - 32px)); background:var(--card); color:var(--ink); box-shadow:0 30px 80px -20px rgba(11,18,32,.5); }
+dialog::backdrop { background:rgba(11,18,32,.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+dialog[open] { animation:pop .22s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes pop { from { transform:translateY(8px) scale(.97); opacity:0; } to { transform:none; opacity:1; } }
+.dlg { padding:28px 26px 22px; text-align:center; }
+.sign { width:64px; height:64px; margin:0 auto 14px; display:block; }
+.dlg h2 { font-family:var(--head); font-weight:700; font-size:22px; letter-spacing:-.02em; margin:0 0 10px; }
+.dlg p { margin:0 0 6px; color:var(--mid); font-size:15.5px; }
+.dlg em { font-style:italic; color:var(--warn); font-weight:500; }
+.acts { display:flex; gap:10px; margin-top:20px; }
+.acts button, .acts a { flex:1; font:inherit; font-weight:500; font-size:14.5px; border-radius:10px; padding:12px 14px; min-height:46px; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; }
+.stay { background:var(--ink); color:#fff; border:0; }
+.stay:hover { background:var(--accent); }
+.risk { background:transparent; color:var(--warn); border:1px solid rgba(229,72,77,.35); }
+.risk:hover { background:rgba(229,72,77,.08); border-color:var(--warn); }
+@media (prefers-reduced-motion:reduce) { dialog[open] { animation:none; } }
 </style></head><body>
 <header>
-  <a class="name" href="../">Josiah Walker<small>Writer / Director</small></a>
+  <div class="brand">
+    <a class="name leave" href="../" data-dest="../">Josiah Walker</a>
+    <span class="tag"><b>Narrative Director</b> by day<span class="sep">/</span><b>Corporate video</b> by night</span>
+  </div>
   <nav aria-label="Site">
-    <a href="../bio/">Bio</a>
-    <a href="../contact/">Contact</a>
-    <a href="https://www.instagram.com/josiahwalker_/">Instagram</a>
-    <a href="https://www.imdb.com/name/nm9711704/">IMDb</a>
+    <a class="leave" href="../bio/" data-dest="../bio/">Bio</a>
+    <a class="cta" href="../contact/">Contact</a>
   </nav>
 </header>
 <main>
   <section id="lock" aria-labelledby="lockh">
-    <p class="kicker">Private</p>
-    <h1 id="lockh">Corporate Work</h1>
-    <p>This page is password protected.</p>
+    <p class="kicker">Private screening</p>
+    <h1 id="lockh">Enter the password</h1>
+    <p class="lede">This page was shared with you directly.</p>
     <form id="f" autocomplete="off">
       <label for="pw">Password</label>
       <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
-      <button class="btn" id="go" type="submit">View the work</button>
+      <button class="btn" id="go" type="submit">Watch</button>
       <div class="msg" id="msg" role="alert" aria-live="assertive"></div>
     </form>
   </section>
   <section id="reel" hidden aria-labelledby="reelh">
-    <p class="kicker">Selected work</p>
+    <p class="kicker">Corporate video · Fintech &amp; SaaS</p>
     <h1 id="reelh">Corporate Work</h1>
-    <p id="intro" hidden></p>
+    <p class="lede" id="intro" hidden></p>
     <div class="list" id="list"></div>
+    <ul class="meta" id="meta" hidden></ul>
   </section>
 </main>
-<footer><span>© 2026 Walker Motion Pictures</span><button class="out" id="out" type="button" hidden>Lock</button></footer>
+<footer><span>© 2026 Josiah Walker</span><button class="out" id="out" type="button" hidden>Lock page</button></footer>
+<dialog id="warn" aria-labelledby="warnh" aria-describedby="warnp">
+  <div class="dlg">
+    <svg class="sign" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 L60 56 H4 Z" fill="#ffd23f" stroke="#0b1220" stroke-width="3.5" stroke-linejoin="round"/><rect x="29.2" y="22" width="5.6" height="20" rx="2.8" fill="#0b1220"/><circle cx="32" cy="48.5" r="3.4" fill="#0b1220"/></svg>
+    <h2 id="warnh">Leaving corporate video</h2>
+    <p id="warnp">Are you sure you want to go to Josiah's homepage? This will take you away from corporate video and into a narrative world full of mystery and&hellip; <em>murder</em>.</p>
+    <p>Click at your own risk&hellip;</p>
+    <div class="acts">
+      <button class="stay" type="button" id="stay">Stay here</button>
+      <a class="risk" id="risk" href="../">Enter at my own risk</a>
+    </div>
+  </div>
+</dialog>
 <script>
 (() => {
-  const BLOB = {"v": 1, "rounds": 600000, "salt": "stflgtbgloZ04yKyPeP1JQ==", "iv": "n3C8IqEqNqpS4ajZ", "ct": "xaLfzoKBDm7pLERbTdrRYGD9nsVx7rowLPkEIzrPx4I/Yy0V5ZPFZD0+rzx5c2y7XSbq6K7e8Kd2RqI9eYesvAvt07zhQYCMLjIn0EZjeSRFJob5YGgPLFL3EhZs5D5oh93NpCxKUecAXSWJX4Sn5+JeBuvwGafIOWqI3vHHCbpxEIhPiD0bDxntfSQZvbYpBJzD8+weP/ZwSVJfXwvXV0V/BgFFqAjn3keQ+6L6YfrcnrmygTPkbEXouSf9hePCw03zA+sSbLEZxvot3g8="};
+  const BLOB = {"v": 1, "rounds": 600000, "salt": "Nbw+2gtB9o5qe1baCL9AFQ==", "iv": "L8dQE8+qroI5fXDi", "ct": "+E8Ye3w7DZSRnHll3QkA/b19bPglJZjdJtM1J3Z8j2UwUOf27dx7/CSOjzcfkn31lzBUoG2jMYZcIxoWQzxiWCKO8qKa8ySC0pWjx5a2csgTYPsoGxbAaxSDT58/ZHobpRxjhiXaeReAnCduq/AO8JSniG7OXbGAYejn/ykg3LSroA0f/AYjv0CRq+zMelDAK47kPpDrYQEcSC/6og2P+GyWaCcfOMzdi6tQQ3cOiZw3gHydgCreOun1TbCalqTAbarI4A76x/9i7vLKHAzoeQsFntSRhl3SxLfXSy/OGf+eERzzos3wexzfxei7uVM7g3VGrQg82tt/8Fv2/kazUyq/hRTAn7ZBllAC/KCWqcVYl93hnAPbKKNUTsUlBcwx3EBwyQmOeEbmAVxNGzqkMGSWT2N+krB4B4ziMraxmTNEAMYSBXc71ZkQ/4BSFGuOx1rcb7Yn6Jv0nY9+TUpP7joZn1gn2qnCN0ITcGT6fANIzG6mFK/8"};
   const $ = id => document.getElementById(id);
   const KEY = 'corp-pw:' + location.pathname;
   const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -141,6 +189,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
   function render(d, key) {
     if (d.title) { $('reelh').textContent = d.title; document.title = d.title + ' · Josiah Walker'; }
     if (d.intro) { $('intro').textContent = d.intro; $('intro').hidden = false; }
+    if (d.meta && d.meta.length) { const m = $('meta'); m.textContent = ''; d.meta.forEach(x => m.append(el('li', null, x))); m.hidden = false; }
     const list = $('list'); list.textContent = ''; const one = d.videos.length === 1; list.classList.toggle('one', one);
     d.videos.forEach((v, i) => {
       const fig = el('figure'), frame = el('div', 'frame'), label = v.title || ('Video ' + (i + 1));
@@ -176,7 +225,7 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
   });
 
   async function tryOpen(pw, quiet) {
-    $('go').disabled = true; $('msg').textContent = quiet ? '' : 'Checking…'; $('msg').style.color = 'var(--dim)';
+    $('go').disabled = true; $('msg').textContent = quiet ? '' : 'Checking…'; $('msg').style.color = 'var(--mid)';
     try { const { d, key } = await decrypt(pw); store.set(pw); render(d, key); $('reelh').focus(); }
     catch (e) { store.del(); if (!quiet) { $('msg').style.color = ''; $('msg').textContent = window.crypto && crypto.subtle ? 'That password is not right.' : 'This browser cannot open the page. Try a current browser.'; $('pw').select(); } }
     finally { $('go').disabled = false; if (quiet) $('msg').textContent = ''; }
@@ -185,6 +234,17 @@ footer { display:flex; justify-content:space-between; gap:16px; padding:18px max
   $('f').addEventListener('submit', e => { e.preventDefault(); const pw = $('pw').value; if (pw) tryOpen(pw, false); });
   $('out').addEventListener('click', () => { store.del(); location.reload(); });
   const saved = store.get(); if (saved) tryOpen(saved, true); else $('pw').focus();
+})();
+</script>
+<script>
+(() => {
+  const dlg = document.getElementById('warn'), risk = document.getElementById('risk');
+  document.querySelectorAll('.leave').forEach(a => a.addEventListener('click', e => {
+    if (!dlg.showModal) return;              // very old browsers: just follow the link
+    e.preventDefault(); risk.href = a.dataset.dest || a.getAttribute('href'); dlg.showModal(); document.getElementById('stay').focus();
+  }));
+  document.getElementById('stay').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // click outside the card
 })();
 </script>
 </body></html>
