@@ -413,14 +413,17 @@ const CODE = (() => {
     e: { name: 'Ghost',    lines: ['floor', 'major', 'posts', 'rails'], n: 600, tail: 24, size: 12, speed: [120, 300],  flicker: 4,  col: [0x9aa6bb, 0xaab5cc], head: 0x6b778c, alpha: .38, down: false },
   };
   const vert = `
-    attribute vec3 aA; attribute vec3 aB; attribute float aPhase; attribute float aSpeed; attribute float aSeed; attribute float aRank; attribute float aSpacing;
+    attribute vec3 aA; attribute vec3 aB; attribute float aPhase; attribute float aSpeed; attribute float aSeed; attribute float aRank; attribute float aSpacing; attribute float aGap;
     uniform float uTime, uSize, uTail, uFlicker; uniform vec3 uRight, uUp;
     varying vec2 vUv; varying float vAlpha; varying float vSeed; varying float vHead; varying float vFog;
     float hash(float n) { return fract(sin(n) * 43758.5453123); }
     void main() {
-      float t = fract(aPhase + uTime * aSpeed) - aRank * aSpacing;
+      // one cycle = the line, plus room for the whole tail to leave, plus a gap: the train enters and exits one glyph at a time
+      float cyc = 1.0 + uTail * aSpacing + aGap;
+      float h = mod(aPhase * cyc + uTime * aSpeed, cyc);
+      float t = h - aRank * aSpacing;
       vHead = step(aRank, 0.5);
-      float on = step(0.0, t);
+      float on = step(0.0, t) * step(t, 1.0);
       vAlpha = on * pow(1.0 - aRank / uTail, 1.6);
       vec3 p = mix(aA, aB, clamp(t, 0.0, 1.0));
       float g = floor(hash(aSeed * 7.13 + floor(uTime * uFlicker + aRank * 0.37)) * 64.0);
@@ -450,7 +453,7 @@ const CODE = (() => {
     const V = VARIANTS[key];
     const pool = V.lines.flatMap(k => segs[k]);
     const N = V.n, T = V.tail, count = N * T;
-    const A = new Float32Array(count * 3), B = new Float32Array(count * 3), ph = new Float32Array(count), sp = new Float32Array(count), sd = new Float32Array(count), rk = new Float32Array(count), sg = new Float32Array(count);
+    const A = new Float32Array(count * 3), B = new Float32Array(count * 3), ph = new Float32Array(count), sp = new Float32Array(count), sd = new Float32Array(count), rk = new Float32Array(count), sg = new Float32Array(count), gp = new Float32Array(count);
     for (let i = 0; i < N; i++) {
       let g = pool[Math.floor(Math.random() * pool.length)];
       let a = [g[0], g[1], g[2]], b = [g[3], g[4], g[5]];
@@ -458,10 +461,10 @@ const CODE = (() => {
       if (vertical ? (V.down ? a[1] < b[1] : Math.random() < .5) : Math.random() < .5) [a, b] = [b, a];
       const len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
       const ups = V.speed[0] + Math.random() * (V.speed[1] - V.speed[0]);
-      const phase = Math.random(), seed = Math.random() * 1000;
+      const phase = Math.random(), seed = Math.random() * 1000, gap = 0.2 + Math.random() * 1.2;
       for (let r = 0; r < T; r++) {
         const j = i * T + r;
-        A.set(a, j * 3); B.set(b, j * 3); ph[j] = phase; sp[j] = ups / len; sd[j] = seed + r * 0.618; rk[j] = r; sg[j] = V.size * 0.92 / len;
+        A.set(a, j * 3); B.set(b, j * 3); ph[j] = phase; sp[j] = ups / len; sd[j] = seed + r * 0.618; rk[j] = r; sg[j] = V.size * 0.92 / len; gp[j] = gap;
       }
     }
     const geo = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(1, 1));
@@ -469,7 +472,7 @@ const CODE = (() => {
     geo.setAttribute('aA', new THREE.InstancedBufferAttribute(A, 3)); geo.setAttribute('aB', new THREE.InstancedBufferAttribute(B, 3));
     geo.setAttribute('aPhase', new THREE.InstancedBufferAttribute(ph, 1)); geo.setAttribute('aSpeed', new THREE.InstancedBufferAttribute(sp, 1));
     geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(sd, 1)); geo.setAttribute('aRank', new THREE.InstancedBufferAttribute(rk, 1));
-    geo.setAttribute('aSpacing', new THREE.InstancedBufferAttribute(sg, 1));
+    geo.setAttribute('aSpacing', new THREE.InstancedBufferAttribute(sg, 1)); geo.setAttribute('aGap', new THREE.InstancedBufferAttribute(gp, 1));
     mat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, transparent: true, depthWrite: false,
       uniforms: { uTime: { value: 0 }, uSize: { value: V.size }, uTail: { value: T }, uFlicker: { value: V.flicker }, uRight: { value: new THREE.Vector3(1, 0, 0) }, uUp: { value: new THREE.Vector3(0, 1, 0) },
         uAtlas: { value: atlas }, uCol1: { value: new THREE.Color(V.col[0]) }, uCol2: { value: new THREE.Color(V.col[1]) }, uHead: { value: new THREE.Color(V.head) }, uFogCol: { value: new THREE.Color(0xf6f7f9) }, uAlpha: { value: V.alpha } } });
