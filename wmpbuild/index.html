@@ -301,6 +301,23 @@ p { margin:0; color:var(--mid); }
 .embed .vid { box-shadow:0 30px 80px -34px rgba(11,18,32,.55); }
 @media (max-width:700px) { .embed { grid-template-columns:1fr; gap:20px; } }
 
+/* Start a project: the email form unfolds under the button */
+.reach { justify-content:flex-start; }
+.mailbox { display:grid; grid-template-rows:0fr; transition:grid-template-rows .55s cubic-bezier(.2,.7,.2,1); }
+.mailbox > form { overflow:hidden; min-height:0; }
+.mailbox.open { grid-template-rows:1fr; }
+.mailform { display:grid; grid-template-columns:repeat(3,1fr); gap:12px 14px; }
+.mailbox.open .mailform { padding-top:20px; }
+.mailform .wide { grid-column:1 / -1; }
+.mailform label span { display:block; font-size:12.5px; font-weight:600; color:#a9bcff; margin-bottom:6px; } .mailform label i { font-style:normal; font-weight:400; color:#7f8aa3; }
+.mailform input, .mailform textarea { width:100%; box-sizing:border-box; font:inherit; font-size:15px; color:#fff; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.16); border-radius:12px; padding:12px 14px; outline:none; resize:vertical; transition:border-color .2s, background .2s; }
+.mailform input:focus, .mailform textarea:focus { border-color:#7d97ff; background:rgba(255,255,255,.09); }
+.mailform .bad { border-color:#ff7a8a; }
+.mailform .hp { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+.sendrow { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.mstat { margin:0; font-size:14px; color:#aab5cc; } .mstat a { color:#fff; }
+@media (max-width:700px) { .mailform { grid-template-columns:1fr; } .mailform input, .mailform textarea { font-size:16px; } }   /* 16px stops iOS zooming into the field */
+
 /* phones: narrower cards, single columns */
 @media (max-width:700px) {
   .card { width:var(--wm, 360px); padding:24px 22px 22px; }
@@ -425,7 +442,17 @@ p { margin:0; color:var(--mid); }
     <p class="chip">Start a project</p>
     <h2 style="color:#fff">What’s first on your list?</h2>
     <p class="sub" style="color:#aab5cc">One-off or ongoing, send a line about it. A proposal sized to it comes back, and a kickoff call plans the first shoot or edit.</p>
-    <div class="reach"><span class="mail"><span class="ph">[studio email]</span></span><span class="btn pri">Email the studio</span></div>
+    <div class="reach"><button type="button" class="btn pri" data-mailopen aria-expanded="false">Email the studio</button></div>
+    <div class="mailbox" data-mailbox>
+      <form class="mailform" novalidate>
+        <label><span>Name</span><input name="name" autocomplete="name" required></label>
+        <label><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
+        <label><span>Company <i>(optional)</i></span><input name="company" autocomplete="organization"></label>
+        <label class="wide"><span>What’s the project?</span><textarea name="message" rows="2" required></textarea></label>
+        <input name="_honey" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="wide sendrow"><button type="submit" class="btn pri">Send</button><p class="mstat" role="status" aria-live="polite"></p></div>
+      </form>
+    </div>
   </article>
 </template>
 
@@ -458,7 +485,7 @@ function setOverview() {
 let gl;
 try { gl = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, alpha: true }); } catch (e) { gl = null; }
 const listWrap = $('listwrap');
-function buildList() { if (!listWrap.childElementCount) { for (const c of $('cards').content.querySelectorAll('.card')) listWrap.append(c.cloneNode(true)); if (window.hydrate) hydrate(listWrap); } }
+function buildList() { if (!listWrap.childElementCount) { for (const c of $('cards').content.querySelectorAll('.card')) listWrap.append(c.cloneNode(true)); if (window.hydrate) hydrate(listWrap); wireMail(listWrap); } }
 if (!gl) { buildList(); $('list').hidden = false; $('listbtn').hidden = true; $('nextbtn').hidden = true; throw new Error('no webgl'); }
 gl.setPixelRatio(Math.min(devicePixelRatio, 2)); gl.setClearColor(0xf6f7f9, 0);
 const css = new CSS3DRenderer({ element: $('css') });
@@ -1004,6 +1031,56 @@ const AUD = {
 };
 function selHead() { for (const key in AUD) { const m = location.hash.match(new RegExp('(?:^#|&)' + key + '=(\\d)')), [sel, list] = AUD[key]; if (m && list[m[1] - 1]) document.querySelectorAll(sel).forEach(el => { el.innerHTML = list[m[1] - 1]; }); } }
 selHead(); addEventListener('hashchange', selHead);
+// ---------- Start a project: email form ----------
+// The card grows downward (its top stays put while the form unfolds), then the camera settles on the taller card.
+function refit(id) {
+  if (flight || current !== id) return;
+  const to = viewFor(id), from = eyeNow(), path = new THREE.CurvePath(); path.add(new THREE.LineCurve3(from, to.pos));
+  if (path.getLength() < 1 && lookNow().distanceTo(to.look) < 1) { arrive(id); return; }
+  const pts = [from.clone(), to.pos.clone()]; trailGeo.setFromPoints(pts); trail.material.opacity = 0; headMat.opacity = 0;
+  flight = { path, pts, t0: performance.now(), dur: 700, fromLook: cam.look.clone(), toLook: to.look, id }; current = 'flying';
+}
+function wireMail(root, c, k) {
+  const MAILTO = 'walkermotionpictures@gmail.com';   // local: List view (no WebGL) wires this before the module finishes
+  const box = root.querySelector('[data-mailbox]'); if (!box) return;
+  const btn = root.querySelector('[data-mailopen]'), form = box.querySelector('form'), stat = form.querySelector('.mstat');
+  let h0 = 0; const y0 = c ? c.obj.position.y : 0;
+  if (c) {
+    h0 = c.el.offsetHeight;
+    new ResizeObserver(() => { c.obj.position.y = y0 - (c.el.offsetHeight - h0) / 2; }).observe(c.el);
+    addEventListener('resize', () => { if (!box.classList.contains('open')) { h0 = c.el.offsetHeight; c.obj.position.y = y0; } });
+    box.addEventListener('transitionend', e => { if (e.target === box) refit(k); });
+  }
+  btn.addEventListener('click', e => {
+    e.stopPropagation(); if (c && current !== k) { go(k); return; }
+    const open = !box.classList.contains('open'); if (c && open) h0 = c.el.offsetHeight - (box.offsetHeight || 0);
+    box.classList.toggle('open', open); btn.setAttribute('aria-expanded', open);
+    btn.textContent = open ? 'Close' : 'Email the studio';
+    if (open) setTimeout(() => form.elements.name.focus({ preventScroll: !!c }), 450);
+  });
+  form.addEventListener('submit', async e => {
+    e.preventDefault(); const f = form.elements; let ok = true;
+    for (const n of ['name', 'email', 'message']) { const bad = !f[n].value.trim() || (n === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f[n].value.trim())); f[n].classList.toggle('bad', bad); if (bad && ok) { ok = false; f[n].focus({ preventScroll: !!c }); } }
+    if (!ok) { stat.textContent = 'Name, email and a line about the project, please.'; return; }
+    if (f._honey.value) return;
+    const send = form.querySelector('[type=submit]'); send.disabled = true; stat.textContent = 'Sending…';
+    const body = { name: f.name.value.trim(), email: f.email.value.trim(), company: f.company.value.trim(), message: f.message.value.trim(), _subject: 'Project inquiry · ' + (f.company.value.trim() || f.name.value.trim()), _replyto: f.email.value.trim(), _template: 'table', _captcha: 'false' };
+    const mail = `mailto:${MAILTO}?subject=${encodeURIComponent(body._subject)}&body=${encodeURIComponent(body.message + '\n\n' + body.name + (body.company ? ', ' + body.company : '') + '\n' + body.email)}`;
+    try {
+      const r = await fetch('https://formsubmit.co/ajax/' + MAILTO, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && String(j.success) === 'true') { form.reset(); stat.textContent = 'Sent. A reply goes to ' + body.email + '.'; }
+      else throw new Error(j.message || r.status);
+    } catch (err) { stat.innerHTML = `Didn’t go through. <a href="${mail}">Send it from your email app</a> instead.`; }
+    send.disabled = false;
+  });
+  if (c) {   // in 3D: typing must not drive the camera, and focusing a field must not scroll the 3D layer
+    form.addEventListener('keydown', e => e.stopPropagation());
+    form.addEventListener('pointerdown', e => e.stopPropagation());
+    form.addEventListener('focusin', () => requestAnimationFrame(() => { for (let n = form; n; n = n.parentElement) { n.scrollTop = 0; n.scrollLeft = 0; } scrollTo(0, 0); }));
+  }
+}
+for (const k in cards) wireMail(cards[k].el, cards[k], k);
 window.__wmp = { go, step, get current() { return current; }, get flight() { return flight; }, cards, camPos: () => camera.position.clone(), HOLE };   // QA
 </script>
 </body></html>
