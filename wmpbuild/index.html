@@ -39,16 +39,16 @@ nav.top button.cta:hover { background:var(--accent); }
 .rail span { position:absolute; right:30px; white-space:nowrap; font-size:12.5px; font-weight:500; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:8px; padding:5px 9px; opacity:0; transform:translateX(6px); transition:.2s; pointer-events:none; box-shadow:0 8px 20px -12px rgba(11,18,32,.3); }
 .rail button:hover span, .rail button:focus-visible span { opacity:1; transform:none; }
 @media (max-width:620px) { .rail { display:none; } }
-.count { display:none; align-self:center; font-size:12.5px; font-weight:500; color:var(--mid); border-radius:999px; padding:7px 11px; font-variant-numeric:tabular-nums; }
+.count { display:none; align-self:center; font-size:13px; font-weight:500; color:var(--mid); border-radius:999px; padding:7px 11px; font-variant-numeric:tabular-nums; }
 @media (max-width:620px) { .count { display:block; } }
 .hint { position:fixed; z-index:10; left:max(14px,2.6vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--mid); border-radius:999px; padding:8px 14px; transition:opacity .5s; pointer-events:none; }
 .hint kbd { font:inherit; font-size:11px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 5px; background:#fff; color:var(--ink); }
-.ctl { position:fixed; z-index:10; right:max(14px,2.6vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:flex; gap:8px; }
-.ctl button { font:inherit; font-size:13px; font-weight:500; color:var(--ink); border-radius:999px; padding:9px 14px; cursor:pointer; box-shadow:0 8px 24px -14px rgba(11,18,32,.3); }
+.ctl { position:fixed; z-index:10; left:0; top:0; display:flex; gap:10px; align-items:center; will-change:transform; }
+.ctl button { font:inherit; font-size:15px; font-weight:500; color:var(--ink); border-radius:999px; padding:12px 20px; min-height:46px; cursor:pointer; box-shadow:0 10px 30px -14px rgba(11,18,32,.35); }
 .ctl button:hover { border-color:var(--accent); color:var(--accent); }
 .ctl .next { background:var(--ink); color:#fff; border-color:var(--ink); }
 .ctl .next:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
-@media (max-width:620px) { .hint { display:none; } .ctl { left:14px; right:14px; justify-content:space-between; } }
+@media (max-width:620px) { .hint { display:none; } .ctl button { font-size:14px; padding:11px 16px; min-height:44px; } }
 .build { position:fixed; z-index:10; left:50%; top:calc(env(safe-area-inset-top,0px) + 66px); transform:translateX(-50%); font-size:10.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:rgba(47,91,255,.08); border:1px solid rgba(47,91,255,.2); border-radius:999px; padding:4px 10px; pointer-events:none; }
 
 /* ---------- 3D cards ---------- */
@@ -199,6 +199,16 @@ p { margin:0; color:var(--mid); }
 .reach { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-top:28px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .reach .mail { font-family:var(--head); font-size:26px; font-weight:600; letter-spacing:-.02em; color:#fff; }
 
+.stats { display:flex; gap:28px; flex-wrap:wrap; margin:26px 0 0; padding-top:20px; border-top:1px solid rgba(255,255,255,.1); }
+.stats span { display:flex; align-items:baseline; gap:10px; font-size:14px; color:#aab5cc; }
+.stats b { font-family:var(--head); font-weight:800; font-size:30px; letter-spacing:-.04em; color:#fff; font-variant-numeric:tabular-nums; }
+.onsite { margin-top:22px; padding:18px 20px; border-radius:16px; background:#f1f4ff; border:1px solid #dfe6ff; font-size:15px; color:var(--mid); }
+.onsite b { color:var(--ink); font-weight:600; }
+.onsite .scale { margin-top:14px; }
+.ways1 { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); font-size:15px; color:var(--mid); }
+.ways1 span { color:var(--accent); font-weight:500; cursor:pointer; }
+.ways1 span:hover { text-decoration:underline; }
+
 /* phones: narrower cards, single columns */
 @media (max-width:700px) {
   .card { width:var(--wm, 360px); padding:24px 22px 22px; }
@@ -228,20 +238,18 @@ p { margin:0; color:var(--mid); }
   </button>
   <nav class="top glass" aria-label="Sections">
     <button type="button" data-go="work">Work</button>
-    <button type="button" data-go="produce">Services</button>
-    <button type="button" data-go="process">Process</button>
-    <button type="button" data-go="plans">Plans</button>
+    <button type="button" data-go="do">What I do</button>
+    <button type="button" data-go="process">How I work</button>
     <button type="button" class="cta" data-go="next">Start a project</button>
   </nav>
 </header>
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
-<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><span class="count glass" id="count">01 / 09</span><button type="button" class="next" id="nextbtn">Next ↓</button></div>
+<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button></div>
 <div id="list" hidden><div class="wrap" id="listwrap"></div></div>
 
 <template id="cards">
-  <!-- 0 -->
   <article class="card" data-id="hero" data-label="Intro" style="--w:1180px;--wm:360px">
     <div class="hero">
       <div>
@@ -256,20 +264,8 @@ p { margin:0; color:var(--mid); }
       </div>
     </div>
   </article>
-  <!-- 1 -->
-  <article class="card" data-id="produce" data-label="What I produce" style="--w:1000px">
-    <p class="chip">What I produce</p>
-    <h2>Shot, edited and finished for the three kinds of video your team needs most.</h2>
-    <div class="three">
-      <div class="tile"><div class="vid t2"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Testimonials</span><h3>Customer testimonials</h3><p>Finance leaders on camera, explaining the before and after, cut long for your site and short for social.</p></div>
-      <div class="tile"><div class="vid"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Internal</span><h3>Internal company updates</h3><p>Leadership messages, all-hands recaps and announcements your team will actually watch.</p></div>
-      <div class="tile"><div class="vid t3"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Paid media</span><h3>Commercials and ads</h3><p>Spots for paid social, web and events, shot and finished to run as ads.</p></div>
-    </div>
-    <p class="also"><b>Also:</b> product demos, event and launch teasers, and mashups.</p>
-  </article>
-  <!-- 2 -->
-  <article class="card night" data-id="work" data-label="Selected work" style="--w:1120px">
-    <p class="chip">Selected work · Planful</p>
+  <article class="card night" data-id="work" data-label="Work" style="--w:1120px">
+    <p class="chip">Selected work</p>
     <h2 style="color:#fff">A finance product, sold as a story.</h2>
     <div class="work">
       <div class="feat">
@@ -281,7 +277,7 @@ p { margin:0; color:var(--mid); }
         </div>
       </div>
       <div>
-        <h3 style="color:#fff">AI Analyst commercial</h3>
+        <h3 style="color:#fff">AI Analyst commercial · Planful</h3>
         <p class="logline">An FP&amp;A manager gets a late request from the board, answers it with AI Analyst, and still makes it to her son’s game.</p>
         <p class="meta">Narrative spot · 1:42 · Shot by Walker Motion Pictures</p>
         <div class="more">
@@ -292,32 +288,22 @@ p { margin:0; color:var(--mid); }
         </div>
       </div>
     </div>
+    <p class="stats"><span><b data-count="30">30</b>pieces of content from one event</span><span><b>2</b>weeks to deliver them</span><span><b>3</b>formats: 16:9, square, vertical</span></p>
   </article>
-  <!-- 3 -->
-  <article class="card" data-id="onsite" data-label="Onsite" style="--w:1000px">
-    <p class="chip">Onsite, at any scale</p>
-    <h2>The crew scales with the shoot. The production quality doesn’t change.</h2>
-    <div class="tiers">
-      <div class="tier"><span class="tag">Cinema interviews</span><h3>Testimonials, exec updates + b-roll</h3><p>One or two cinema cameras, lighting and dual audio, set up at your office, booth or event. Interviews that hold up in paid media and on your homepage.</p></div>
-      <div class="tier"><span class="tag">Commercial shoots</span><h3>Ads and brand spots</h3><p>Narrative spots for paid social and web, scripted and shot with a crew sized to the concept.</p></div>
-      <div class="tier"><span class="tag">Full crew</span><h3>Conferences and keynotes</h3><p>A crew covering breakout rooms, a live stream and a multicamera keynote, with me directing.</p></div>
+  <article class="card" data-id="do" data-label="What I do" style="--w:1040px">
+    <p class="chip">What I do</p>
+    <h2>Shot, edited and finished for the three kinds of video your team needs most.</h2>
+    <div class="three">
+      <div class="tile"><div class="vid t2"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Testimonials</span><h3>Customer testimonials</h3><p>Finance leaders on camera, explaining the before and after, cut long for your site and short for social.</p></div>
+      <div class="tile"><div class="vid"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Internal</span><h3>Internal company updates</h3><p>Leadership messages, all-hands recaps and announcements your team will actually watch.</p></div>
+      <div class="tile"><div class="vid t3"><span class="pl"></span><span class="ph">[Video]</span></div><span class="tag">Paid media</span><h3>Commercials and ads</h3><p>Spots for paid social, web and events, shot and finished to run as ads.</p></div>
     </div>
-    <p class="scale"><span>One operator</span><i></i><span>Full crew</span></p>
-  </article>
-  <!-- 4 -->
-  <article class="card night" data-id="event" data-label="Event package" style="--w:1040px">
-    <p class="chip">Event content package · example</p>
-    <h2 style="color:#fff">One event. <span class="grad">30 pieces of content.</span></h2>
-    <div class="flowx">
-      <div class="cap"><h3>Captured at your event</h3><ul><li>6 customer testimonials</li><li>Event b-roll</li><li>Curated questions for your CEO</li></ul><p class="fine">The interview plan and deliverables are agreed before the event.</p></div>
-      <div class="arrow"><svg viewBox="0 0 44 20" aria-hidden="true"><path d="M2 10h36M30 3l8 7-8 7" fill="none" stroke="#7d96ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Within 2 weeks</div>
-      <div class="del"><h3>Delivered</h3><ol>
-        <li><b data-count="6">6</b>2-minute testimonials</li><li><b data-count="18">18</b>Spotlight cuts, 3 per testimonial</li><li><b data-count="3">3</b>Mashups</li>
-        <li><b data-count="1">1</b>Event recap</li><li><b data-count="1">1</b>Event promo</li><li><b data-count="1">1</b>Launch promo: your CEO’s answers with animation</li></ol></div>
+    <div class="onsite">
+      <div><b>Onsite, at any scale.</b> One or two cinema cameras at your office or booth, a scripted commercial crew, or a full crew across breakout rooms, a live stream and a multicamera keynote, with me directing.</div>
+      <p class="scale"><span>One operator</span><i></i><span>Full crew</span></p>
     </div>
   </article>
-  <!-- 5 -->
-  <article class="card" data-id="process" data-label="Process" style="--w:1080px">
+  <article class="card" data-id="process" data-label="How I work" style="--w:1080px">
     <p class="chip">How a video gets made</p>
     <h2>From your references to a finished cut.</h2>
     <p class="sub">Your team is involved at steps 1 and 4. Either of us can write the script.</p>
@@ -329,46 +315,12 @@ p { margin:0; color:var(--mid); }
       <li class="m"><i>5</i><span class="who">Me</span><b>Execute</b><span>I animate the approved boards and deliver the cut.</span></li>
     </ol>
     <p class="legend"><span><i style="background:#e7edff;border:1.5px solid #c9d6ff"></i>Your team</span><span><i style="background:var(--ink)"></i>Me</span><span>Animation starts after your team approves the boards.</span></p>
+    <p class="ways1">Per-project packages and monthly retainers. <span data-go="next">Ask for a proposal →</span></p>
   </article>
-  <!-- 6 -->
-  <article class="card" data-id="plans" data-label="Plans" style="--w:1080px">
-    <p class="chip">Two ways to work together</p>
-    <h2>A one-off shoot, or a monthly pipeline.</h2>
-    <p class="sub">Onsite shoots work with either. Retainer clients get 20% off onsite days.</p>
-    <div class="ways">
-      <div class="way"><em>01</em><h3>Custom content package</h3><p>A shoot or event, a planned set of deliverables, quoted per project.</p></div>
-      <div class="way"><em>02</em><h3>Monthly retainer</h3><p>An ongoing pipeline of edited video and motion design, sized to your monthly volume.</p></div>
-    </div>
-    <div class="plans">
-      <div class="plan"><span class="tag">Core</span><h3>Edit &amp; animate</h3><p>Your designer supplies the graphics. I edit and animate.</p></div>
-      <div class="plan full"><span class="tag">Full Service</span><h3>Design, edit &amp; animate</h3><p>I design the motion graphics with your designer, then edit and animate.</p></div>
-      <div class="plan sup"><span class="tag">Supercharged</span><h3>3-month commitment</h3><p>Either plan, same rate, plus up to 2 social cuts per video in 16:9, square and vertical.</p></div>
-    </div>
-    <p class="credits"><b>What a video uses:</b><span><i>1 credit</i> · Short clip</span><span><i>2 credits</i> · Full edit</span><span><i>3 credits</i> · Edit + motion graphics</span><span><i>4 credits</i> · Animation-forward</span></p>
-    <p class="price"><span class="ph">[Starting price per month]</span> includes 16 credits a month, enough for about 8 testimonials or company updates, or 4 animation-forward videos.</p>
-  </article>
-  <!-- 7 -->
-  <article class="card" data-id="includes" data-label="Every retainer" style="--w:680px">
-    <p class="chip">Every retainer includes</p>
-    <h2>No surprises in the fine print.</h2>
-    <ul class="checks">
-      <li>A monthly credit allowance, for any mix of videos</li>
-      <li>16:9, square and vertical formats</li>
-      <li>Up to 3 revision rounds per video</li>
-      <li>Unused credits roll over while the retainer is active</li>
-      <li>Priority scheduling</li>
-    </ul>
-    <p class="off"><b>20%<small>off</small></b><span>Onsite production day and travel day rates</span></p>
-  </article>
-  <!-- 8 -->
-  <article class="card night" data-id="next" data-label="Next steps" style="--w:1000px">
-    <p class="chip">Next steps</p>
+  <article class="card night" data-id="next" data-label="Start a project" style="--w:900px">
+    <p class="chip">Start a project</p>
     <h2 style="color:#fff">Tell me what’s first on your list.</h2>
-    <div class="next3">
-      <div class="n"><em>01</em><p>Tell me what’s first on your list, and whether it’s a one-off or ongoing.</p></div>
-      <div class="n"><em>02</em><p>I send a proposal and agreement sized to your needs.</p></div>
-      <div class="n"><em>03</em><p>Kickoff call: we plan the first shoot or edit, and production starts.</p></div>
-    </div>
+    <p class="sub" style="color:#aab5cc">One-off or ongoing, send a line about it. I reply with a proposal sized to it, and a kickoff call plans the first shoot or edit.</p>
     <div class="reach"><span class="mail"><span class="ph">[studio email]</span></span><span class="btn pri">Email the studio</span></div>
   </article>
 </template>
@@ -382,23 +334,19 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
 
 // Where each stop sits in the grid (cell coordinates) and how it is turned. The tour weaves deeper and higher.
-const ORDER = ['hero', 'produce', 'work', 'onsite', 'event', 'process', 'plans', 'includes', 'next'];
+const ORDER = ['hero', 'work', 'do', 'process', 'next'];
 const SPOTS = {
-  hero:     { p: [0, 3, 0],     ry: 0 },
-  produce:  { p: [10, 4, -6],   ry: -24 },
-  work:     { p: [-10, 5, -10], ry: 24 },
-  onsite:   { p: [0, 7, -16],   ry: 0 },
-  event:    { p: [10, 6, -21],  ry: -22 },
-  process:  { p: [-10, 8, -25], ry: 22 },
-  plans:    { p: [0, 9, -31],   ry: 0 },
-  includes: { p: [10, 8, -35],  ry: -20 },
-  next:     { p: [-6, 10, -39], ry: 16 },
+  hero:    { p: [0, 3, 0],     ry: 0 },
+  work:    { p: [-9, 5, -9],   ry: 22 },
+  do:      { p: [9, 6, -17],   ry: -22 },
+  process: { p: [-5, 8, -25],  ry: 14 },
+  next:    { p: [5, 10, -32],  ry: -12 },
 };
 const OVER = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
 function setOverview() {
   const phone = innerWidth < 700;
-  OVER.pos.set(phone ? 0 : 0, (phone ? 22 : 17) * G, (phone ? 30 : 22) * G);
-  OVER.look.set(0, 5 * G, -16 * G);
+  OVER.pos.set(0, (phone ? 20 : 15) * G, (phone ? 28 : 20) * G);
+  OVER.look.set(0, 5 * G, -14 * G);
 }
 
 // ---------- renderers ----------
@@ -415,7 +363,7 @@ const camera = new THREE.PerspectiveCamera(40, 1, 10, 20000);
 
 // ---------- the lattice ----------
 (function lattice() {
-  const X = 18, Z0 = -44, Z1 = 14, YT = 12;
+  const X = 18, Z0 = -40, Z1 = 14, YT = 12;
   const floor = [], major = [], cage = [], nodes = [];
   for (let i = -X; i <= X; i++) (i % 4 ? floor : major).push(i * G, 0, Z0 * G, i * G, 0, Z1 * G);
   for (let k = Z0; k <= Z1; k++) (k % 4 ? floor : major).push(-X * G, 0, k * G, X * G, 0, k * G);
@@ -491,7 +439,7 @@ function route(a, b) {
   for (let i = 1; i < P.length; i++) {
     const cur = P[i], nx = P[i + 1];
     if (!nx) { path.add(new THREE.LineCurve3(from, cur)); break; }
-    const r = Math.min(G * 1.4, cur.distanceTo(from) / 2, cur.distanceTo(nx) / 2);
+    const r = Math.min(G * 3.2, cur.distanceTo(from) / 2, cur.distanceTo(nx) / 2);
     const inP = cur.clone().addScaledVector(from.clone().sub(cur).normalize(), r), outP = cur.clone().addScaledVector(nx.clone().sub(cur).normalize(), r);
     if (inP.distanceTo(from) > .5) path.add(new THREE.LineCurve3(from, inP));
     path.add(new THREE.QuadraticBezierCurve3(inP, cur, outP)); from = outP;
@@ -504,7 +452,7 @@ trail.renderOrder = 9; scene.add(trail);
 const headMat = new THREE.PointsMaterial({ color: 0x2f5bff, size: 12, sizeAttenuation: false, transparent: true, opacity: 0, depthTest: false });
 const head = new THREE.Points(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]), headMat); head.renderOrder = 10; scene.add(head);
 
-const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ease = t => t * t * t * (t * (t * 6 - 15) + 10);                 // smootherstep: velocity and acceleration both start and end at zero
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function eyeNow() { return camera.position.clone(); }
 function lookNow() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, Math.max(400, cam.pos.distanceTo(cam.look))); }
@@ -518,7 +466,7 @@ function go(id) {
   const path = route(fromPos, to.pos), len = path.getLength();
   const pts = path.getSpacedPoints(Math.max(60, Math.round(len / 20)));
   trailGeo.setFromPoints(pts); trailGeo.setDrawRange(0, 0); trail.material.opacity = .95; headMat.opacity = 1;
-  flight = { path, pts, t0: performance.now(), dur: Math.min(3600, Math.max(1500, len / 1.9)), fromLook, toLook: to.look, id };
+  flight = { path, pts, t0: performance.now(), dur: Math.min(4200, Math.max(1900, 900 + len / 1.45)), fromLook, toLook: to.look, id };
   current = 'flying'; navState(id);
 }
 function arrive(id) {
@@ -526,7 +474,7 @@ function arrive(id) {
   { const v = viewFor(id); pan.max = v.panMax || 0; pan.k = v.worldPerPx || 1; pan.y = pan.cur = 0; }
   const t0 = performance.now(), o = trail.material.opacity;
   const f = () => { const k = Math.min(1, (performance.now() - t0) / 1000); trail.material.opacity = o * (1 - k); if (k < 1) requestAnimationFrame(f); }; f();
-  if (id === 'event') countUp(cards.event.el);
+  if (id === 'work') countUp(cards.work.el);
   const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Back to start ↺' : 'Next ↓';
 }
 function mark(id) { for (const k in cards) cards[k].el.classList.toggle('here', k === id); }
@@ -534,7 +482,7 @@ function navState(id) {
   const i = ORDER.indexOf(id);
   document.querySelectorAll('nav.top [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === id));
   rail.querySelectorAll('button').forEach((b, j) => { b.classList.toggle('on', j === i); b.classList.toggle('done', i > -1 && j < i); });
-  $('count').textContent = i < 0 ? '— / 09' : String(i + 1).padStart(2, '0') + ' / ' + String(ORDER.length).padStart(2, '0');
+  $('count').textContent = (i < 0 ? '—' : String(i + 1).padStart(2, '0')) + ' / ' + String(ORDER.length).padStart(2, '0');
 }
 function countUp(el) {
   el.querySelectorAll('[data-count]').forEach(b => { const n = +b.dataset.count, t0 = performance.now(); if (still) return;
@@ -550,8 +498,8 @@ addEventListener('pointermove', e => {
   if (!down) return;
   const dx = e.clientX - down.x, dy = e.clientY - down.y; moved = Math.max(moved, Math.hypot(dx, dy));
   const k = 0.16, lim = current === 'overview' ? 40 : 24;
-  tYaw = THREE.MathUtils.clamp(down.yaw - dx * k, -lim, lim);
-  if (!down.touch) tPitch = THREE.MathUtils.clamp(down.pitch + dy * k * .7, -16, 14);
+  tYaw = THREE.MathUtils.clamp(down.yaw + dx * k, -lim, lim);                 // inverted (Josiah 10-20): drag right looks right
+  if (!down.touch) tPitch = THREE.MathUtils.clamp(down.pitch - dy * k * .7, -16, 14);
   else if (pan.max && Math.abs(dy) > Math.abs(dx)) { pan.y = THREE.MathUtils.clamp(down.pan - dy * pan.k, 0, pan.max); tYaw = down.yaw; }
   if (moved > 6) hideHint();
 });
@@ -585,28 +533,51 @@ $('listbtn').addEventListener('click', () => $('list').hidden ? openList() : clo
 function openList() { buildList(); $('list').hidden = false; $('listbtn').textContent = '3D view'; $('nextbtn').hidden = true; }
 function closeList() { $('list').hidden = true; $('listbtn').textContent = 'List view'; $('nextbtn').hidden = false; }
 
+// The control bar sits just under whichever card we are at; between cards it rests at the bottom of the screen.
+const ctlEl = document.querySelector('.ctl'), ctlPos = { x: innerWidth / 2, y: innerHeight - 60, set: false };
+const ndc = new THREE.Vector3();
+function placeCtl(dt) {
+  const w = ctlEl.offsetWidth, h = ctlEl.offsetHeight, m = 14, bottom = innerHeight - h - m - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0);
+  let x = innerWidth / 2, y = bottom;
+  const c = cards[current];
+  if (c && !flight) {
+    const eh = c.el.offsetHeight;
+    ndc.set(0, -eh / 2, 0); c.obj.localToWorld(ndc); ndc.project(camera);
+    if (ndc.z < 1) { x = (ndc.x + 1) / 2 * innerWidth; y = (1 - ndc.y) / 2 * innerHeight + 18 + pan.cur * 0; }
+    // keep it on screen
+    y = Math.min(y, bottom); y = Math.max(y, 70);
+    x = Math.min(Math.max(x, w / 2 + m), innerWidth - w / 2 - m);
+  }
+  const k = ctlPos.set ? 1 - Math.exp(-dt * 10) : 1; ctlPos.set = true;
+  ctlPos.x += (x - ctlPos.x) * k; ctlPos.y += (y - ctlPos.y) * k;
+  ctlEl.style.transform = `translate(${(ctlPos.x - w / 2).toFixed(1)}px, ${ctlPos.y.toFixed(1)}px)`;
+}
+
 // ---------- frame loop ----------
 const up = new THREE.Vector3(0, 1, 0), tmp = new THREE.Vector3();
+let last = performance.now();
 function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (flight) {
     const k = Math.min(1, (now - flight.t0) / flight.dur), t = ease(k);
     const tt = Math.min(t, .9995), p = flight.path.getPointAt(tt), tan = flight.path.getTangentAt(Math.min(.999, tt + .01));
-    // keep the destination in frame while travelling, with a little lean into each turn
-    const look = flight.fromLook.clone().lerp(flight.toLook, smooth(.02, .7, k)).addScaledVector(tan, 260 * Math.sin(Math.PI * k));
+    // the look direction turns once, on the same curve as the motion, so nothing jolts at corners
+    const look = flight.fromLook.clone().lerp(flight.toLook, ease(Math.min(1, k / .9)));
     cam.pos.copy(p); cam.look.copy(look);
     trailGeo.setDrawRange(0, Math.max(2, Math.round(flight.pts.length * t)));
     headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); head.position.copy(flight.path.getPointAt(Math.min(.9995, tt + .06)));
     if (k >= 1) { const v = viewFor(flight.id); cam.pos.copy(v.pos); cam.look.copy(v.look); arrive(flight.id); }
   }
-  yaw += (tYaw - yaw) * .12; pitch += (tPitch - pitch) * .12;
+  { const k = 1 - Math.exp(-dt * 8); yaw += (tYaw - yaw) * k; pitch += (tPitch - pitch) * k; }
   const dir = cam.look.clone().sub(cam.pos), dist = dir.length(); dir.normalize();
   const right = new THREE.Vector3().crossVectors(dir, up).normalize();
   dir.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(right, THREE.MathUtils.degToRad(-pitch))).applyQuaternion(new THREE.Quaternion().setFromAxisAngle(up, THREE.MathUtils.degToRad(yaw)));
-  pan.cur += (pan.y - pan.cur) * .22;
+  pan.cur += (pan.y - pan.cur) * (1 - Math.exp(-dt * 14));
   camera.position.copy(cam.pos).addScaledVector(right, -yaw * 8).addScaledVector(up, pitch * 6 - pan.cur);
   camera.lookAt(tmp.copy(camera.position).addScaledVector(dir, dist));
   // ground rings breathe gently
   const s = 1 + Math.sin(now / 700) * .06; for (const k in cards) cards[k].ring.scale.setScalar(k === current ? s * 1.25 : 1);
+  placeCtl(dt);
   gl.render(scene, camera); css.render(cssScene, camera);
   requestAnimationFrame(frame);
 }
@@ -622,6 +593,6 @@ requestAnimationFrame(frame);
 // Opening move: a beat on the whole grid, then the camera travels in to the intro.
 const startAt = location.hash.slice(1);
 setTimeout(() => go(cards[startAt] ? startAt : 'hero'), still ? 0 : 900);
-window.__wmp = { go, step, get current() { return current; }, cards };   // QA
+window.__wmp = { go, step, get current() { return current; }, cards, camPos: () => camera.position.clone() };   // QA
 </script>
 </body></html>
