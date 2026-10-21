@@ -1177,15 +1177,26 @@ function wireMail(root, c, k) {
 }
 for (const k in cards) wireMail(cards[k].el, cards[k], k);
 // ---------- radio globe: Radio Garden stations (with Radio Garden's OK, Josiah 10-20) ----------
-// On load the globe spins itself and lands on a random place; a click spins again (2 s to a dead stop).
-// Stations come from Radio Garden's own data and streams; the audio element plays the stream directly.
+// On load the globe spins itself, lands on a station and plays it; each click spins to a different one (2 s to a dead stop).
+// Ten music stations, each at its own spot on the map; every spin draws the next from a shuffled deck, so none repeats
+// until all ten have played. Each plays its own public stream (KXSC through Radio Garden's stream link).
 (() => {
-  const RG = 'https://radio.garden', API = RG + '/api/ara/content';
-  const FALLBACK = [{ id: 'la', geo: [-118.24, 34.05], title: 'Los Angeles CA', country: 'United States', channels: [{ id: 'qG0IphIN', title: 'KXSC Radio - USC', url: '/listen/kxsc/qG0IphIN' }] }];
+  const STATIONS = [
+    { title: 'KEXP 90.3', place: 'Seattle', country: 'United States', geo: [-122.33, 47.61], src: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+    { title: 'FIP', place: 'Paris', country: 'France', geo: [2.35, 48.86], src: 'https://icecast.radiofrance.fr/fip-midfi.mp3' },
+    { title: 'WWOZ 90.7', place: 'New Orleans', country: 'United States', geo: [-90.07, 29.95], src: 'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3' },
+    { title: 'NTS 1', place: 'London', country: 'United Kingdom', geo: [-0.13, 51.51], src: 'https://stream-relay-geo.ntslive.net/stream?client=direct' },
+    { title: 'Radio Swiss Jazz', place: 'Basel', country: 'Switzerland', geo: [7.59, 47.56], src: 'https://stream.srg-ssr.ch/srgssr/rsj/mp3/128' },
+    { title: 'triple j', place: 'Sydney', country: 'Australia', geo: [151.21, -33.87], src: 'https://live-radio01.mediahubaustralia.com/2TJW/mp3/' },
+    { title: 'SomaFM Groove Salad', place: 'San Francisco', country: 'United States', geo: [-122.42, 37.77], src: 'https://ice2.somafm.com/groovesalad-128-mp3' },
+    { title: 'WFMU 91.1', place: 'Jersey City', country: 'United States', geo: [-74.08, 40.73], src: 'https://stream0.wfmu.org/freeform-128k' },
+    { title: 'Radio Meuh', place: 'La Clusaz', country: 'France', geo: [6.42, 45.9], src: 'https://radiomeuh.ice.infomaniak.ch/radiomeuh-128.mp3' },
+    { title: 'KXSC Radio · USC', place: 'Los Angeles', country: 'United States', geo: [-118.28, 34.02], src: 'https://radio.garden/api/ara/content/listen/qG0IphIN/channel.mp3' },
+  ];
   const box = $('radio'), cv = $('globecv'), st = $('rst'), pl = $('rpl'), playBtn = $('rplay'), knob = $('rvol');
   let peekT = 0; const peek = ms => { box.classList.add('peek'); clearTimeout(peekT); if (ms) peekT = setTimeout(() => box.classList.remove('peek'), ms); };
   const audio = new Audio(); audio.preload = 'none';
-  let places = FALLBACK, vol = .7, userPaused = false, ducked = false, current = null, spinning = false, wantPlay = false, tries = 0;
+  let vol = .7, userPaused = false, ducked = false, current = null, spinning = false, wantPlay = false, tries = 0;
   try { const v = parseFloat(localStorage.getItem('wmp-radio-vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
   audio.volume = vol;
 
@@ -1229,36 +1240,24 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
   }
   requestAnimationFrame(loop);
 
-  // --- Radio Garden data
-  const placesReady = fetch(API + '/places').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(j => {
-    const list = (j && j.data && j.data.list) || []; if (list.length) places = list.filter(p => p.geo && p.id);
-  }).catch(e => console.warn('Radio Garden places unavailable, using the fallback station', e));
-  async function channelsFor(place) {
-    if (place.channels) return place.channels;
-    const j = await fetch(API + '/page/' + place.id + '/channels').then(r => r.ok ? r.json() : Promise.reject(r.status));
-    const out = [];
-    const walk = o => { if (!o || typeof o !== 'object') return; if (Array.isArray(o)) return o.forEach(walk);
-      const pg = o.page || o; if (pg && typeof pg.url === 'string' && pg.url.includes('/listen/')) out.push({ id: pg.url.split('/').filter(Boolean).pop(), title: pg.title || o.title || 'Radio', url: pg.url, place: pg.place && pg.place.title, country: pg.country && pg.country.title });
-      else for (const k in o) if (k !== 'page') walk(o[k]); };
-    walk(j && j.data); return out;
-  }
-  const pick = a => a[Math.floor(Math.random() * a.length)];
+  // --- the deck: a shuffled pass through all ten, never the same station twice in a row
+  let deck = [], last = null;
+  const draw = () => {
+    if (!deck.length) { deck = STATIONS.slice().sort(() => Math.random() - .5); if (deck[deck.length - 1] === last) deck.unshift(deck.pop()); }
+    return (last = deck.pop());
+  };
   function show(title, where) { st.textContent = title; pl.textContent = where || ''; }
-  async function tune() {
+  function tune() {
     if (spinning) return;
-    await Promise.race([placesReady, new Promise(r => setTimeout(r, 2500))]);
-    const place = pick(places); box.classList.add('tuning'); show('Tuning in…', ''); peek(0);
-    spinTo(place);
+    box.classList.add('tuning'); show('Tuning in…', ''); peek(0);
+    spinTo(draw());
   }
-  async function landed(place) {
-    pin.position.copy(ll(place.geo[1], place.geo[0], 1.01)); pin.visible = true;
-    let ch = [];
-    try { ch = await channelsFor(place); } catch (e) { console.warn('Radio Garden channels unavailable', e); }
-    if (!ch.length) { if (++tries < 4) return tune(); ch = FALLBACK[0].channels; place = FALLBACK[0]; }
-    const c = pick(ch); current = { ...c, placeTitle: c.place || place.title, country: c.country || place.country };
+  function landed(s1) {
+    pin.position.copy(ll(s1.geo[1], s1.geo[0], 1.01)); pin.visible = true;
+    current = { ...s1, placeTitle: s1.place };
     box.classList.remove('tuning');
-    show(current.title, [current.placeTitle, current.country].filter(Boolean).join(', ')); peek(5000);
-    audio.src = API + '/listen/' + current.id + '/channel.mp3';
+    show(current.title, [current.place, current.country].join(', ')); peek(5000);
+    audio.src = s1.src;
     if (!userPaused && !ducked) start();
   }
   function start() {
@@ -1268,9 +1267,9 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
   }
   function stop() { wantPlay = false; audio.pause(); box.classList.add('paused'); playBtn.setAttribute('aria-label', 'Play'); }
   // a station that is off air: try another place
-  audio.addEventListener('error', () => { if (current && wantPlay && ++tries < 4) { show('Off air, retuning…', ''); tune(); } });
+  audio.addEventListener('error', () => { if (current && wantPlay && ++tries < 4) { show('Off air, retuning…', ''); setTimeout(tune, 400); } });   // a station that's down: spin on to the next
   audio.addEventListener('pause', () => { if (!ducked) box.classList.add('paused'); });
-  audio.addEventListener('playing', () => { const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
+  audio.addEventListener('playing', () => { tries = 0; const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
 
   $('globe').addEventListener('click', e => { e.stopPropagation(); userPaused = false; tries = 0; tune(); });
   const toggle = e => { e.stopPropagation(); if (audio.paused) { userPaused = false; if (current) start(); else tune(); } else { userPaused = true; stop(); } };
@@ -1295,7 +1294,7 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
   // a video in the player takes the sound; the radio comes back when it closes
   window.__radio = { audio, tune, duck(on) { if (on) { if (!audio.paused) { ducked = true; audio.pause(); } } else if (ducked) { ducked = false; if (!userPaused) start(); } }, get current() { return current; } };
   // first spin once the stops have faded in
-  setTimeout(tune, still ? 300 : 2600);
+  setTimeout(tune, still ? 300 : 1500);                 // spins as the globe fades in
 })();
 window.__wmp = { go, step, get current() { return current; }, get flight() { return flight; }, cards, camPos: () => camera.position.clone(), HOLE };   // QA
 </script>
