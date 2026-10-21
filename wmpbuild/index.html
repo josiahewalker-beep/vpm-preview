@@ -397,6 +397,15 @@ const CODE = (() => {
   const cv = document.createElement('canvas'); cv.width = cv.height = 512; const c2 = cv.getContext('2d');
   c2.fillStyle = '#fff'; c2.font = '600 46px "IBM Plex Mono", ui-monospace, Menlo, monospace'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
   for (let i = 0; i < 64; i++) c2.fillText(chars[i % chars.length], (i % 8) * 64 + 32, Math.floor(i / 8) * 64 + 34);
+  // a few film icons hidden in the character set (last column): clapperboard, camera, play, keyframe, scissors, film strip
+  const icon = (i, draw) => { const x = (i % 8) * 64, y = Math.floor(i / 8) * 64; c2.clearRect(x, y, 64, 64); c2.save(); c2.translate(x + 32, y + 32); c2.lineWidth = 5; c2.strokeStyle = '#fff'; c2.lineCap = 'round'; c2.lineJoin = 'round'; draw(); c2.restore(); };
+  icon(7, () => { c2.strokeRect(-20, -6, 40, 26); c2.beginPath(); c2.moveTo(-20, -6); c2.lineTo(-17, -20); c2.lineTo(23, -14); c2.lineTo(20, -6); c2.stroke(); for (const k of [-9, 1, 11]) { c2.beginPath(); c2.moveTo(k, -19); c2.lineTo(k - 4, -7); c2.stroke(); } });
+  icon(15, () => { c2.strokeRect(-20, -4, 34, 24); c2.beginPath(); c2.moveTo(14, 2); c2.lineTo(24, -4); c2.lineTo(24, 20); c2.lineTo(14, 14); c2.stroke(); c2.beginPath(); c2.arc(-11, -15, 8, 0, 7); c2.stroke(); c2.beginPath(); c2.arc(7, -15, 8, 0, 7); c2.stroke(); });
+  icon(23, () => { c2.beginPath(); c2.arc(0, 0, 22, 0, 7); c2.stroke(); c2.fillStyle = '#fff'; c2.beginPath(); c2.moveTo(-7, -12); c2.lineTo(13, 0); c2.lineTo(-7, 12); c2.closePath(); c2.fill(); });
+  icon(31, () => { c2.fillStyle = '#fff'; c2.beginPath(); c2.moveTo(0, -20); c2.lineTo(18, 0); c2.lineTo(0, 20); c2.lineTo(-18, 0); c2.closePath(); c2.fill(); c2.beginPath(); c2.moveTo(-30, 0); c2.lineTo(-22, 0); c2.moveTo(22, 0); c2.lineTo(30, 0); c2.stroke(); });
+  icon(39, () => { c2.beginPath(); c2.arc(-11, 12, 8, 0, 7); c2.stroke(); c2.beginPath(); c2.arc(11, 12, 8, 0, 7); c2.stroke(); c2.beginPath(); c2.moveTo(-6, 6); c2.lineTo(16, -22); c2.moveTo(6, 6); c2.lineTo(-16, -22); c2.stroke(); });
+  icon(47, () => { c2.strokeRect(-24, -18, 48, 36); for (const k of [-16, -5, 6]) { c2.fillStyle = '#fff'; c2.fillRect(k, -14, 7, 5); c2.fillRect(k, 9, 7, 5); } c2.strokeRect(-14, -6, 28, 12); });
+
   const atlas = new THREE.CanvasTexture(cv); atlas.minFilter = THREE.LinearMipmapLinearFilter; atlas.generateMipmaps = true;
 
   const segs = { floor: [], major: [], posts: [], rails: [] };
