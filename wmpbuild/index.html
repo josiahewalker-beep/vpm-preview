@@ -742,7 +742,7 @@ for (const src of tpl.querySelectorAll('.card')) {
   const id = src.dataset.id, s = SPOTS[id], el = src.cloneNode(true);
   const holder = document.createElement('div'); holder.className = 'holder'; holder.append(el);
   const obj = new CSS3DObject(holder);
-  obj.position.set(s.p[0] * G, s.p[1] * G, s.p[2] * G); obj.rotation.y = THREE.MathUtils.degToRad(s.ry);
+  obj.position.set(s.p[0] * G, s.p[1] * G, s.p[2] * G); obj.rotation.y = /[#&]square/.test(location.hash) ? 0 : THREE.MathUtils.degToRad(s.ry);   // #square: audition, every card faces straight down the grid
   cssScene.add(obj);
   const base = new THREE.Vector3(obj.position.x, 0, obj.position.z);
   scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base, obj.position.clone().setY(0.01)]), stemMat));
