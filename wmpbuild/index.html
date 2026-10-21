@@ -1071,10 +1071,12 @@ function frame(now) {
     const p = t >= .99999 ? flight.end.clone() : (flight.path.getPointAt(t) || flight.end.clone());
     // the look direction turns once, on the same curve as the motion, so nothing jolts at corners
     const look = flight.fromLook.clone().lerp(flight.toLook, ease(Math.min(1, k / .92)));
+    // if the card's layout shifted while flying (fonts, thumbnails), blend toward its fresh framing so the landing is exact without a snap
+    if (flight.id !== 'overview' && cards[flight.id]) { const v = viewFor(flight.id), w = ease(k); p.addScaledVector(v.pos.clone().sub(flight.end), w); look.addScaledVector(v.look.clone().sub(flight.toLook), w); flight.endNow = v; }
     cam.pos.copy(p); cam.look.copy(look);
     trailGeo.setDrawRange(0, Math.max(2, Math.round(flight.pts.length * t)));
     if (trail.material.opacity > 0) headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); { const hp = flight.path.getPointAt(Math.min(.9999, t + .06)); if (hp) head.position.copy(hp); }
-    if (k >= 1) { cam.pos.copy(flight.end); cam.look.copy(flight.toLook); arrive(flight.id); }
+    if (k >= 1) { const v = flight.endNow || { pos: flight.end, look: flight.toLook }; cam.pos.copy(v.pos); cam.look.copy(v.look); arrive(flight.id); }
   }
   { const k = 1 - Math.exp(-dt * 8); yaw += (tYaw - yaw) * k; pitch += (tPitch - pitch) * k; }
   if (Math.abs(tYaw - yaw) < .004) yaw = tYaw; if (Math.abs(tPitch - pitch) < .004) pitch = tPitch;
@@ -1135,16 +1137,16 @@ function wireMail(root, c, k) {
   const MAILTO = 'walkermotionpictures@gmail.com', ENDPOINT = 'https://formspree.io/f/xeaebrzk';   // Josiah's Walker Motion Pictures Formspree form (10-20); local because List view (no WebGL) wires this before the module finishes
   const box = root.querySelector('[data-mailbox]'); if (!box) return;
   const btn = root.querySelector('[data-mailopen]'), form = box.querySelector('form'), stat = form.querySelector('.mstat');
-  let h0 = 0; const y0 = c ? c.obj.position.y : 0;
+  // h0 = the card's height with the form closed, measured when it opens; until then the card stays exactly on its spot
+  let h0 = null; const y0 = c ? c.obj.position.y : 0;
   if (c) {
-    h0 = c.el.offsetHeight;
-    new ResizeObserver(() => { c.obj.position.y = y0 - (c.el.offsetHeight - h0) / 2; }).observe(c.el);
-    addEventListener('resize', () => { if (!box.classList.contains('open')) { h0 = c.el.offsetHeight; c.obj.position.y = y0; } });
+    new ResizeObserver(() => { if (h0 != null) c.obj.position.y = y0 - Math.max(0, c.el.offsetHeight - h0) / 2; }).observe(c.el);
+    addEventListener('resize', () => { if (!box.classList.contains('open')) { h0 = null; c.obj.position.y = y0; } });
     box.addEventListener('transitionend', e => { if (e.target === box) refit(k); });
   }
   btn.addEventListener('click', e => {
     e.stopPropagation(); if (c && current !== k) { go(k); return; }
-    const open = !box.classList.contains('open'); if (c && open) h0 = c.el.offsetHeight - (box.offsetHeight || 0);
+    const open = !box.classList.contains('open'); if (c && open && h0 == null) h0 = c.el.offsetHeight - (box.offsetHeight || 0);
     box.classList.toggle('open', open); btn.setAttribute('aria-expanded', open);
     btn.textContent = open ? 'Close' : 'Email the studio';
     if (open) setTimeout(() => form.elements.name.focus({ preventScroll: !!c }), 450);
