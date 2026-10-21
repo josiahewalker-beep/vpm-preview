@@ -410,7 +410,7 @@ const CODE = (() => {
     b: { name: 'Highways', lines: ['floor', 'major', 'posts'],         n: 420, tail: 14, size: 24, speed: [320, 760],  flicker: 12, col: [0x2f5bff, 0x00b39b], head: 0x0b1220, alpha: .7,  down: false },
     c: { name: 'Rain',     lines: ['posts'],                           n: 320, tail: 18, size: 22, speed: [360, 900],  flicker: 14, col: [0x00b39b, 0x2f5bff], head: 0x0b1220, alpha: .65, down: true },
     d: { name: 'Circuit',  lines: ['floor', 'major', 'posts', 'rails'], n: 800, tail: 8,  size: 18, speed: [400, 1100], flicker: 18, col: [0x2f5bff, 0x00b39b], head: 0x0b1220, alpha: .5,  down: false },
-    e: { name: 'Ghost',    lines: ['floor', 'major', 'posts', 'rails'], n: 600, tail: 24, size: 20, speed: [120, 300],  flicker: 4,  col: [0x9aa6bb, 0xaab5cc], head: 0x6b778c, alpha: .38, down: false },
+    e: { name: 'Ghost',    lines: ['floor', 'major', 'posts', 'rails'], n: 600, tail: 24, size: 12, speed: [120, 300],  flicker: 4,  col: [0x9aa6bb, 0xaab5cc], head: 0x6b778c, alpha: .38, down: false },
   };
   const vert = `
     attribute vec3 aA; attribute vec3 aB; attribute float aPhase; attribute float aSpeed; attribute float aSeed; attribute float aRank; attribute float aSpacing;
@@ -484,7 +484,7 @@ const CODE = (() => {
   return { build, tick, VARIANTS, get variant() { return variant; } };
 })();
 const hashParts = Object.fromEntries(location.hash.slice(1).split('&').map(x => x.includes('=') ? x.split('=') : [x, '1']));
-const CODE_DEFAULT = null;                                       // set after the audition
+const CODE_DEFAULT = 'e';                                        // Josiah 10-20: Ghost, 40% smaller
 CODE.build(hashParts.code && hashParts.code !== 'off' ? hashParts.code : CODE_DEFAULT);
 if (hashParts.audition) {
   const bar = document.createElement('div'); bar.className = 'aud glass';
