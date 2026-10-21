@@ -12,7 +12,26 @@
 [hidden] { display:none !important; }
 html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:var(--body); -webkit-text-size-adjust:100%; }
 a { color:inherit; } :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:8px; }
-#gl, #css { position:fixed; inset:0; }
+#void, #gl, #css { position:fixed; inset:0; }
+#void { background:var(--bg); }
+body.ending::after { opacity:var(--glow, 1); }
+body::after { transition:none; }
+header, .rail, .hint, .ctl, .build { transition:opacity 1.4s ease; }
+body.ending header, body.ending .rail, body.ending .hint, body.ending .ctl, body.ending .build { opacity:0; pointer-events:none; }
+/* the black hole */
+#hole { position:fixed; z-index:6; left:0; top:0; width:40px; height:40px; margin:-20px 0 0 -20px; padding:0; border:0; border-radius:50%; cursor:pointer; background:radial-gradient(circle, #000 0 38%, rgba(0,0,0,.92) 48%, rgba(11,18,32,.35) 62%, transparent 72%); box-shadow:0 0 0 1px rgba(47,91,255,.25), 0 0 18px 2px rgba(47,91,255,.22), inset 0 0 6px rgba(0,179,155,.4); transition:opacity .6s ease; will-change:transform; }
+#hole::before { content:''; position:absolute; inset:-30%; border-radius:50%; border:1px solid rgba(47,91,255,.35); animation:spin 9s linear infinite; mask:conic-gradient(from 0deg, transparent 0 40%, #000 70%, transparent 100%); -webkit-mask:conic-gradient(from 0deg, transparent 0 40%, #000 70%, transparent 100%); }
+@keyframes spin { to { transform:rotate(360deg); } }
+#hole:hover, #hole:focus-visible { box-shadow:0 0 0 1px rgba(47,91,255,.5), 0 0 26px 4px rgba(47,91,255,.35), inset 0 0 8px rgba(0,179,155,.6); outline:none; }
+#hole.orb { background:radial-gradient(circle, #fff 0 30%, rgba(255,255,255,.9) 42%, rgba(255,255,255,.25) 60%, transparent 72%); box-shadow:0 0 30px 8px rgba(255,255,255,.55), 0 0 90px 30px rgba(180,200,255,.25); animation:breathe 3.2s ease-in-out infinite; }
+#hole.orb::before { border-color:rgba(255,255,255,.35); }
+@keyframes breathe { 50% { box-shadow:0 0 40px 14px rgba(255,255,255,.7), 0 0 120px 44px rgba(180,200,255,.3); } }
+#hole .tip { position:absolute; left:50%; top:100%; transform:translate(-50%, 14px); white-space:nowrap; font:500 13px/1.3 var(--body); color:var(--ink); background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:9px; padding:7px 11px; box-shadow:0 10px 30px -14px rgba(11,18,32,.35); opacity:0; pointer-events:none; transition:opacity .25s; }
+#hole:hover .tip, #hole:focus-visible .tip, #hole.showtip .tip { opacity:1; }
+#hole.orb .tip { color:#fff; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.25); }
+#hole.busy { pointer-events:none; } #hole.busy .tip { opacity:0 !important; }
+@media (hover:none) { #hole .tip { opacity:1; } }
+@media (prefers-reduced-motion:reduce) { #hole::before, #hole.orb { animation:none; } }
 #css { touch-action:none; cursor:grab; }
 #css.dragging { cursor:grabbing; }
 body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:1; background:radial-gradient(1100px 560px at 85% -10%, rgba(47,91,255,.10), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgba(0,179,155,.08), transparent 60%); }
@@ -238,7 +257,9 @@ p { margin:0; color:var(--mid); }
 </style>
 <script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
 </head><body>
+<div id="void" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
+<button id="hole" type="button" hidden aria-label="A black hole"><span class="tip" id="holetip">Do not click this unless you are okay with the end.</span></button>
 <div id="css" aria-label="Walker Motion Pictures. A 3D grid of sections: drag to look around, scroll or use the arrow keys to travel."></div>
 
 <header>
@@ -361,17 +382,41 @@ function setOverview() {
 
 // ---------- renderers ----------
 let gl;
-try { gl = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true }); } catch (e) { gl = null; }
+try { gl = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, alpha: true }); } catch (e) { gl = null; }
 const listWrap = $('listwrap');
 function buildList() { if (!listWrap.childElementCount) for (const c of $('cards').content.querySelectorAll('.card')) listWrap.append(c.cloneNode(true)); }
 if (!gl) { buildList(); $('list').hidden = false; $('listbtn').hidden = true; $('nextbtn').hidden = true; throw new Error('no webgl'); }
-gl.setPixelRatio(Math.min(devicePixelRatio, 2)); gl.setClearColor(0xf6f7f9, 1);
+gl.setPixelRatio(Math.min(devicePixelRatio, 2)); gl.setClearColor(0xf6f7f9, 0);
 const css = new CSS3DRenderer({ element: $('css') });
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xf6f7f9, 2600, 9000);
 const cssScene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 10, 20000);
 
 // ---------- the lattice ----------
+// The fabric: every line, node and glyph runs through one warp, so the black hole can bend all of it together.
+const WARP = { uHole: { value: new THREE.Vector3(0, 0, -13 * G) }, uPull: { value: 0 }, uSink: { value: 0 }, uSwirl: { value: 0 }, uR: { value: 2.5 * G }, uFade: { value: 0 }, uFogCol: { value: new THREE.Color(0xf6f7f9) } };
+const WARP_GLSL = `
+  uniform vec3 uHole; uniform float uPull, uSink, uSwirl, uR;
+  vec3 warp(vec3 p) {
+    vec3 d = p - uHole; float r = length(d.xz) + 0.001;
+    float w = 1.0 / (1.0 + (r / uR) * (r / uR));
+    float pull = uPull * w;
+    float ang = uSwirl * w;
+    vec2 dir = d.xz / r;
+    vec2 rot = vec2(cos(ang) * dir.x - sin(ang) * dir.y, sin(ang) * dir.x + cos(ang) * dir.y);
+    float nr = r * (1.0 - pull);
+    float y = p.y - uSink * w;
+    y = mix(y, uHole.y, pull);
+    return vec3(uHole.x + rot.x * nr, y, uHole.z + rot.y * nr);
+  }`;
+const lineMat = (color, opacity) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
+  uniforms: Object.assign({ uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity } }, WARP),
+  vertexShader: WARP_GLSL + `varying float vFog; void main() { vec4 mv = modelViewMatrix * vec4(warp(position), 1.0); vFog = smoothstep(2600.0, 9000.0, -mv.z); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `uniform vec3 uColor, uFogCol; uniform float uOpacity, uFade; varying float vFog; void main() { gl_FragColor = vec4(mix(uColor, uFogCol, vFog), uOpacity * (1.0 - uFade) * (1.0 - vFog)); }` });
+const pointMat = (color, opacity, size) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
+  uniforms: Object.assign({ uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity }, uPx: { value: size }, uH: { value: innerHeight } }, WARP),
+  vertexShader: WARP_GLSL + `uniform float uPx, uH; varying float vFog; void main() { vec4 mv = modelViewMatrix * vec4(warp(position), 1.0); vFog = smoothstep(2600.0, 9000.0, -mv.z); gl_PointSize = uPx * (uH * 0.5) / max(1.0, -mv.z) * 1.6; gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `uniform vec3 uColor, uFogCol; uniform float uOpacity, uFade; varying float vFog; void main() { if (length(gl_PointCoord - 0.5) > 0.5) discard; gl_FragColor = vec4(mix(uColor, uFogCol, vFog), uOpacity * (1.0 - uFade) * (1.0 - vFog)); }` });
 const LINES = (function lattice() {
   const X = 18, Z0 = -40, Z1 = 14, YT = 12;
   const floor = [], major = [], cage = [], nodes = [];
@@ -383,10 +428,10 @@ const LINES = (function lattice() {
     for (let z = Z0; z <= Z1; z += 4) cage.push(-X * G, y * G, z * G, X * G, y * G, z * G);
   }
   for (let x = -X; x <= X; x += 2) for (let z = Z0; z <= Z1; z += 2) for (let y = 2; y <= YT; y += 2) if ((x + z + y) % 4 === 0) nodes.push(x * G, y * G, z * G);
-  const seg = (arr, color, opacity) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity })); };
+  const seg = (arr, color, opacity) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); return new THREE.LineSegments(g, lineMat(color, opacity)); };
   scene.add(seg(floor, 0xcfd6e2, 0.6), seg(major, 0xaab5c8, 0.8), seg(cage, 0xc3ccda, 0.42));
   const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(nodes, 3));
-  scene.add(new THREE.Points(ng, new THREE.PointsMaterial({ color: 0x8c99b0, size: 6, sizeAttenuation: true, transparent: true, opacity: .7 })));
+  scene.add(new THREE.Points(ng, pointMat(0x8c99b0, .7, 6)));
   return { floor, major, cage };
 })();
 
@@ -424,6 +469,7 @@ const CODE = (() => {
   const vert = `
     attribute vec3 aA; attribute vec3 aB; attribute float aPhase; attribute float aSpeed; attribute float aSeed; attribute float aRank; attribute float aSpacing; attribute float aGap;
     uniform float uTime, uSize, uTail, uFlicker; uniform vec3 uRight, uUp;
+    ` + WARP_GLSL + `
     varying vec2 vUv; varying float vAlpha; varying float vSeed; varying float vHead; varying float vFog;
     float hash(float n) { return fract(sin(n) * 43758.5453123); }
     void main() {
@@ -434,7 +480,7 @@ const CODE = (() => {
       vHead = step(aRank, 0.5);
       float on = step(0.0, t) * step(t, 1.0);
       vAlpha = on * pow(1.0 - aRank / uTail, 1.6);
-      vec3 p = mix(aA, aB, clamp(t, 0.0, 1.0));
+      vec3 p = warp(mix(aA, aB, clamp(t, 0.0, 1.0)));
       float g = floor(hash(aSeed * 7.13 + floor(uTime * uFlicker + aRank * 0.37)) * 64.0);
       vec2 cell = vec2(mod(g, 8.0), 7.0 - floor(g / 8.0));
       vUv = (uv + cell) / 8.0;
@@ -445,14 +491,14 @@ const CODE = (() => {
       gl_Position = projectionMatrix * mv;
     }`;
   const frag = `
-    uniform sampler2D uAtlas; uniform vec3 uCol1, uCol2, uHead, uFogCol; uniform float uAlpha;
+    uniform sampler2D uAtlas; uniform vec3 uCol1, uCol2, uHead, uFogCol; uniform float uAlpha, uFade;
     varying vec2 vUv; varying float vAlpha; varying float vSeed; varying float vHead; varying float vFog;
     void main() {
       float a = texture2D(uAtlas, vUv).a;
       vec3 col = mix(uCol1, uCol2, step(0.5, fract(vSeed * 3.7)));
       col = mix(col, uHead, vHead);
       col = mix(col, uFogCol, vFog);
-      gl_FragColor = vec4(col, a * vAlpha * uAlpha * (1.0 - vFog));
+      gl_FragColor = vec4(col, a * vAlpha * uAlpha * (1.0 - vFog) * (1.0 - uFade));
       if (gl_FragColor.a < 0.01) discard;
     }`;
   let mesh = null, mat = null, variant = null;
@@ -484,7 +530,7 @@ const CODE = (() => {
     geo.setAttribute('aSpacing', new THREE.InstancedBufferAttribute(sg, 1)); geo.setAttribute('aGap', new THREE.InstancedBufferAttribute(gp, 1));
     mat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, transparent: true, depthWrite: false,
       uniforms: { uTime: { value: 0 }, uSize: { value: V.size }, uTail: { value: T }, uFlicker: { value: V.flicker }, uRight: { value: new THREE.Vector3(1, 0, 0) }, uUp: { value: new THREE.Vector3(0, 1, 0) },
-        uAtlas: { value: atlas }, uCol1: { value: new THREE.Color(V.col[0]) }, uCol2: { value: new THREE.Color(V.col[1]) }, uHead: { value: new THREE.Color(V.head) }, uFogCol: { value: new THREE.Color(0xf6f7f9) }, uAlpha: { value: V.alpha } } });
+        uAtlas: { value: atlas }, uCol1: { value: new THREE.Color(V.col[0]) }, uCol2: { value: new THREE.Color(V.col[1]) }, uHead: { value: new THREE.Color(V.head) }, uAlpha: { value: V.alpha }, uHole: WARP.uHole, uPull: WARP.uPull, uSink: WARP.uSink, uSwirl: WARP.uSwirl, uR: WARP.uR, uFade: WARP.uFade, uFogCol: WARP.uFogCol } });
     mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = 1; scene.add(mesh);
   }
   const r = new THREE.Vector3(), u = new THREE.Vector3();
@@ -587,6 +633,7 @@ function eyeNow() { return camera.position.clone(); }
 function lookNow() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, Math.max(400, cam.pos.distanceTo(cam.look))); }
 
 function go(id, opt = {}) {
+  if (HOLE.active) return;
   if (id !== 'overview' && !cards[id]) return;
   if (id === current && !flight) return;
   const to = viewFor(id), fromPos = eyeNow(), fromLook = lookNow();
@@ -619,12 +666,12 @@ function countUp(el) {
   el.querySelectorAll('[data-count]').forEach(b => { const n = +b.dataset.count, t0 = performance.now(); if (still) return;
     const f = () => { const k = Math.min(1, (performance.now() - t0) / 900); b.textContent = Math.round(n * ease(k)); if (k < 1) requestAnimationFrame(f); }; b.textContent = 0; f(); });
 }
-const step = d => { if (flight) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go('overview', { straight: true }); if (j < 0) return go('overview', { straight: true }); go(ORDER[j]); };
+const step = d => { if (flight || HOLE.active) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go('overview', { straight: true }); if (j < 0) return go('overview', { straight: true }); go(ORDER[j]); };
 
 // ---------- input: drag looks, scroll / swipe / keys travel ----------
 const el = $('css');
 let down = null, moved = 0, wheelAcc = 0, wheelT = 0;
-el.addEventListener('pointerdown', e => { if (flight) return; down = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch, pan: pan.y, touch: e.pointerType === 'touch' }; moved = 0; el.classList.add('dragging'); });
+el.addEventListener('pointerdown', e => { if (flight || HOLE.active) return; down = { x: e.clientX, y: e.clientY, yaw: tYaw, pitch: tPitch, pan: pan.y, touch: e.pointerType === 'touch' }; moved = 0; el.classList.add('dragging'); });
 addEventListener('pointermove', e => {
   if (!down) return;
   const dx = e.clientX - down.x, dy = e.clientY - down.y; moved = Math.max(moved, Math.hypot(dx, dy));
@@ -646,13 +693,13 @@ addEventListener('pointerup', e => {
 });
 addEventListener('pointercancel', () => { down = null; el.classList.remove('dragging'); });
 addEventListener('wheel', e => {
-  if (!$('list').hidden) return; e.preventDefault();
+  if (!$('list').hidden || HOLE.active) return; e.preventDefault();
   const now = performance.now(); if (now - wheelT > 500) wheelAcc = 0; wheelT = now; wheelAcc += e.deltaY;
   if (pan.max && !flight) { const ny = THREE.MathUtils.clamp(pan.y + e.deltaY * pan.k, 0, pan.max); const used = ny !== pan.y; pan.y = ny; if (used) { wheelAcc = 0; return; } }
   if (Math.abs(wheelAcc) > 60 && !flight) { step(wheelAcc > 0 ? 1 : -1); wheelAcc = 0; hideHint(); }
 }, { passive: false });
 addEventListener('keydown', e => {
-  if (!$('list').hidden) return;
+  if (!$('list').hidden || HOLE.active) return;
   if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); step(1); }
   if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); step(-1); }
   if (e.key === 'Escape') go('overview');
@@ -686,6 +733,65 @@ function placeCtl(dt) {
   ctlEl.style.transform = `translate(${(ctlPos.x - w / 2).toFixed(1)}px, ${ctlPos.y.toFixed(1)}px)`;
 }
 
+// ---------- the black hole: a 20 s end of the fabric, and its recreation ----------
+const HOLE = (() => {
+  const el = $('hole'), tip = $('holetip'), voidEl = $('void');
+  const DUR = 20000, BACK = 6500;
+  const st = { t: 0, dir: 0, active: false, ended: false, homes: null, radius: 1.1 * G };
+  const base = new THREE.Vector3(0, 0, -13 * G);
+  const E = x => Math.min(1, Math.max(0, x)), S3 = (a, b, x) => { const t = E((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const vis = () => (current === 'overview' && !flight) || st.active || st.ended;
+  function start() { if (st.active || st.ended) return; st.active = true; st.dir = 1; st.t0 = performance.now() - st.t * DUR; el.classList.add('busy'); document.body.classList.add('ending'); st.homes = {}; for (const k in cards) st.homes[k] = { p: cards[k].obj.position.clone(), r: cards[k].obj.rotation.y }; }
+  function recreate() { if (!st.ended) return; st.ended = false; st.active = true; st.dir = -1; st.t0 = performance.now() - (1 - st.t) * BACK; el.classList.add('busy'); el.classList.remove('orb'); tip.textContent = 'Do not click this unless you are okay with the end.'; }
+  el.addEventListener('click', () => st.ended ? recreate() : start());
+  function apply(t) {
+    const sink = 10 * G * S3(0, .5, t), pull = Math.pow(S3(.1, .95, t), 1.5);
+    WARP.uSink.value = sink; WARP.uPull.value = pull; WARP.uSwirl.value = 3 * S3(.15, .9, t);
+    WARP.uR.value = THREE.MathUtils.lerp(2.5 * G, 70 * G, S3(.05, .85, t));
+    WARP.uHole.value.set(base.x, -sink * .9, base.z);
+    WARP.uFade.value = S3(.8, .97, t);
+    // the white drains into the hole; black takes its place from the edges in
+    const black = S3(.45, .85, t), col = new THREE.Color(0xf6f7f9).lerp(new THREE.Color(0x000000), S3(.5, .9, t));
+    WARP.uFogCol.value.copy(col);
+    const pr = project(WARP.uHole.value), R = (1 - black) * 170;
+    voidEl.style.background = black > 0 ? `radial-gradient(circle at ${pr.x.toFixed(1)}px ${pr.y.toFixed(1)}px, #f6f7f9 0, #f6f7f9 ${(R * .55).toFixed(1)}vmax, #000 ${R.toFixed(1)}vmax)` : '';
+    document.body.style.setProperty('--glow', 1 - S3(.35, .7, t));
+    // the story panels: pulled in and down, nearest first, then gone
+    const ids = Object.keys(cards).sort((a, b) => st.homes[a].p.distanceTo(base) - st.homes[b].p.distanceTo(base));
+    ids.forEach((k, i) => {
+      const c = cards[k], h = st.homes[k], s0 = .22 + i * .085, e = S3(s0, s0 + .24, t);
+      const target = WARP.uHole.value.clone().add(new THREE.Vector3(0, 40, 0));
+      c.obj.position.copy(h.p).lerp(target, e * e); c.obj.position.y -= 3 * G * Math.sin(Math.PI * e) * .3;
+      c.obj.rotation.y = h.r + e * 1.6; c.obj.rotation.z = e * .5; c.obj.scale.setScalar(Math.max(.001, 1 - e * .97));
+      c.el.style.opacity = 1 - S3(.72, 1, e); c.el.style.pointerEvents = e > 0 ? 'none' : '';
+      c.ring.material.opacity = .5 * (1 - e); 
+    });
+    stemMat.opacity = .32 * (1 - S3(.2, .6, t));
+    // the camera leans in a little
+    const v = viewFor('overview'); cam.pos.copy(v.pos).lerp(WARP.uHole.value, .12 * S3(0, 1, t)); cam.look.copy(v.look).lerp(WARP.uHole.value, S3(0, .6, t));
+    st.radius = (1.1 + 1.3 * S3(0, .6, t)) * G;
+  }
+  const _v = new THREE.Vector3();
+  function project(p) { _v.copy(p).project(camera); return { x: (_v.x + 1) / 2 * innerWidth, y: (1 - _v.y) / 2 * innerHeight, z: _v.z }; }
+  function place() {
+    const show = vis(); el.hidden = !show; if (!show) return;
+    const c = project(WARP.uHole.value), edge = project(WARP.uHole.value.clone().add(new THREE.Vector3(st.radius, 0, 0)));
+    const px = Math.max(26, Math.min(220, Math.hypot(edge.x - c.x, edge.y - c.y) * 2));
+    el.style.width = el.style.height = px + 'px'; el.style.margin = `-${px / 2}px 0 0 -${px / 2}px`;
+    el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px)`;
+  }
+  function tick(now, dt) {
+    if (st.active) {
+      st.t = st.dir > 0 ? E((now - st.t0) / DUR) : E(1 - (now - st.t0) / BACK);
+      apply(st.t);
+      if (st.dir > 0 && st.t >= 1) { st.active = false; st.ended = true; el.classList.remove('busy'); el.classList.add('orb'); tip.textContent = 'Click to recreate the fabric of space time'; current = 'overview'; }
+      if (st.dir < 0 && st.t <= 0) { st.active = false; el.classList.remove('busy'); document.body.classList.remove('ending'); voidEl.style.background = ''; for (const k in cards) { const c = cards[k], h = st.homes[k]; c.obj.position.copy(h.p); c.obj.rotation.set(0, h.r, 0); c.obj.scale.setScalar(1); c.el.style.opacity = ''; c.el.style.pointerEvents = ''; c.ring.material.opacity = .5; } stemMat.opacity = .32; WARP.uFogCol.value.set(0xf6f7f9); const v = viewFor('overview'); cam.pos.copy(v.pos); cam.look.copy(v.look); navState('overview'); }
+    }
+    place();
+  }
+  return { tick, get active() { return st.active; }, get ended() { return st.ended; }, start, recreate, get t() { return st.t; } };
+})();
+
 // ---------- frame loop ----------
 const up = new THREE.Vector3(0, 1, 0), tmp = new THREE.Vector3();
 let last = performance.now();
@@ -710,7 +816,7 @@ function frame(now) {
   camera.lookAt(tmp.copy(camera.position).addScaledVector(dir, dist));
   // ground rings breathe gently
   const s = 1 + Math.sin(now / 700) * .06; for (const k in cards) cards[k].ring.scale.setScalar(k === current ? s * 1.25 : 1);
-  placeCtl(dt); CODE.tick(now);
+  placeCtl(dt); CODE.tick(now); HOLE.tick(now, dt);
   gl.render(scene, camera); css.render(cssScene, camera);
   requestAnimationFrame(frame);
 }
@@ -726,6 +832,6 @@ requestAnimationFrame(frame);
 // Opening move: a beat on the whole grid, then the camera travels in to the intro.
 const startAt = hashParts.at || (cards[location.hash.slice(1)] ? location.hash.slice(1) : '');
 setTimeout(() => go(cards[startAt] ? startAt : 'hero'), still ? 0 : 900);
-window.__wmp = { go, step, get current() { return current; }, cards, camPos: () => camera.position.clone() };   // QA
+window.__wmp = { go, step, get current() { return current; }, cards, camPos: () => camera.position.clone(), HOLE };   // QA
 </script>
 </body></html>
