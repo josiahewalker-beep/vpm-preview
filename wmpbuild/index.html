@@ -54,6 +54,11 @@ nav.top button.cta:hover { background:var(--accent); }
 .ctl .next { background:var(--ink); color:#fff; border-color:var(--ink); }
 .ctl .next:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
 @media (max-width:620px) { .hint { display:none; } .ctl button { font-size:14px; padding:11px 16px; min-height:44px; } }
+.aud { position:fixed; z-index:12; left:50%; top:calc(env(safe-area-inset-top,0px) + 96px); transform:translateX(-50%); display:flex; gap:4px; align-items:center; padding:5px 6px 5px 12px; border-radius:12px; max-width:calc(100vw - 24px); overflow:auto; }
+.aud span { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-right:6px; white-space:nowrap; }
+.aud button { font:inherit; font-size:13px; font-weight:500; color:var(--mid); background:none; border:0; border-radius:8px; padding:7px 10px; cursor:pointer; white-space:nowrap; }
+.aud button:hover { color:var(--ink); background:rgba(11,18,32,.05); }
+.aud button.on { color:#fff; background:var(--ink); }
 .build { position:fixed; z-index:10; left:50%; top:calc(env(safe-area-inset-top,0px) + 66px); transform:translateX(-50%); font-size:10.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:rgba(47,91,255,.08); border:1px solid rgba(47,91,255,.2); border-radius:999px; padding:4px 10px; pointer-events:none; }
 
 /* ---------- 3D cards ---------- */
@@ -367,7 +372,7 @@ const cssScene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 10, 20000);
 
 // ---------- the lattice ----------
-(function lattice() {
+const LINES = (function lattice() {
   const X = 18, Z0 = -40, Z1 = 14, YT = 12;
   const floor = [], major = [], cage = [], nodes = [];
   for (let i = -X; i <= X; i++) (i % 4 ? floor : major).push(i * G, 0, Z0 * G, i * G, 0, Z1 * G);
@@ -382,7 +387,114 @@ const camera = new THREE.PerspectiveCamera(40, 1, 10, 20000);
   scene.add(seg(floor, 0xcfd6e2, 0.6), seg(major, 0xaab5c8, 0.8), seg(cage, 0xc3ccda, 0.42));
   const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(nodes, 3));
   scene.add(new THREE.Points(ng, new THREE.PointsMaterial({ color: 0x8c99b0, size: 6, sizeAttenuation: true, transparent: true, opacity: .7 })));
+  return { floor, major, cage };
 })();
+
+// ---------- code streams along the grid lines (audition) ----------
+const CODE = (() => {
+  // glyph atlas: 8 x 8 characters, numbers and the symbols a finance screen uses
+  const chars = '0123456789$%+-=/<>[]{}#&*:;.,|~^ABCDEF0123456789.0123456789%$0123456789+-';
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512; const c2 = cv.getContext('2d');
+  c2.fillStyle = '#fff'; c2.font = '600 46px "IBM Plex Mono", ui-monospace, Menlo, monospace'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+  for (let i = 0; i < 64; i++) c2.fillText(chars[i % chars.length], (i % 8) * 64 + 32, Math.floor(i / 8) * 64 + 34);
+  const atlas = new THREE.CanvasTexture(cv); atlas.minFilter = THREE.LinearMipmapLinearFilter; atlas.generateMipmaps = true;
+
+  const segs = { floor: [], major: [], posts: [], rails: [] };
+  const toSegs = (arr, out) => { for (let i = 0; i < arr.length; i += 6) out.push([arr[i], arr[i + 1], arr[i + 2], arr[i + 3], arr[i + 4], arr[i + 5]]); };
+  toSegs(LINES.floor, segs.floor); toSegs(LINES.major, segs.major);
+  const cage = []; toSegs(LINES.cage, cage);
+  for (const g of cage) (g[0] === g[3] && g[2] === g[5] ? segs.posts : segs.rails).push(g);
+
+  const VARIANTS = {
+    a: { name: 'Ticker',   lines: ['major'],                           n: 110, tail: 10, size: 26, speed: [220, 420],  flicker: 8,  col: [0x2f5bff, 0x2f5bff], head: 0x0b1220, alpha: .6,  down: false },
+    b: { name: 'Highways', lines: ['floor', 'major', 'posts'],         n: 420, tail: 14, size: 24, speed: [320, 760],  flicker: 12, col: [0x2f5bff, 0x00b39b], head: 0x0b1220, alpha: .7,  down: false },
+    c: { name: 'Rain',     lines: ['posts'],                           n: 320, tail: 18, size: 22, speed: [360, 900],  flicker: 14, col: [0x00b39b, 0x2f5bff], head: 0x0b1220, alpha: .65, down: true },
+    d: { name: 'Circuit',  lines: ['floor', 'major', 'posts', 'rails'], n: 800, tail: 8,  size: 18, speed: [400, 1100], flicker: 18, col: [0x2f5bff, 0x00b39b], head: 0x0b1220, alpha: .5,  down: false },
+    e: { name: 'Ghost',    lines: ['floor', 'major', 'posts', 'rails'], n: 600, tail: 24, size: 20, speed: [120, 300],  flicker: 4,  col: [0x9aa6bb, 0xaab5cc], head: 0x6b778c, alpha: .38, down: false },
+  };
+  const vert = `
+    attribute vec3 aA; attribute vec3 aB; attribute float aPhase; attribute float aSpeed; attribute float aSeed; attribute float aRank; attribute float aSpacing;
+    uniform float uTime, uSize, uTail, uFlicker; uniform vec3 uRight, uUp;
+    varying vec2 vUv; varying float vAlpha; varying float vSeed; varying float vHead; varying float vFog;
+    float hash(float n) { return fract(sin(n) * 43758.5453123); }
+    void main() {
+      float t = fract(aPhase + uTime * aSpeed) - aRank * aSpacing;
+      vHead = step(aRank, 0.5);
+      float on = step(0.0, t);
+      vAlpha = on * pow(1.0 - aRank / uTail, 1.6);
+      vec3 p = mix(aA, aB, clamp(t, 0.0, 1.0));
+      float g = floor(hash(aSeed * 7.13 + floor(uTime * uFlicker + aRank * 0.37)) * 64.0);
+      vec2 cell = vec2(mod(g, 8.0), 7.0 - floor(g / 8.0));
+      vUv = (uv + cell) / 8.0;
+      vSeed = aSeed;
+      vec3 world = p + (uRight * (uv.x - 0.5) + uUp * (uv.y - 0.5)) * uSize;
+      vec4 mv = modelViewMatrix * vec4(world, 1.0);
+      vFog = smoothstep(2600.0, 9000.0, -mv.z);
+      gl_Position = projectionMatrix * mv;
+    }`;
+  const frag = `
+    uniform sampler2D uAtlas; uniform vec3 uCol1, uCol2, uHead, uFogCol; uniform float uAlpha;
+    varying vec2 vUv; varying float vAlpha; varying float vSeed; varying float vHead; varying float vFog;
+    void main() {
+      float a = texture2D(uAtlas, vUv).a;
+      vec3 col = mix(uCol1, uCol2, step(0.5, fract(vSeed * 3.7)));
+      col = mix(col, uHead, vHead);
+      col = mix(col, uFogCol, vFog);
+      gl_FragColor = vec4(col, a * vAlpha * uAlpha * (1.0 - vFog));
+      if (gl_FragColor.a < 0.01) discard;
+    }`;
+  let mesh = null, mat = null, variant = null;
+  function build(key) {
+    if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); mat.dispose(); mesh = null; }
+    variant = key; if (!key || !VARIANTS[key]) return;
+    const V = VARIANTS[key];
+    const pool = V.lines.flatMap(k => segs[k]);
+    const N = V.n, T = V.tail, count = N * T;
+    const A = new Float32Array(count * 3), B = new Float32Array(count * 3), ph = new Float32Array(count), sp = new Float32Array(count), sd = new Float32Array(count), rk = new Float32Array(count), sg = new Float32Array(count);
+    for (let i = 0; i < N; i++) {
+      let g = pool[Math.floor(Math.random() * pool.length)];
+      let a = [g[0], g[1], g[2]], b = [g[3], g[4], g[5]];
+      const vertical = g[0] === g[3] && g[2] === g[5];
+      if (vertical ? (V.down ? a[1] < b[1] : Math.random() < .5) : Math.random() < .5) [a, b] = [b, a];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      const ups = V.speed[0] + Math.random() * (V.speed[1] - V.speed[0]);
+      const phase = Math.random(), seed = Math.random() * 1000;
+      for (let r = 0; r < T; r++) {
+        const j = i * T + r;
+        A.set(a, j * 3); B.set(b, j * 3); ph[j] = phase; sp[j] = ups / len; sd[j] = seed + r * 0.618; rk[j] = r; sg[j] = V.size * 0.92 / len;
+      }
+    }
+    const geo = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(1, 1));
+    geo.instanceCount = count;
+    geo.setAttribute('aA', new THREE.InstancedBufferAttribute(A, 3)); geo.setAttribute('aB', new THREE.InstancedBufferAttribute(B, 3));
+    geo.setAttribute('aPhase', new THREE.InstancedBufferAttribute(ph, 1)); geo.setAttribute('aSpeed', new THREE.InstancedBufferAttribute(sp, 1));
+    geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(sd, 1)); geo.setAttribute('aRank', new THREE.InstancedBufferAttribute(rk, 1));
+    geo.setAttribute('aSpacing', new THREE.InstancedBufferAttribute(sg, 1));
+    mat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, transparent: true, depthWrite: false,
+      uniforms: { uTime: { value: 0 }, uSize: { value: V.size }, uTail: { value: T }, uFlicker: { value: V.flicker }, uRight: { value: new THREE.Vector3(1, 0, 0) }, uUp: { value: new THREE.Vector3(0, 1, 0) },
+        uAtlas: { value: atlas }, uCol1: { value: new THREE.Color(V.col[0]) }, uCol2: { value: new THREE.Color(V.col[1]) }, uHead: { value: new THREE.Color(V.head) }, uFogCol: { value: new THREE.Color(0xf6f7f9) }, uAlpha: { value: V.alpha } } });
+    mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = 1; scene.add(mesh);
+  }
+  const r = new THREE.Vector3(), u = new THREE.Vector3();
+  function tick(now) {
+    if (!mat) return;
+    mat.uniforms.uTime.value = now / 1000;
+    camera.matrixWorld.extractBasis(r, u, new THREE.Vector3()); mat.uniforms.uRight.value.copy(r); mat.uniforms.uUp.value.copy(u);
+  }
+  return { build, tick, VARIANTS, get variant() { return variant; } };
+})();
+const hashParts = Object.fromEntries(location.hash.slice(1).split('&').map(x => x.includes('=') ? x.split('=') : [x, '1']));
+const CODE_DEFAULT = null;                                       // set after the audition
+CODE.build(hashParts.code && hashParts.code !== 'off' ? hashParts.code : CODE_DEFAULT);
+if (hashParts.audition) {
+  const bar = document.createElement('div'); bar.className = 'aud glass';
+  bar.innerHTML = '<span>Code audition</span>' + Object.entries(CODE.VARIANTS).map(([k, v]) => `<button type="button" data-v="${k}">${k.toUpperCase()} · ${v.name}</button>`).join('') + '<button type="button" data-v="off">Off</button>';
+  document.body.append(bar);
+  const sync = () => bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', (CODE.variant || 'off') === b.dataset.v));
+  bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CODE.build(b.dataset.v === 'off' ? null : b.dataset.v); sync();
+    history.replaceState(null, '', '#audition&code=' + b.dataset.v); });
+  sync();
+}
 
 // ---------- cards in the grid ----------
 const tpl = $('cards').content;
@@ -586,7 +698,7 @@ function frame(now) {
   camera.lookAt(tmp.copy(camera.position).addScaledVector(dir, dist));
   // ground rings breathe gently
   const s = 1 + Math.sin(now / 700) * .06; for (const k in cards) cards[k].ring.scale.setScalar(k === current ? s * 1.25 : 1);
-  placeCtl(dt);
+  placeCtl(dt); CODE.tick(now);
   gl.render(scene, camera); css.render(cssScene, camera);
   requestAnimationFrame(frame);
 }
@@ -600,7 +712,7 @@ addEventListener('resize', resize); resize();
 cam.pos.copy(OVER.pos); cam.look.copy(OVER.look);
 requestAnimationFrame(frame);
 // Opening move: a beat on the whole grid, then the camera travels in to the intro.
-const startAt = location.hash.slice(1);
+const startAt = hashParts.at || (cards[location.hash.slice(1)] ? location.hash.slice(1) : '');
 setTimeout(() => go(cards[startAt] ? startAt : 'hero'), still ? 0 : 900);
 window.__wmp = { go, step, get current() { return current; }, cards, camPos: () => camera.position.clone() };   // QA
 </script>
