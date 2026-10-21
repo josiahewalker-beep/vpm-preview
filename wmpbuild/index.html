@@ -358,7 +358,7 @@ p { margin:0; color:var(--mid); }
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
-<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button><button type="button" class="glass" id="backbtn">↑ Back</button></div>
+<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↑</button><button type="button" class="glass" id="backbtn">↓ Back</button></div>
 <div id="lb" hidden role="dialog" aria-modal="true" aria-label="Video player"><div class="frame" id="lbframe"></div><div class="bar"><span id="lbtitle"></span><button type="button" id="lbclose">Close · Esc</button></div></div>
 <div id="list" hidden><div class="listbar"><button type="button" class="next" id="backto3d">← Cool 3D view</button></div><div class="wrap" id="listwrap"></div></div>
 
@@ -817,7 +817,7 @@ function arrive(id) {
   const t0 = performance.now(), o = trail.material.opacity;
   const f = () => { const k = Math.min(1, (performance.now() - t0) / 1000); trail.material.opacity = o * (1 - k); if (k < 1) requestAnimationFrame(f); }; f();
   
-  const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Start over ↺' : 'Next ↓';
+  const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Start over ↺' : 'Next ↑';
   $('backbtn').hidden = id === 'overview';
 }
 function mark(id) { for (const k in cards) cards[k].el.classList.toggle('here', k === id); }
