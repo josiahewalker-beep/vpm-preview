@@ -46,6 +46,11 @@ nav.top button.cta:hover { background:var(--accent); }
 .ctl { position:fixed; z-index:10; left:0; top:0; display:flex; gap:10px; align-items:center; will-change:transform; }
 .ctl button { font:inherit; font-size:15px; font-weight:500; color:var(--ink); border-radius:999px; padding:12px 20px; min-height:46px; cursor:pointer; box-shadow:0 10px 30px -14px rgba(11,18,32,.35); }
 .ctl button:hover { border-color:var(--accent); color:var(--accent); }
+.ctl .bird { display:inline-flex; align-items:center; gap:8px; } .ctl .bird svg { width:18px; height:18px; flex:none; }
+@media (max-width:620px) { .ctl .bird span { display:none; } .ctl .bird { padding:11px 13px; } }
+.listbar { position:sticky; top:0; z-index:2; display:flex; justify-content:center; padding:0 0 18px; margin-top:-30px; }
+.listbar button { font:inherit; font-size:15px; font-weight:500; color:#fff; background:var(--ink); border:0; border-radius:999px; padding:12px 20px; min-height:46px; cursor:pointer; box-shadow:0 10px 30px -14px rgba(11,18,32,.45); }
+.listbar button:hover { background:var(--accent); }
 .ctl .next { background:var(--ink); color:#fff; border-color:var(--ink); }
 .ctl .next:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
 @media (max-width:620px) { .hint { display:none; } .ctl button { font-size:14px; padding:11px 16px; min-height:44px; } }
@@ -246,8 +251,8 @@ p { margin:0; color:var(--mid); }
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
-<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button></div>
-<div id="list" hidden><div class="wrap" id="listwrap"></div></div>
+<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button></div>
+<div id="list" hidden><div class="listbar"><button type="button" class="next" id="backto3d">← Cool 3D view</button></div><div class="wrap" id="listwrap"></div></div>
 
 <template id="cards">
   <article class="card" data-id="hero" data-label="Intro" style="--w:1180px;--wm:360px">
@@ -345,8 +350,8 @@ const SPOTS = {
 const OVER = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
 function setOverview() {
   const phone = innerWidth < 700;
-  OVER.pos.set(0, (phone ? 20 : 15) * G, (phone ? 28 : 20) * G);
-  OVER.look.set(0, 5 * G, -14 * G);
+  OVER.pos.set(0, (phone ? 21 : 16) * G, (phone ? 29 : 21) * G);
+  OVER.look.set(0, 3 * G, (phone ? -9 : -10) * G);
 }
 
 // ---------- renderers ----------
@@ -457,15 +462,17 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 function eyeNow() { return camera.position.clone(); }
 function lookNow() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, Math.max(400, cam.pos.distanceTo(cam.look))); }
 
-function go(id) {
+function go(id, opt = {}) {
   if (id !== 'overview' && !cards[id]) return;
   if (id === current && !flight) return;
   const to = viewFor(id), fromPos = eyeNow(), fromLook = lookNow();
   tYaw = tPitch = yaw = pitch = 0; pan.y = pan.cur = 0; pan.max = 0; mark(null);
   if (still) { cam.pos.copy(to.pos); cam.look.copy(to.look); arrive(id); return; }
-  const path = route(fromPos, to.pos), len = path.getLength();
+  // a straight pull-back (end of the tour) flies a straight line instead of following the grid
+  const path = opt.straight ? new THREE.CurvePath() : route(fromPos, to.pos); if (opt.straight) path.add(new THREE.LineCurve3(fromPos, to.pos));
+  const len = path.getLength();
   const pts = path.getSpacedPoints(Math.max(60, Math.round(len / 20)));
-  trailGeo.setFromPoints(pts); trailGeo.setDrawRange(0, 0); trail.material.opacity = .95; headMat.opacity = 1;
+  trailGeo.setFromPoints(pts); trailGeo.setDrawRange(0, 0); trail.material.opacity = opt.straight ? 0 : .95; headMat.opacity = opt.straight ? 0 : 1;
   flight = { path, pts, t0: performance.now(), dur: Math.min(4200, Math.max(1900, 900 + len / 1.45)), fromLook, toLook: to.look, id };
   current = 'flying'; navState(id);
 }
@@ -475,7 +482,7 @@ function arrive(id) {
   const t0 = performance.now(), o = trail.material.opacity;
   const f = () => { const k = Math.min(1, (performance.now() - t0) / 1000); trail.material.opacity = o * (1 - k); if (k < 1) requestAnimationFrame(f); }; f();
   if (id === 'work') countUp(cards.work.el);
-  const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Back to start ↺' : 'Next ↓';
+  const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Start over ↺' : 'Next ↓';
 }
 function mark(id) { for (const k in cards) cards[k].el.classList.toggle('here', k === id); }
 function navState(id) {
@@ -488,7 +495,7 @@ function countUp(el) {
   el.querySelectorAll('[data-count]').forEach(b => { const n = +b.dataset.count, t0 = performance.now(); if (still) return;
     const f = () => { const k = Math.min(1, (performance.now() - t0) / 900); b.textContent = Math.round(n * ease(k)); if (k < 1) requestAnimationFrame(f); }; b.textContent = 0; f(); });
 }
-const step = d => { if (flight) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go(ORDER[0]); if (j < 0) return go('overview'); go(ORDER[j]); };
+const step = d => { if (flight) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go('overview', { straight: true }); if (j < 0) return go('overview', { straight: true }); go(ORDER[j]); };
 
 // ---------- input: drag looks, scroll / swipe / keys travel ----------
 const el = $('css');
@@ -530,6 +537,8 @@ function hideHint() { $('hint').style.opacity = 0; }
 document.querySelectorAll('header [data-go], #rail [data-go]').forEach(b => b.addEventListener('click', () => { closeList(); go(b.dataset.go); }));
 $('nextbtn').addEventListener('click', () => { if (pan.max && pan.y < pan.max - 1) { pan.y = Math.min(pan.max, pan.y + innerHeight * 0.6 * pan.k); return; } step(1); });
 $('listbtn').addEventListener('click', () => $('list').hidden ? openList() : closeList());
+$('backto3d').addEventListener('click', closeList);
+$('birdbtn').addEventListener('click', () => { closeList(); go('overview'); });
 function openList() { buildList(); $('list').hidden = false; $('listbtn').textContent = '3D view'; $('nextbtn').hidden = true; }
 function closeList() { $('list').hidden = true; $('listbtn').textContent = 'List view'; $('nextbtn').hidden = false; }
 
@@ -565,7 +574,7 @@ function frame(now) {
     const look = flight.fromLook.clone().lerp(flight.toLook, ease(Math.min(1, k / .9)));
     cam.pos.copy(p); cam.look.copy(look);
     trailGeo.setDrawRange(0, Math.max(2, Math.round(flight.pts.length * t)));
-    headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); head.position.copy(flight.path.getPointAt(Math.min(.9995, tt + .06)));
+    if (trail.material.opacity > 0) headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); head.position.copy(flight.path.getPointAt(Math.min(.9995, tt + .06)));
     if (k >= 1) { const v = viewFor(flight.id); cam.pos.copy(v.pos); cam.look.copy(v.look); arrive(flight.id); }
   }
   { const k = 1 - Math.exp(-dt * 8); yaw += (tYaw - yaw) * k; pitch += (tPitch - pitch) * k; }
