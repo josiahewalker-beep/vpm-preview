@@ -394,45 +394,56 @@ const camera = new THREE.PerspectiveCamera(40, 1, 10, 20000);
 
 // ---------- the lattice ----------
 // The fabric: every line, node and glyph runs through one warp, so the black hole can bend all of it together.
-const WARP = { uHole: { value: new THREE.Vector3(0, 0, -13 * G) }, uPull: { value: 0 }, uSink: { value: 0 }, uSwirl: { value: 0 }, uR: { value: 2.5 * G }, uFade: { value: 0 }, uFogCol: { value: new THREE.Color(0xf6f7f9) } };
+const WARP = { uHole: { value: new THREE.Vector3(0, 0, -13 * G) }, uPull: { value: 0 }, uSink: { value: 0 }, uSwirl: { value: 0 }, uR: { value: 2.5 * G }, uFade: { value: 0 }, uFogCol: { value: new THREE.Color(0xf6f7f9) }, uStress: { value: 0 }, uStressCol: { value: new THREE.Color(0x4f66a3) } };
 const WARP_GLSL = `
   uniform vec3 uHole; uniform float uPull, uSink, uSwirl, uR;
   vec3 warp(vec3 p) {
     vec3 d = p - uHole; float r = length(d.xz) + 0.001;
-    float w = 1.0 / (1.0 + (r / uR) * (r / uR));
+    float q = r / uR;
+    float well = 1.0 / sqrt(1.0 + q * q);            // gravity well: steep at the centre, a long slope outward
+    float w = 1.0 / (1.0 + q * q);                     // tighter falloff for the pull and swirl
     float pull = uPull * w;
     float ang = uSwirl * w;
     vec2 dir = d.xz / r;
     vec2 rot = vec2(cos(ang) * dir.x - sin(ang) * dir.y, sin(ang) * dir.x + cos(ang) * dir.y);
-    float nr = r * (1.0 - pull);
-    float y = p.y - uSink * w;
+    float nr = r * (1.0 - pull) - uSink * 0.35 * well * (1.0 - pull);   // the fabric also draws in toward the hole as it sinks
+    nr = max(nr, 0.0);
+    float y = p.y - uSink * well;
     y = mix(y, uHole.y, pull);
     return vec3(uHole.x + rot.x * nr, y, uHole.z + rot.y * nr);
   }`;
 const lineMat = (color, opacity) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
   uniforms: Object.assign({ uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity } }, WARP),
   vertexShader: WARP_GLSL + `varying float vFog; void main() { vec4 mv = modelViewMatrix * vec4(warp(position), 1.0); vFog = smoothstep(2600.0, 9000.0, -mv.z); gl_Position = projectionMatrix * mv; }`,
-  fragmentShader: `uniform vec3 uColor, uFogCol; uniform float uOpacity, uFade; varying float vFog; void main() { gl_FragColor = vec4(mix(uColor, uFogCol, vFog), uOpacity * (1.0 - uFade) * (1.0 - vFog)); }` });
+  fragmentShader: `uniform vec3 uColor, uFogCol, uStressCol; uniform float uOpacity, uFade, uStress; varying float vFog; void main() { vec3 c = mix(uColor, uStressCol, uStress); gl_FragColor = vec4(mix(c, uFogCol, vFog), min(1.0, uOpacity * (1.0 + 1.3 * uStress)) * (1.0 - uFade) * (1.0 - vFog)); }` });
 const pointMat = (color, opacity, size) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false,
   uniforms: Object.assign({ uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity }, uPx: { value: size }, uH: { value: innerHeight } }, WARP),
   vertexShader: WARP_GLSL + `uniform float uPx, uH; varying float vFog; void main() { vec4 mv = modelViewMatrix * vec4(warp(position), 1.0); vFog = smoothstep(2600.0, 9000.0, -mv.z); gl_PointSize = uPx * (uH * 0.5) / max(1.0, -mv.z) * 1.6; gl_Position = projectionMatrix * mv; }`,
-  fragmentShader: `uniform vec3 uColor, uFogCol; uniform float uOpacity, uFade; varying float vFog; void main() { if (length(gl_PointCoord - 0.5) > 0.5) discard; gl_FragColor = vec4(mix(uColor, uFogCol, vFog), uOpacity * (1.0 - uFade) * (1.0 - vFog)); }` });
+  fragmentShader: `uniform vec3 uColor, uFogCol, uStressCol; uniform float uOpacity, uFade, uStress; varying float vFog; void main() { if (length(gl_PointCoord - 0.5) > 0.5) discard; vec3 c = mix(uColor, uStressCol, uStress); gl_FragColor = vec4(mix(c, uFogCol, vFog), min(1.0, uOpacity * (1.0 + 1.3 * uStress)) * (1.0 - uFade) * (1.0 - vFog)); }` });
 const LINES = (function lattice() {
   const X = 18, Z0 = -40, Z1 = 14, YT = 12;
   const floor = [], major = [], cage = [], nodes = [];
-  for (let i = -X; i <= X; i++) (i % 4 ? floor : major).push(i * G, 0, Z0 * G, i * G, 0, Z1 * G);
-  for (let k = Z0; k <= Z1; k++) (k % 4 ? floor : major).push(-X * G, 0, k * G, X * G, 0, k * G);
-  for (let x = -X + 2; x <= X; x += 4) for (let z = Z0; z <= Z1; z += 4) cage.push(x * G, 0, z * G, x * G, YT * G, z * G);
+  // every line is cut into half-cell pieces so the fabric can curve, not just tilt
+  const STEP = G / 2;
+  const line = (out, x1, y1, z1, x2, y2, z2) => { const n = Math.max(1, Math.round(Math.hypot(x2 - x1, y2 - y1, z2 - z1) / STEP)); for (let i = 0; i < n; i++) { const a = i / n, b = (i + 1) / n; out.push(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, z1 + (z2 - z1) * a, x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, z1 + (z2 - z1) * b); } };
+  for (let i = -X; i <= X; i++) line(i % 4 ? floor : major, i * G, 0, Z0 * G, i * G, 0, Z1 * G);
+  for (let k = Z0; k <= Z1; k++) line(k % 4 ? floor : major, -X * G, 0, k * G, X * G, 0, k * G);
+  for (let x = -X + 2; x <= X; x += 4) for (let z = Z0; z <= Z1; z += 4) line(cage, x * G, 0, z * G, x * G, YT * G, z * G);
   for (const y of [4, 8, 12]) {
-    for (let x = -X + 2; x <= X; x += 4) cage.push(x * G, y * G, Z0 * G, x * G, y * G, Z1 * G);
-    for (let z = Z0; z <= Z1; z += 4) cage.push(-X * G, y * G, z * G, X * G, y * G, z * G);
+    for (let x = -X + 2; x <= X; x += 4) line(cage, x * G, y * G, Z0 * G, x * G, y * G, Z1 * G);
+    for (let z = Z0; z <= Z1; z += 4) line(cage, -X * G, y * G, z * G, X * G, y * G, z * G);
   }
   for (let x = -X; x <= X; x += 2) for (let z = Z0; z <= Z1; z += 2) for (let y = 2; y <= YT; y += 2) if ((x + z + y) % 4 === 0) nodes.push(x * G, y * G, z * G);
   const seg = (arr, color, opacity) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3)); return new THREE.LineSegments(g, lineMat(color, opacity)); };
   scene.add(seg(floor, 0xcfd6e2, 0.6), seg(major, 0xaab5c8, 0.8), seg(cage, 0xc3ccda, 0.42));
   const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.Float32BufferAttribute(nodes, 3));
   scene.add(new THREE.Points(ng, pointMat(0x8c99b0, .7, 6)));
-  return { floor, major, cage };
+  const whole = { floor: [], major: [], cage: [] };
+  for (let i = -X; i <= X; i++) (i % 4 ? whole.floor : whole.major).push(i * G, 0, Z0 * G, i * G, 0, Z1 * G);
+  for (let k = Z0; k <= Z1; k++) (k % 4 ? whole.floor : whole.major).push(-X * G, 0, k * G, X * G, 0, k * G);
+  for (let x = -X + 2; x <= X; x += 4) for (let z = Z0; z <= Z1; z += 4) whole.cage.push(x * G, 0, z * G, x * G, YT * G, z * G);
+  for (const y of [4, 8, 12]) { for (let x = -X + 2; x <= X; x += 4) whole.cage.push(x * G, y * G, Z0 * G, x * G, y * G, Z1 * G); for (let z = Z0; z <= Z1; z += 4) whole.cage.push(-X * G, y * G, z * G, X * G, y * G, z * G); }
+  return whole;
 })();
 
 // ---------- code streams along the grid lines (audition) ----------
@@ -745,10 +756,11 @@ const HOLE = (() => {
   function recreate() { if (!st.ended) return; st.ended = false; st.active = true; st.dir = -1; st.t0 = performance.now() - (1 - st.t) * BACK; el.classList.add('busy'); el.classList.remove('orb'); tip.textContent = 'Do not click this unless you are okay with the end.'; }
   el.addEventListener('click', () => st.ended ? recreate() : start());
   function apply(t) {
-    const sink = 10 * G * S3(0, .5, t), pull = Math.pow(S3(.1, .95, t), 1.5);
-    WARP.uSink.value = sink; WARP.uPull.value = pull; WARP.uSwirl.value = 3 * S3(.15, .9, t);
-    WARP.uR.value = THREE.MathUtils.lerp(2.5 * G, 70 * G, S3(.05, .85, t));
-    WARP.uHole.value.set(base.x, -sink * .9, base.z);
+    const sink = 7 * G * S3(0, .3, t) + 5 * G * S3(.3, .7, t), pull = Math.pow(S3(.25, .95, t), 1.5);
+    WARP.uSink.value = sink; WARP.uPull.value = pull; WARP.uSwirl.value = 3 * S3(.3, .9, t);
+    WARP.uR.value = THREE.MathUtils.lerp(2.5 * G, 7 * G, S3(0, .3, t)) + (70 - 7) * G * S3(.3, .85, t);
+    WARP.uHole.value.set(base.x, -sink * .92, base.z);
+    WARP.uStress.value = S3(0, .35, t);
     WARP.uFade.value = S3(.8, .97, t);
     // the white drains into the hole; black takes its place from the edges in
     const black = S3(.45, .85, t), col = new THREE.Color(0xf6f7f9).lerp(new THREE.Color(0x000000), S3(.5, .9, t));
@@ -761,14 +773,18 @@ const HOLE = (() => {
     ids.forEach((k, i) => {
       const c = cards[k], h = st.homes[k], s0 = .22 + i * .085, e = S3(s0, s0 + .24, t);
       const target = WARP.uHole.value.clone().add(new THREE.Vector3(0, 40, 0));
-      c.obj.position.copy(h.p).lerp(target, e * e); c.obj.position.y -= 3 * G * Math.sin(Math.PI * e) * .3;
+      // the card rides the bending sheet under it before it is taken
+      const rr = Math.hypot(h.p.x - base.x, h.p.z - base.z) / WARP.uR.value, dip = sink / Math.sqrt(1 + rr * rr) * .7;
+      c.obj.position.copy(h.p); c.obj.position.y -= dip; c.obj.position.lerp(target, e * e); c.obj.position.y -= 3 * G * Math.sin(Math.PI * e) * .3;
       c.obj.rotation.y = h.r + e * 1.6; c.obj.rotation.z = e * .5; c.obj.scale.setScalar(Math.max(.001, 1 - e * .97));
       c.el.style.opacity = 1 - S3(.72, 1, e); c.el.style.pointerEvents = e > 0 ? 'none' : '';
       c.ring.material.opacity = .5 * (1 - e); 
     });
     stemMat.opacity = .32 * (1 - S3(.2, .6, t));
     // the camera leans in a little
-    const v = viewFor('overview'); cam.pos.copy(v.pos).lerp(WARP.uHole.value, .12 * S3(0, 1, t)); cam.look.copy(v.look).lerp(WARP.uHole.value, S3(0, .6, t));
+    // the camera comes down to a lower angle so the depth of the well reads, then leans in
+    const v = viewFor('overview'), low = new THREE.Vector3(base.x - (innerWidth < 700 ? 6 : 12) * G, 10 * G, base.z + (innerWidth < 700 ? 36 : 28) * G);
+    cam.pos.copy(v.pos).lerp(low, S3(0, .35, t)).lerp(WARP.uHole.value, .1 * S3(.4, 1, t)); cam.look.copy(v.look).lerp(WARP.uHole.value.clone().add(new THREE.Vector3(0, 2 * G, 0)), S3(0, .3, t));
     st.radius = (1.1 + 1.3 * S3(0, .6, t)) * G;
   }
   const _v = new THREE.Vector3();
