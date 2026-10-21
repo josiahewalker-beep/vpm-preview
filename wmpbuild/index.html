@@ -318,32 +318,51 @@ p { margin:0; color:var(--mid); }
 .mstat { margin:0; font-size:14px; color:#aab5cc; } .mstat a { color:#fff; }
 @media (max-width:700px) { .mailform { grid-template-columns:1fr; } .mailform input, .mailform textarea { font-size:16px; } }   /* 16px stops iOS zooming into the field */
 
-/* ---------- sound ---------- */
-.snd { position:fixed; z-index:11; right:max(14px,2.2vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); border-radius:16px; box-shadow:0 10px 30px -14px rgba(11,18,32,.35); overflow:hidden; }
-.sndtab { display:flex; align-items:center; gap:9px; font:inherit; font-size:13px; font-weight:500; color:var(--ink); background:none; border:0; padding:9px 14px; cursor:pointer; min-height:40px; }
-.eq { display:flex; align-items:flex-end; gap:2px; height:14px; } .eq i { width:3px; height:4px; border-radius:1px; background:var(--accent); }
-.snd.playing .eq i { animation:eq 1s ease-in-out infinite; } .snd.playing .eq i:nth-child(2) { animation-delay:-.35s; } .snd.playing .eq i:nth-child(3) { animation-delay:-.7s; } .snd.playing .eq i:nth-child(4) { animation-delay:-.15s; }
-@keyframes eq { 0%,100% { height:4px; } 50% { height:14px; } }
-.sndpanel { display:grid; grid-template-rows:0fr; transition:grid-template-rows .4s cubic-bezier(.2,.7,.2,1); }
-.sndinner { min-height:0; overflow:hidden; }
-.snd.open .sndpanel { grid-template-rows:1fr; }
-.sndtrack { margin:0; padding:0 14px; font-size:12px; color:var(--mid); }
-.sndbtns { display:flex; gap:6px; padding:8px 14px 4px; }
-.sndbtns button { width:40px; height:40px; display:grid; place-items:center; border-radius:12px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
-.sndbtns button:hover { border-color:var(--accent); color:var(--accent); }
-.sndbtns svg { width:18px; height:18px; fill:currentColor; }
-#sndplay .i-pause { display:none; } .snd.playing #sndplay .i-play { display:none; } .snd.playing #sndplay .i-pause { display:inline; }
-.sndvol { display:flex; align-items:center; gap:8px; padding:6px 14px 12px; color:var(--mid); } .sndvol svg { width:18px; height:18px; fill:currentColor; flex:none; }
-.sndvol input { width:118px; accent-color:var(--accent); }
-.snd.open .sndtab { width:100%; }
-@media (max-width:620px) { .snd { right:12px; bottom:auto; top:calc(env(safe-area-inset-top,0px) + 70px); } .sndlbl { display:none; } .sndtab { padding:9px 11px; } }
+/* ---------- radio globe (Radio Garden) ---------- */
+.radio { position:fixed; z-index:11; right:max(14px,2.2vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); width:252px; border-radius:18px; padding:11px 14px 9px; box-shadow:0 14px 40px -18px rgba(11,18,32,.4); }
+.rtop { margin:0 0 6px; font-size:12.5px; font-weight:600; color:var(--ink); }
+.rrow { display:flex; align-items:center; gap:12px; }
+.globe { flex:none; width:96px; height:96px; padding:0; border:0; background:none; border-radius:50%; cursor:pointer; position:relative; }
+.globe canvas { width:96px; height:96px; display:block; }
+.globe:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.rinfo { min-width:0; flex:1; }
+.rst { margin:0; font-size:13px; font-weight:600; color:var(--ink); line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; transition:opacity .35s; }
+.rpl { margin:2px 0 0; font-size:12px; color:var(--mid); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:15.6px; transition:opacity .35s; }
+.rmini, .rby2 { display:none; }
+.radio.tuning .rst, .radio.tuning .rpl { opacity:.45; }
+.rctl { display:flex; align-items:center; gap:10px; margin-top:8px; }
+.rbtn { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; padding:0; }
+.rbtn:hover { border-color:var(--accent); color:var(--accent); }
+.rbtn svg { width:16px; height:16px; fill:currentColor; }
+.rbtn .i-play { display:none; } .radio.paused .rbtn .i-play { display:inline; } .radio.paused .rbtn .i-pause { display:none; }
+.knob { --v:.7; position:relative; width:34px; height:34px; border-radius:50%; cursor:ns-resize; touch-action:none; background:conic-gradient(from 225deg, var(--accent) calc(var(--v) * 270deg), #e3e7ee 0 270deg, transparent 0); }
+.knob::before { content:''; position:absolute; inset:4px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(11,18,32,.18); }
+.knob i { position:absolute; left:50%; top:50%; width:2px; height:9px; margin-left:-1px; border-radius:1px; background:var(--ink); transform-origin:50% 100%; transform:translateY(-100%) rotate(calc(-135deg + var(--v) * 270deg)); }
+.knob:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.rby { margin:7px 0 0; font-size:10.5px; color:var(--dim); } .rby a { color:var(--mid); font-weight:600; text-decoration:none; } .rby a:hover { color:var(--accent); }
+.radio.blocked .rst::after { content:''; }
+@media (max-width:620px) {
+  /* phones: a small globe under the header; the station slides out beside it after each spin, then tucks away */
+  .radio { right:10px; bottom:auto; top:calc(env(safe-area-inset-top,0px) + 64px); width:auto; padding:0; background:none; border:0; box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .rtop, .radio > .rby { display:none; }
+  .rrow { flex-direction:row-reverse; align-items:flex-start; gap:8px; position:relative; }
+  .globe { width:54px; height:54px; background:rgba(255,255,255,.82); box-shadow:0 8px 24px -12px rgba(11,18,32,.45); border:1px solid rgba(227,231,238,.95); }
+  .globe canvas { width:52px; height:52px; }
+  .rmini { display:grid; position:absolute; right:-4px; top:40px; width:26px; height:26px; box-shadow:0 4px 12px -6px rgba(11,18,32,.4); } .rmini svg { width:12px; height:12px; }
+  .radio.paused .rmini .i-play { display:inline; } .radio.paused .rmini .i-pause { display:none; }
+  .rinfo { max-width:180px; padding:7px 11px 6px; border-radius:14px; background:rgba(255,255,255,.86); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid rgba(227,231,238,.95); box-shadow:0 8px 24px -12px rgba(11,18,32,.35); opacity:0; transform:translateX(10px); pointer-events:none; transition:opacity .35s, transform .35s; }
+  .radio.peek .rinfo { opacity:1; transform:none; pointer-events:auto; }
+  .rst { font-size:12px; -webkit-line-clamp:1; } .rpl { font-size:11px; -webkit-line-clamp:1; } .rctl { display:none; }
+  .rby2 { display:block; margin:3px 0 0; font-size:10px; }
+}
+
 /* ---------- first load: the grid fades in, then the stops ---------- */
 #gl { transition:opacity 1.6s ease; }
 body.intro #gl { opacity:0; }
 #css .card { transition:opacity 1s ease; }
 body.intro #css .card, body.intro-c #css .card { opacity:0; }
-header, .rail, .hint, .ctl, .snd { transition:opacity .9s ease; }
-body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.intro .snd, body.intro-c header, body.intro-c .rail, body.intro-c .hint, body.intro-c .ctl, body.intro-c .snd { opacity:0; pointer-events:none; }
+header, .rail, .hint, .ctl, .radio { transition:opacity .9s ease; }
+body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.intro .radio, body.intro-c header, body.intro-c .rail, body.intro-c .hint, body.intro-c .ctl, body.intro-c .radio { opacity:0; pointer-events:none; }
 
 /* phones: narrower cards, single columns */
 @media (max-width:700px) {
@@ -384,18 +403,23 @@ body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.int
 </header>
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
-<div class="snd glass" id="snd">
-  <button type="button" class="sndtab" id="sndtab" aria-expanded="false" aria-controls="sndpanel"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sndlbl">Sound</span></button>
-  <div class="sndpanel" id="sndpanel" role="group" aria-label="Music"><div class="sndinner">
-    <p class="sndtrack" id="sndtrack">Track 1</p>
-    <div class="sndbtns">
-      <button type="button" id="sndplay" aria-label="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4.5v11l9-5.5z"/><path class="i-pause" d="M5.5 4.5h3v11h-3zM11.5 4.5h3v11h-3z"/></svg></button>
-      <button type="button" id="sndstop" aria-label="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5h9v9h-9z"/></svg></button>
-      <button type="button" id="sndnext" aria-label="Next track"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 4.5v11l8-5.5zM13 4.5h2.5v11H13z"/></svg></button>
+<aside class="radio glass" id="radio" aria-label="Radio from around the world, from Radio Garden">
+  <p class="rtop">Spin the globe to play a tune.</p>
+  <div class="rrow">
+    <button type="button" class="globe" id="globe" aria-label="Spin the globe to play a random station"><canvas id="globecv" width="192" height="192"></canvas></button>
+    <button type="button" class="rbtn rmini" id="rplay2" aria-label="Pause"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4.5v11l9-5.5z"/><path class="i-pause" d="M5.5 4.5h3v11h-3zM11.5 4.5h3v11h-3z"/></svg></button>
+    <div class="rinfo">
+      <p class="rst" id="rst">Tuning in…</p>
+      <p class="rpl" id="rpl"></p>
+      <div class="rctl">
+        <button type="button" class="rbtn" id="rplay" aria-label="Pause"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4.5v11l9-5.5z"/><path class="i-pause" d="M5.5 4.5h3v11h-3zM11.5 4.5h3v11h-3z"/></svg></button>
+        <div class="knob" id="rvol" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70"><i></i></div>
+      </div>
+      <p class="rby rby2">powered by <a href="https://radio.garden" target="_blank" rel="noopener">Radio Garden</a></p>
     </div>
-    <label class="sndvol"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M13 7a4 4 0 0 1 0 6M15 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input type="range" id="sndvol" min="0" max="1" step="0.01" value="0.6" aria-label="Volume"></label>
-  </div></div>
-</div>
+  </div>
+  <p class="rby">powered by <a href="https://radio.garden" target="_blank" rel="noopener">Radio Garden</a></p>
+</aside>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
 <div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↑</button><button type="button" class="glass" id="backbtn">↓ Back</button></div>
 <div id="lb" hidden role="dialog" aria-modal="true" aria-label="Video player"><div class="frame" id="lbframe"></div><div class="bar"><span id="lbtitle"></span><button type="button" id="lbclose">Close · Esc</button></div></div>
@@ -755,14 +779,14 @@ function hydrate(root) {
   });
 }
 function openVideo(v, title) {
-  if (window.__snd) __snd.duck(true);
+  if (window.__radio) __radio.duck(true);
   if (v.startsWith('file:')) { $('lbframe').innerHTML = `<video src="${v.slice(5)}" controls autoplay playsinline></video>`; $('lbtitle').innerHTML = title; $('lb').hidden = false; $('lbclose').focus(); return; }
   const [id, h] = v.split('/');
   const q = new URLSearchParams({ autoplay: '1', title: '0', byline: '0', portrait: '0', dnt: '1', playsinline: '1' }); if (h) q.set('h', h);
   $('lbframe').innerHTML = `<iframe src="https://player.vimeo.com/video/${id}?${q}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="${title.replace(/"/g, '&quot;')}"></iframe>`;
   $('lbtitle').innerHTML = title; $('lb').hidden = false; $('lbclose').focus();
 }
-function closeVideo() { $('lb').hidden = true; $('lbframe').innerHTML = ''; if (window.__snd) __snd.duck(false); }
+function closeVideo() { $('lb').hidden = true; $('lbframe').innerHTML = ''; if (window.__radio) __radio.duck(false); }
 $('lbclose').addEventListener('click', closeVideo);
 $('lb').addEventListener('click', e => { if (e.target === $('lb')) closeVideo(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lb').hidden) { e.stopImmediatePropagation(); closeVideo(); } }, true);
@@ -1151,39 +1175,131 @@ function wireMail(root, c, k) {
   }
 }
 for (const k in cards) wireMail(cards[k].el, cards[k], k);
+// ---------- radio globe: Radio Garden stations (with Radio Garden's OK, Josiah 10-20) ----------
+// On load the globe spins itself and lands on a random place; a click spins again (2 s to a dead stop).
+// Stations come from Radio Garden's own data and streams; the audio element plays the stream directly.
+(() => {
+  const RG = 'https://radio.garden', API = RG + '/api/ara/content';
+  const FALLBACK = [{ id: 'la', geo: [-118.24, 34.05], title: 'Los Angeles CA', country: 'United States', channels: [{ id: 'qG0IphIN', title: 'KXSC Radio - USC', url: '/listen/kxsc/qG0IphIN' }] }];
+  const box = $('radio'), cv = $('globecv'), st = $('rst'), pl = $('rpl'), playBtn = $('rplay'), knob = $('rvol');
+  let peekT = 0; const peek = ms => { box.classList.add('peek'); clearTimeout(peekT); if (ms) peekT = setTimeout(() => box.classList.remove('peek'), ms); };
+  const audio = new Audio(); audio.preload = 'none';
+  let places = FALLBACK, vol = .7, userPaused = false, ducked = false, current = null, spinning = false, wantPlay = false, tries = 0;
+  try { const v = parseFloat(localStorage.getItem('wmp-radio-vol')); if (v >= 0 && v <= 1) vol = v; } catch (e) {}
+  audio.volume = vol;
+
+  // --- the globe: lattice lines like the site's grid, one dot per Radio Garden place
+  const R = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
+  R.setPixelRatio(1); R.setSize(192, 192, false);
+  const S = new THREE.Scene(), C = new THREE.PerspectiveCamera(30, 1, .1, 10); C.position.set(0, 0, 4.15);
+  const G0 = new THREE.Group(); S.add(G0);
+  G0.add(new THREE.Mesh(new THREE.SphereGeometry(.995, 48, 32), new THREE.MeshBasicMaterial({ color: 0xf3f6ff })));
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x9fb2e6, transparent: true, opacity: .55 });
+  const ll = (lat, lng, r = 1) => { const ph = (90 - lat) * Math.PI / 180, th = (lng + 180) * Math.PI / 180; return new THREE.Vector3(-r * Math.sin(ph) * Math.cos(th), r * Math.cos(ph), r * Math.sin(ph) * Math.sin(th)); };
+  for (let lat = -75; lat <= 75; lat += 15) { const pts = []; for (let lng = -180; lng <= 180; lng += 5) pts.push(ll(lat, lng, 1.001)); G0.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat)); }
+  for (let lng = -180; lng < 180; lng += 15) { const pts = []; for (let lat = -90; lat <= 90; lat += 5) pts.push(ll(lat, lng, 1.001)); G0.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat)); }
+  const dotGeo = new THREE.BufferGeometry(), dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0x2f5bff, size: 2.2, sizeAttenuation: false }));
+  G0.add(dots);
+  const pin = new THREE.Points(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]), new THREE.PointsMaterial({ color: 0xff4d6d, size: 9, sizeAttenuation: false, depthTest: false }));
+  pin.visible = false; G0.add(pin);
+  const setDots = () => { const a = new Float32Array(places.length * 3); places.forEach((p, i) => ll(p.geo[1], p.geo[0], 1.004).toArray(a, i * 3)); dotGeo.setAttribute('position', new THREE.BufferAttribute(a, 3)); dotGeo.computeBoundingSphere(); };
+  setDots();
+  G0.rotation.set(.35, 0, 0);
+
+  // --- spin: an ease-out over 2 s so it whips round and settles to a full stop with the place facing you
+  let spin = null;
+  const easeOut = t => 1 - Math.pow(1 - t, 4);
+  function spinTo(place) {
+    const v = ll(place.geo[1], place.geo[0]);
+    const yaw = Math.atan2(-v.x, v.z), lat = place.geo[1] * Math.PI / 180 * .85;    // a little less than the full latitude keeps the poles in view
+    const y0 = G0.rotation.y; let y1 = yaw; while (y1 < y0 + Math.PI * 4) y1 += Math.PI * 2;
+    spin = { t0: performance.now(), dur: 2000, y0, y1, x0: G0.rotation.x, x1: lat, place };
+    pin.visible = false; spinning = true;
+  }
+  let lastT = performance.now();
+  function loop(now) {
+    const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+    if (spin) {
+      const k = Math.min(1, (now - spin.t0) / spin.dur), e = easeOut(k);
+      G0.rotation.y = spin.y0 + (spin.y1 - spin.y0) * e; G0.rotation.x = spin.x0 + (spin.x1 - spin.x0) * (k * k * (3 - 2 * k));
+      if (k >= 1) { const p = spin.place; spin = null; spinning = false; landed(p); }
+    } else if (!current) G0.rotation.y += dt * .25;                                // idle drift until the first station lands
+    if (pin.visible) pin.material.size = 8 + Math.sin(now / 220) * 2.5;
+    R.render(S, C); requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // --- Radio Garden data
+  const placesReady = fetch(API + '/places').then(r => r.ok ? r.json() : Promise.reject(r.status)).then(j => {
+    const list = (j && j.data && j.data.list) || []; if (list.length) { places = list.filter(p => p.geo && p.id); setDots(); }
+  }).catch(e => console.warn('Radio Garden places unavailable, using the fallback station', e));
+  async function channelsFor(place) {
+    if (place.channels) return place.channels;
+    const j = await fetch(API + '/page/' + place.id + '/channels').then(r => r.ok ? r.json() : Promise.reject(r.status));
+    const out = [];
+    const walk = o => { if (!o || typeof o !== 'object') return; if (Array.isArray(o)) return o.forEach(walk);
+      const pg = o.page || o; if (pg && typeof pg.url === 'string' && pg.url.includes('/listen/')) out.push({ id: pg.url.split('/').filter(Boolean).pop(), title: pg.title || o.title || 'Radio', url: pg.url, place: pg.place && pg.place.title, country: pg.country && pg.country.title });
+      else for (const k in o) if (k !== 'page') walk(o[k]); };
+    walk(j && j.data); return out;
+  }
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function show(title, where) { st.textContent = title; pl.textContent = where || ''; }
+  async function tune() {
+    if (spinning) return;
+    await Promise.race([placesReady, new Promise(r => setTimeout(r, 2500))]);
+    const place = pick(places); box.classList.add('tuning'); show('Tuning in…', ''); peek(0);
+    spinTo(place);
+  }
+  async function landed(place) {
+    pin.geometry.setFromPoints([ll(place.geo[1], place.geo[0], 1.012)]); pin.visible = true;
+    let ch = [];
+    try { ch = await channelsFor(place); } catch (e) { console.warn('Radio Garden channels unavailable', e); }
+    if (!ch.length) { if (++tries < 4) return tune(); ch = FALLBACK[0].channels; place = FALLBACK[0]; }
+    const c = pick(ch); current = { ...c, placeTitle: c.place || place.title, country: c.country || place.country };
+    box.classList.remove('tuning');
+    show(current.title, [current.placeTitle, current.country].filter(Boolean).join(', ')); peek(5000);
+    audio.src = API + '/listen/' + current.id + '/channel.mp3';
+    if (!userPaused && !ducked) start();
+  }
+  function start() {
+    wantPlay = true;
+    audio.play().then(() => { tries = 0; box.classList.remove('paused', 'blocked'); playBtn.setAttribute('aria-label', 'Pause'); })
+      .catch(err => { if (err && err.name === 'NotAllowedError') { box.classList.add('blocked', 'paused'); playBtn.setAttribute('aria-label', 'Play'); pl.textContent = 'Tap anywhere to listen'; peek(0); } });
+  }
+  function stop() { wantPlay = false; audio.pause(); box.classList.add('paused'); playBtn.setAttribute('aria-label', 'Play'); }
+  // a station that is off air: try another place
+  audio.addEventListener('error', () => { if (current && wantPlay && ++tries < 4) { show('Off air, retuning…', ''); tune(); } });
+  audio.addEventListener('pause', () => { if (!ducked) box.classList.add('paused'); });
+  audio.addEventListener('playing', () => { const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
+
+  $('globe').addEventListener('click', e => { e.stopPropagation(); userPaused = false; tries = 0; tune(); });
+  const toggle = e => { e.stopPropagation(); if (audio.paused) { userPaused = false; if (current) start(); else tune(); } else { userPaused = true; stop(); } };
+  playBtn.addEventListener('click', toggle); $('rplay2').addEventListener('click', toggle);
+  // volume knob: drag up or down, scroll, or arrow keys
+  const setVol = v => { vol = Math.min(1, Math.max(0, v)); audio.volume = vol; knob.style.setProperty('--v', vol); knob.setAttribute('aria-valuenow', Math.round(vol * 100)); try { localStorage.setItem('wmp-radio-vol', String(vol)); } catch (e) {} };
+  setVol(vol);
+  let kd = null;
+  knob.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); kd = { y: e.clientY, x: e.clientX, v: vol }; knob.setPointerCapture(e.pointerId); });
+  knob.addEventListener('pointermove', e => { if (kd) setVol(kd.v + ((kd.y - e.clientY) + (e.clientX - kd.x)) / 120); });
+  knob.addEventListener('pointerup', () => { kd = null; });
+  knob.addEventListener('wheel', e => { e.preventDefault(); e.stopPropagation(); setVol(vol - e.deltaY / 800); }, { passive: false });
+  knob.addEventListener('keydown', e => { const d = { ArrowUp: .05, ArrowRight: .05, ArrowDown: -.05, ArrowLeft: -.05 }[e.key]; if (d) { e.preventDefault(); e.stopPropagation(); setVol(vol + d); } });
+  box.addEventListener('pointerdown', e => e.stopPropagation());
+  box.addEventListener('wheel', e => e.stopPropagation());
+
+  // Browsers hold sound until the visitor interacts: the first click, tap or key anywhere starts the station.
+  const evs = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
+  const kick = () => { if (userPaused || !current || !audio.paused || ducked) { if (!audio.paused || userPaused) evs.forEach(e => removeEventListener(e, kick, true)); return; } start(); };
+  evs.forEach(e => addEventListener(e, kick, { capture: true, passive: true }));
+
+  // a video in the player takes the sound; the radio comes back when it closes
+  window.__radio = { audio, tune, duck(on) { if (on) { if (!audio.paused) { ducked = true; audio.pause(); } } else if (ducked) { ducked = false; if (!userPaused) start(); } }, get current() { return current; } };
+  // first spin once the stops have faded in
+  setTimeout(tune, still ? 300 : 2600);
+})();
 window.__wmp = { go, step, get current() { return current; }, get flight() { return flight; }, cards, camPos: () => camera.position.clone(), HOLE };   // QA
 </script>
 <script>
-// ---------- sound: starts on entry; play / pause, stop, next and volume in the Sound tab ----------
-(() => {
-  const TRACKS = [{ src: 'media/track1.m4a', title: 'Track 1' }];      // add songs here; Next steps through them and the list loops
-  const $ = id => document.getElementById(id), box = $('snd'), a = new Audio();
-  a.preload = 'auto'; a.crossOrigin = 'anonymous';
-  let i = 0, stopped = false, started = false, want = .6, ctx = null, gain = null, fadeRAF = 0;
-  try { const v = parseFloat(localStorage.getItem('wmp-vol')); if (v >= 0 && v <= 1) want = v; } catch (e) {}
-  $('sndvol').value = want;
-  // volume runs through Web Audio, because iPhones ignore the audio element's own volume
-  const graph = () => { if (ctx) return; try { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(a).connect(gain).connect(ctx.destination); } catch (e) { ctx = null; gain = null; } };
-  const getV = () => gain ? gain.gain.value : a.volume, setV = v => { if (gain) gain.gain.value = v; else a.volume = v; };
-  const fadeTo = (v, ms, done) => { cancelAnimationFrame(fadeRAF); const v0 = getV(), t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); setV(v0 + (v - v0) * k); if (k < 1) fadeRAF = requestAnimationFrame(f); else if (done) done(); }; f(); };
-  const ui = () => { const on = !a.paused; box.classList.toggle('playing', on); $('sndplay').setAttribute('aria-label', on ? 'Pause' : 'Play'); };
-  const load = n => { i = (n + TRACKS.length) % TRACKS.length; a.src = TRACKS[i].src; $('sndtrack').textContent = TRACKS.length > 1 ? TRACKS[i].title + ' · ' + (i + 1) + ' of ' + TRACKS.length : TRACKS[i].title; };
-  const play = () => { graph(); if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {}); setV(0); return a.play().then(() => { started = true; fadeTo(want, 1800); ui(); }); };
-  a.addEventListener('ended', () => { load(i + 1); play().catch(() => {}); });
-  a.addEventListener('play', ui); a.addEventListener('pause', ui);
-  $('sndplay').addEventListener('click', () => { stopped = false; if (a.paused) play().catch(() => {}); else fadeTo(0, 300, () => a.pause()); });
-  $('sndstop').addEventListener('click', () => { stopped = true; fadeTo(0, 300, () => { a.pause(); a.currentTime = 0; }); });
-  $('sndnext').addEventListener('click', () => { stopped = false; load(i + 1); play().catch(() => {}); });
-  $('sndvol').addEventListener('input', e => { want = +e.target.value; cancelAnimationFrame(fadeRAF); setV(want); try { localStorage.setItem('wmp-vol', String(want)); } catch (err) {} });
-  $('sndtab').addEventListener('click', () => { const o = !box.classList.contains('open'); box.classList.toggle('open', o); $('sndtab').setAttribute('aria-expanded', String(o)); });
-  // Browsers hold sound back until the visitor interacts, so if the first try is refused the song starts on the first click, tap or key.
-  const evs = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
-  const off = () => evs.forEach(e => removeEventListener(e, kick, true));
-  function kick(e) { if (started || stopped) return off(); if (e && e.target && e.target.closest && e.target.closest('#snd')) return; play().then(off).catch(() => {}); }
-  evs.forEach(e => addEventListener(e, kick, { capture: true, passive: true }));
-  load(0); play().catch(() => {});
-  window.__snd = { audio: a, duck(on) { if (on) { if (!a.paused) { this.was = true; fadeTo(0, 250, () => a.pause()); } } else if (this.was) { this.was = false; play().catch(() => {}); } } };
-})();
 // safety net: if anything stops the opening sequence, show the page anyway
 setTimeout(() => document.body.classList.remove('intro', 'intro-c'), 6000);
 </script>
