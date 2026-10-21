@@ -1241,11 +1241,15 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
   requestAnimationFrame(loop);
 
   // --- the deck: a shuffled pass through all ten, never the same station twice in a row
-  let deck = [], last = null;
+  // a station that fails to play is set aside for the rest of the visit, so the deck only deals ones that work
+  let deck = [], last = null; const dead = new Set();
   const draw = () => {
-    if (!deck.length) { deck = STATIONS.slice().sort(() => Math.random() - .5); if (deck[deck.length - 1] === last) deck.unshift(deck.pop()); }
+    const live = STATIONS.filter(x => !dead.has(x)), pool = live.length ? live : STATIONS;
+    deck = deck.filter(x => !dead.has(x));
+    if (!deck.length) { deck = pool.slice().sort(() => Math.random() - .5); if (deck.length > 1 && deck[deck.length - 1] === last) deck.unshift(deck.pop()); }
     return (last = deck.pop());
   };
+  let watchdog = 0;
   function show(title, where) { st.textContent = title; pl.textContent = where || ''; }
   function tune() {
     if (spinning) return;
@@ -1260,16 +1264,20 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
     audio.src = s1.src;
     if (!userPaused && !ducked) start();
   }
+  // no sound within 10 s of asking for it (and not held back by the browser): skip to the next station
+  const arm = () => { clearTimeout(watchdog); watchdog = setTimeout(() => { if (wantPlay && audio.paused === false && audio.readyState < 3 && current) fail(); }, 10000); };
+  function fail() { if (!current) return; dead.add(STATIONS.find(x => x.src === current.src)); if (++tries < 6) { show('Off air, retuning…', ''); setTimeout(tune, 400); } }
   function start() {
     wantPlay = true;
-    audio.play().then(() => { tries = 0; box.classList.remove('paused', 'blocked'); playBtn.setAttribute('aria-label', 'Pause'); })
+    arm();
+    audio.play().then(() => { box.classList.remove('paused', 'blocked'); playBtn.setAttribute('aria-label', 'Pause'); })
       .catch(err => { if (err && err.name === 'NotAllowedError') { box.classList.add('blocked', 'paused'); playBtn.setAttribute('aria-label', 'Play'); pl.textContent = 'Tap anywhere to listen'; peek(0); } });
   }
   function stop() { wantPlay = false; audio.pause(); box.classList.add('paused'); playBtn.setAttribute('aria-label', 'Play'); }
   // a station that is off air: try another place
-  audio.addEventListener('error', () => { if (current && wantPlay && ++tries < 4) { show('Off air, retuning…', ''); setTimeout(tune, 400); } });   // a station that's down: spin on to the next
+  audio.addEventListener('error', () => { if (current && wantPlay) fail(); });   // a station that's down: set it aside and spin on to the next
   audio.addEventListener('pause', () => { if (!ducked) box.classList.add('paused'); });
-  audio.addEventListener('playing', () => { tries = 0; const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
+  audio.addEventListener('playing', () => { tries = 0; clearTimeout(watchdog); const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
 
   $('globe').addEventListener('click', e => { e.stopPropagation(); userPaused = false; tries = 0; tune(); });
   const toggle = e => { e.stopPropagation(); if (audio.paused) { userPaused = false; if (current) start(); else tune(); } else { userPaused = true; stop(); } };
