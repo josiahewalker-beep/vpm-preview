@@ -319,7 +319,7 @@ p { margin:0; color:var(--mid); }
 @media (max-width:700px) { .mailform { grid-template-columns:1fr; } .mailform input, .mailform textarea { font-size:16px; } }   /* 16px stops iOS zooming into the field */
 
 /* ---------- radio globe (Radio Garden): floats in open space, no panel behind it ---------- */
-.radio { position:fixed; z-index:11; right:max(18px,2.6vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:grid; grid-template-columns:auto auto; grid-template-areas:"top globe" "info globe" "by globe"; column-gap:14px; align-items:end; text-align:right; color:var(--ink); }
+.radio { position:fixed; z-index:11; right:max(18px,2.6vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:grid; grid-template-columns:auto auto; grid-template-areas:"top globe" "info globe"; column-gap:14px; align-items:end; text-align:right; color:var(--ink); }
 .rrow { display:contents; } .rtop { grid-area:top; } .globe { grid-area:globe; align-self:center; } .rinfo { grid-area:info; } .radio > .rby { grid-area:by; }
 .radio p { text-shadow:0 0 6px #f6f7f9, 0 0 12px #f6f7f9, 0 0 2px #f6f7f9; }                 /* a halo of the page colour keeps text readable over grid lines */
 .rtop { margin:0; font-size:12.5px; font-weight:600; white-space:nowrap; }
@@ -404,7 +404,7 @@ body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.int
 </header>
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
-<aside class="radio" id="radio" aria-label="Radio from around the world, from Radio Garden">
+<aside class="radio" id="radio" aria-label="Radio: old music from around the world">
   <p class="rtop">Spin the globe to play a tune.</p>
   <div class="rrow">
     <button type="button" class="globe" id="globe" aria-label="Spin the globe to play a random station"><canvas id="globecv" width="260" height="260"></canvas></button>
@@ -416,10 +416,8 @@ body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.int
         <button type="button" class="rbtn" id="rplay" aria-label="Pause"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4.5v11l9-5.5z"/><path class="i-pause" d="M5.5 4.5h3v11h-3zM11.5 4.5h3v11h-3z"/></svg></button>
         <div class="knob" id="rvol" role="slider" tabindex="0" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70"><i></i></div>
       </div>
-      <p class="rby rby2">powered by <a href="https://radio.garden" target="_blank" rel="noopener">Radio Garden</a></p>
     </div>
   </div>
-  <p class="rby">powered by <a href="https://radio.garden" target="_blank" rel="noopener">Radio Garden</a></p>
 </aside>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
 <div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↑</button><button type="button" class="glass" id="backbtn">↓ Back</button></div>
@@ -1178,21 +1176,41 @@ function wireMail(root, c, k) {
 for (const k in cards) wireMail(cards[k].el, cards[k], k);
 // ---------- radio globe: Radio Garden stations (with Radio Garden's OK, Josiah 10-20) ----------
 // On load the globe spins itself, lands on a station and plays it; each click spins to a different one (2 s to a dead stop).
-// Ten music stations, each at its own spot on the map; every spin draws the next from a shuffled deck, so none repeats
-// until all ten have played. Each plays its own public stream (KXSC through Radio Garden's stream link).
+// Old music only (Josiah 10-20): each visit pulls popular stations tagged oldies / 30s–70s / swing / big band / doo-wop /
+// Motown / rock 'n' roll from Radio Browser's open directory (radio-browser.info), keeps 10 from far-apart places, and deals
+// them from a shuffled deck so none repeats until all ten have played. Stations that fail are set aside for the visit.
 (() => {
-  const STATIONS = [
-    { title: 'KEXP 90.3', place: 'Seattle', country: 'United States', geo: [-122.33, 47.61], src: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
-    { title: 'FIP', place: 'Paris', country: 'France', geo: [2.35, 48.86], src: 'https://icecast.radiofrance.fr/fip-midfi.mp3' },
-    { title: 'WWOZ 90.7', place: 'New Orleans', country: 'United States', geo: [-90.07, 29.95], src: 'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3' },
-    { title: 'NTS 1', place: 'London', country: 'United Kingdom', geo: [-0.13, 51.51], src: 'https://stream-relay-geo.ntslive.net/stream?client=direct' },
+  let deck = [];
+  const RB = ['https://de1.api.radio-browser.info', 'https://fi1.api.radio-browser.info', 'https://de2.api.radio-browser.info', 'https://nl1.api.radio-browser.info'];
+  const TAGS = ['oldies', '60s', '50s', '70s', '40s', '30s', 'swing', 'big band', 'doo wop', 'motown', "rock'n'roll", 'golden oldies'];
+  const FALLBACK = [   // vintage streams used only if the directory can't be reached
+    { title: 'SomaFM Seven Inch Soul', place: 'San Francisco', country: 'United States', geo: [-122.42, 37.77], src: 'https://ice2.somafm.com/7soul-128-mp3' },
+    { title: 'SomaFM Secret Agent', place: 'San Francisco', country: 'United States', geo: [-122.42, 37.77], src: 'https://ice2.somafm.com/secretagent-128-mp3' },
+    { title: 'SomaFM Left Coast 70s', place: 'San Francisco', country: 'United States', geo: [-122.42, 37.77], src: 'https://ice2.somafm.com/seventies-128-mp3' },
     { title: 'Radio Swiss Jazz', place: 'Basel', country: 'Switzerland', geo: [7.59, 47.56], src: 'https://stream.srg-ssr.ch/srgssr/rsj/mp3/128' },
-    { title: 'triple j', place: 'Sydney', country: 'Australia', geo: [151.21, -33.87], src: 'https://live-radio01.mediahubaustralia.com/2TJW/mp3/' },
-    { title: 'SomaFM Groove Salad', place: 'San Francisco', country: 'United States', geo: [-122.42, 37.77], src: 'https://ice2.somafm.com/groovesalad-128-mp3' },
-    { title: 'WFMU 91.1', place: 'Jersey City', country: 'United States', geo: [-74.08, 40.73], src: 'https://stream0.wfmu.org/freeform-128k' },
-    { title: 'Radio Meuh', place: 'La Clusaz', country: 'France', geo: [6.42, 45.9], src: 'https://radiomeuh.ice.infomaniak.ch/radiomeuh-128.mp3' },
-    { title: 'KXSC Radio · USC', place: 'Los Angeles', country: 'United States', geo: [-118.28, 34.02], src: 'https://radio.garden/api/ara/content/listen/qG0IphIN/channel.mp3' },
+    { title: 'WWOZ 90.7', place: 'New Orleans', country: 'United States', geo: [-90.07, 29.95], src: 'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3' },
   ];
+  let STATIONS = FALLBACK.slice();
+  const km = (a, b) => { const r = Math.PI / 180, dLa = (b[1] - a[1]) * r, dLo = (b[0] - a[0]) * r; const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLo / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); };
+  async function rb(path) { for (const host of RB) { try { const r = await fetch(host + path); if (r.ok) return { host, data: await r.json() }; } catch (e) {} } throw new Error('Radio Browser unreachable'); }
+  let RBHOST = null;
+  const directory = (async () => {
+    const lists = await Promise.all(TAGS.map(t => rb('/json/stations/search?' + new URLSearchParams({ tag: t, has_geo_info: 'true', is_https: 'true', hidebroken: 'true', order: 'clickcount', reverse: 'true', limit: '80' })).then(x => { RBHOST = RBHOST || x.host; return x.data; }).catch(() => [])));
+    const seen = new Set(), all = [];
+    for (const list of lists) for (const x of list) {
+      const url = x.url_resolved || x.url || '', codec = (x.codec || '').toUpperCase();
+      if (seen.has(x.stationuuid) || !/^https:/.test(url) || /\.m3u8|\.pls|\.m3u(\?|$)/i.test(url) || !/^(MP3|AAC|AAC\+|OGG)$/.test(codec) || x.geo_lat == null || x.geo_long == null) continue;
+      seen.add(x.stationuuid);
+      all.push({ title: (x.name || 'Radio').trim().replace(/\s+/g, ' ').slice(0, 48), place: (x.state || '').trim(), country: (x.country || '').trim(), geo: [+x.geo_long, +x.geo_lat], src: url, uuid: x.stationuuid, clicks: x.clickcount || 0 });
+    }
+    if (all.length < 4) return;
+    // ten from far-apart places: popular first, with a little shuffle so each visit differs
+    for (const x of all) x.score = x.clicks * (0.6 + Math.random() * 0.8);
+    all.sort((a, b) => b.score - a.score);
+    const out = [];
+    for (const minKm of [1500, 700, 250, 0]) { for (const x of all) { if (out.length >= 10) break; if (out.includes(x)) continue; if (out.every(o => km(o.geo, x.geo) >= minKm && (minKm < 700 || o.country !== x.country || out.length > 6))) out.push(x); } if (out.length >= 10) break; }
+    STATIONS = out; deck = [];
+  })().catch(() => {});
   const box = $('radio'), cv = $('globecv'), st = $('rst'), pl = $('rpl'), playBtn = $('rplay'), knob = $('rvol');
   let peekT = 0; const peek = ms => { box.classList.add('peek'); clearTimeout(peekT); if (ms) peekT = setTimeout(() => box.classList.remove('peek'), ms); };
   const audio = new Audio(); audio.preload = 'none';
@@ -1242,31 +1260,35 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
 
   // --- the deck: a shuffled pass through all ten, never the same station twice in a row
   // a station that fails to play is set aside for the rest of the visit, so the deck only deals ones that work
-  let deck = [], last = null; const dead = new Set();
+  let last = null; const dead = new Set();
   const draw = () => {
     const live = STATIONS.filter(x => !dead.has(x)), pool = live.length ? live : STATIONS;
+    deck = deck.filter(x => STATIONS.includes(x));
     deck = deck.filter(x => !dead.has(x));
     if (!deck.length) { deck = pool.slice().sort(() => Math.random() - .5); if (deck.length > 1 && deck[deck.length - 1] === last) deck.unshift(deck.pop()); }
     return (last = deck.pop());
   };
   let watchdog = 0;
   function show(title, where) { st.textContent = title; pl.textContent = where || ''; }
-  function tune() {
+  let firstSpin = true;
+  async function tune() {
     if (spinning) return;
     box.classList.add('tuning'); show('Tuning in…', ''); peek(0);
+    if (firstSpin) { firstSpin = false; await Promise.race([directory, new Promise(r => setTimeout(r, 2500))]); }
     spinTo(draw());
   }
   function landed(s1) {
     pin.position.copy(ll(s1.geo[1], s1.geo[0], 1.01)); pin.visible = true;
-    current = { ...s1, placeTitle: s1.place };
+    current = { ...s1 };
     box.classList.remove('tuning');
-    show(current.title, [current.place, current.country].join(', ')); peek(5000);
+    show(current.title, [current.place, current.country].filter(Boolean).join(', ')); peek(5000);
     audio.src = s1.src;
+    if (s1.uuid && RBHOST) fetch(RBHOST + '/json/url/' + s1.uuid).catch(() => {});   // Radio Browser's play counter, as its docs ask
     if (!userPaused && !ducked) start();
   }
   // no sound within 10 s of asking for it (and not held back by the browser): skip to the next station
   const arm = () => { clearTimeout(watchdog); watchdog = setTimeout(() => { if (wantPlay && audio.paused === false && audio.readyState < 3 && current) fail(); }, 10000); };
-  function fail() { if (!current) return; dead.add(STATIONS.find(x => x.src === current.src)); if (++tries < 6) { show('Off air, retuning…', ''); setTimeout(tune, 400); } }
+  function fail() { if (!current) return; dead.add(STATIONS.find(x => x.src === current.src) || current); if (++tries < 6) { show('Off air, retuning…', ''); setTimeout(tune, 400); } }
   function start() {
     wantPlay = true;
     arm();
@@ -1277,7 +1299,7 @@ for (const k in cards) wireMail(cards[k].el, cards[k], k);
   // a station that is off air: try another place
   audio.addEventListener('error', () => { if (current && wantPlay) fail(); });   // a station that's down: set it aside and spin on to the next
   audio.addEventListener('pause', () => { if (!ducked) box.classList.add('paused'); });
-  audio.addEventListener('playing', () => { tries = 0; clearTimeout(watchdog); const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.placeTitle, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
+  audio.addEventListener('playing', () => { tries = 0; clearTimeout(watchdog); const was = box.classList.contains('blocked'); box.classList.remove('paused', 'blocked'); if (current) pl.textContent = [current.place, current.country].filter(Boolean).join(', '); if (was) peek(4000); });
 
   $('globe').addEventListener('click', e => { e.stopPropagation(); userPaused = false; tries = 0; tune(); });
   const toggle = e => { e.stopPropagation(); if (audio.paused) { userPaused = false; if (current) start(); else tune(); } else { userPaused = true; stop(); } };
