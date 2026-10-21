@@ -504,8 +504,8 @@ body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.int
   </article>
   <article class="card night" data-id="next" data-label="Start a project" style="--w:900px">
     <p class="chip">Start a project</p>
-    <h2 style="color:#fff">What’s first on your list?</h2>
-    <p class="sub" style="color:#aab5cc">One-off or ongoing, send a line about it. A proposal sized to it comes back, and a kickoff call plans the first shoot or edit.</p>
+    <h2 style="color:#fff">What do you got cookin’?</h2>
+    <p class="sub" style="color:#aab5cc">One-off or ongoing, send a line about it, we’d love to chat with you.</p>
     <div class="reach"><button type="button" class="btn pri" data-mailopen aria-expanded="false">Email the studio</button></div>
     <div class="mailbox" data-mailbox>
       <form class="mailform" novalidate>
@@ -531,12 +531,13 @@ const $ = id => document.getElementById(id);
 // Where each stop sits in the grid (cell coordinates) and how it is turned. The tour weaves deeper and higher.
 const ORDER = ['hero', 'work', 'do', 'onsite', 'process', 'next'];
 const SPOTS = {
+  // Josiah 10-21 (audition v3): every card squared to the grid and centred on a main grid line, eight cells apart
   hero:    { p: [0, 3, 0],     ry: 0 },
-  work:    { p: [-9, 5, -9],   ry: 22 },
-  do:      { p: [9, 6, -17],   ry: -22 },
-  onsite:  { p: [-8, 7, -25],  ry: 18 },
-  process: { p: [7, 9, -32],   ry: -14 },
-  next:    { p: [-3, 11, -39], ry: 10 },
+  work:    { p: [-8, 5, -8],   ry: 0 },
+  do:      { p: [8, 6, -16],   ry: 0 },
+  onsite:  { p: [-8, 7, -24],  ry: 0 },
+  process: { p: [8, 9, -32],   ry: 0 },
+  next:    { p: [0, 11, -40],  ry: 0 },
 };
 const OVER = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
 function setOverview() {
@@ -590,7 +591,7 @@ const pointMat = (color, opacity, size) => new THREE.ShaderMaterial({ transparen
   vertexShader: WARP_GLSL + `uniform float uPx, uH; varying float vFog; void main() { vec4 mv = modelViewMatrix * vec4(warp(position), 1.0); vFog = smoothstep(2600.0, 9000.0, -mv.z); gl_PointSize = uPx * (uH * 0.5) / max(1.0, -mv.z) * 1.6; gl_Position = projectionMatrix * mv; }`,
   fragmentShader: `uniform vec3 uColor, uFogCol, uStressCol; uniform float uOpacity, uFade, uStress; varying float vFog, vEat; void main() { if (length(gl_PointCoord - 0.5) > 0.5) discard; vec3 c = mix(uColor, uStressCol, uStress); gl_FragColor = vec4(mix(c, uFogCol, vFog), min(1.0, uOpacity * (1.0 + 1.3 * uStress)) * (1.0 - uFade) * (1.0 - vFog) * vEat); }` });
 const LINES = (function lattice() {
-  const X = 18, Z0 = -40, Z1 = 14, YT = 12;
+  const X = 18, Z0 = -48, Z1 = 14, YT = 12;   // reaches past the last card (z = -40)
   const floor = [], major = [], cage = [], nodes = [];
   // every line is cut into half-cell pieces so the fabric can curve, not just tilt
   const STEP = G / 2;
@@ -742,7 +743,7 @@ for (const src of tpl.querySelectorAll('.card')) {
   const id = src.dataset.id, s = SPOTS[id], el = src.cloneNode(true);
   const holder = document.createElement('div'); holder.className = 'holder'; holder.append(el);
   const obj = new CSS3DObject(holder);
-  obj.position.set(s.p[0] * G, s.p[1] * G, s.p[2] * G); obj.rotation.y = /[#&]square/.test(location.hash) ? 0 : THREE.MathUtils.degToRad(s.ry);   // #square: audition, every card faces straight down the grid
+  obj.position.set(s.p[0] * G, s.p[1] * G, s.p[2] * G); obj.rotation.y = THREE.MathUtils.degToRad(s.ry);
   cssScene.add(obj);
   const base = new THREE.Vector3(obj.position.x, 0, obj.position.z);
   scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base, obj.position.clone().setY(0.01)]), stemMat));
