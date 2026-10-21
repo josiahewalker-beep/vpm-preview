@@ -381,7 +381,7 @@ p { margin:0; color:var(--mid); }
   </article>
   <article class="card" data-id="do" data-label="Selects" style="--w:1120px">
     <p class="chip">Portfolio selects</p>
-    <h2 class="selh">Customers on camera, and the company in its own voice.</h2>
+    <h2 class="selh">Selected work: from testimonials, company updates, to an AI series.</h2>
     <div class="sel">
       <p class="tag">Customer testimonials</p>
       <div class="row5">
@@ -1000,7 +1000,6 @@ const startAt = hashParts.at || (cards[location.hash.slice(1)] ? location.hash.s
 setTimeout(() => go(cards[startAt] ? startAt : 'hero'), still ? 0 : 900);
 // headline auditions: #h=1..4 (Portfolio selects), #k=1..4 (intro); combine with &
 const AUD = {
-  h: ['.selh', ['Customers on camera, and the company in its own voice.', 'Selected work, from testimonials to an AI series.', 'The stories a company tells, inside and out.']],
   k: ['.heroh', ['Corporate video with a soft spot for <span class="grad">fintech and SaaS.</span>', 'Corporate video, fluent in <span class="grad">fintech and SaaS.</span>', 'Corporate video, at home in <span class="grad">fintech and SaaS.</span>', 'Corporate video with a weakness for <span class="grad">fintech and SaaS.</span>']],
 };
 function selHead() { for (const key in AUD) { const m = location.hash.match(new RegExp('(?:^#|&)' + key + '=(\\d)')), [sel, list] = AUD[key]; if (m && list[m[1] - 1]) document.querySelectorAll(sel).forEach(el => { el.innerHTML = list[m[1] - 1]; }); } }
