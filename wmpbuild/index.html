@@ -59,7 +59,7 @@ nav.top button.cta:hover { background:var(--accent); }
 .rail button:hover span, .rail button:focus-visible span { opacity:1; transform:none; }
 @media (max-width:620px) { .rail { display:none; } }
 .count { display:none; align-self:center; font-size:13px; font-weight:500; color:var(--mid); border-radius:999px; padding:7px 11px; font-variant-numeric:tabular-nums; }
-@media (max-width:620px) { .count { display:block; } }
+@media (max-width:620px) { .count { display:none; } }
 .hint { position:fixed; z-index:10; left:max(14px,2.6vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--mid); border-radius:999px; padding:8px 14px; transition:opacity .5s; pointer-events:none; }
 .hint kbd { font:inherit; font-size:11px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 5px; background:#fff; color:var(--ink); }
 .ctl { position:fixed; z-index:10; left:0; top:0; display:flex; gap:10px; align-items:center; will-change:transform; }
@@ -72,7 +72,8 @@ nav.top button.cta:hover { background:var(--accent); }
 .listbar button:hover { background:var(--accent); }
 .ctl .next { background:var(--ink); color:#fff; border-color:var(--ink); }
 .ctl .next:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
-@media (max-width:620px) { .hint { display:none; } .ctl button { font-size:14px; padding:11px 16px; min-height:44px; } }
+@media (max-width:620px) { .hint { display:none; } .ctl { gap:6px; } .ctl button { font-size:14px; padding:11px 14px; min-height:44px; } }
+.ctl button { white-space:nowrap; }
 .aud { position:fixed; z-index:12; left:50%; top:calc(env(safe-area-inset-top,0px) + 96px); transform:translateX(-50%); display:flex; gap:4px; align-items:center; padding:5px 6px 5px 12px; border-radius:12px; max-width:calc(100vw - 24px); overflow:auto; }
 .aud span { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-right:6px; white-space:nowrap; }
 .aud button { font:inherit; font-size:13px; font-weight:500; color:var(--mid); background:none; border:0; border-radius:8px; padding:7px 10px; cursor:pointer; white-space:nowrap; }
@@ -303,7 +304,7 @@ p { margin:0; color:var(--mid); }
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
-<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button></div>
+<div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↓</button><button type="button" class="glass" id="backbtn">↑ Back</button></div>
 <div id="lb" hidden role="dialog" aria-modal="true" aria-label="Video player"><div class="frame" id="lbframe"></div><div class="bar"><span id="lbtitle"></span><button type="button" id="lbclose">Close · Esc</button></div></div>
 <div id="list" hidden><div class="listbar"><button type="button" class="next" id="backto3d">← Cool 3D view</button></div><div class="wrap" id="listwrap"></div></div>
 
@@ -741,6 +742,7 @@ function arrive(id) {
   const f = () => { const k = Math.min(1, (performance.now() - t0) / 1000); trail.material.opacity = o * (1 - k); if (k < 1) requestAnimationFrame(f); }; f();
   if (id === 'work') countUp(cards.work.el);
   const i = ORDER.indexOf(id); $('nextbtn').textContent = i === ORDER.length - 1 ? 'Start over ↺' : 'Next ↓';
+  $('backbtn').hidden = id === 'overview';
 }
 function mark(id) { for (const k in cards) cards[k].el.classList.toggle('here', k === id); }
 function navState(id) {
@@ -753,7 +755,7 @@ function countUp(el) {
   el.querySelectorAll('[data-count]').forEach(b => { const n = +b.dataset.count, t0 = performance.now(); if (still) return;
     const f = () => { const k = Math.min(1, (performance.now() - t0) / 900); b.textContent = Math.round(n * ease(k)); if (k < 1) requestAnimationFrame(f); }; b.textContent = 0; f(); });
 }
-const step = d => { if (flight || HOLE.active) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go('overview', { straight: true }); if (j < 0) return go('overview', { straight: true }); go(ORDER[j]); };
+const step = (d, opt = {}) => { if (flight || HOLE.active) return; const i = ORDER.indexOf(current); const j = i < 0 ? 0 : i + d; if (j >= ORDER.length) return go('overview', { straight: true }); if (j < 0) return go('overview', { straight: true }); go(ORDER[j], opt); };
 
 // ---------- input: drag looks, scroll / swipe / keys travel ----------
 const el = $('css');
@@ -793,6 +795,8 @@ addEventListener('keydown', e => {
 });
 function hideHint() { $('hint').style.opacity = 0; }
 document.querySelectorAll('header [data-go], #rail [data-go]').forEach(b => b.addEventListener('click', () => { closeList(); go(b.dataset.go); }));
+// Back: the previous stop, the camera pulling straight back along a line (no grid route); from the intro it pulls back to the bird's-eye view
+$('backbtn').addEventListener('click', () => step(-1, { straight: true }));
 $('nextbtn').addEventListener('click', () => { if (pan.max && pan.y < pan.max - 1) { pan.y = Math.round(Math.min(pan.max, pan.y + innerHeight * 0.6 * pan.k)); return; } step(1); });
 $('listbtn').addEventListener('click', () => $('list').hidden ? openList() : closeList());
 $('backto3d').addEventListener('click', closeList);
