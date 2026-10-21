@@ -318,6 +318,33 @@ p { margin:0; color:var(--mid); }
 .mstat { margin:0; font-size:14px; color:#aab5cc; } .mstat a { color:#fff; }
 @media (max-width:700px) { .mailform { grid-template-columns:1fr; } .mailform input, .mailform textarea { font-size:16px; } }   /* 16px stops iOS zooming into the field */
 
+/* ---------- sound ---------- */
+.snd { position:fixed; z-index:11; right:max(14px,2.2vw); bottom:calc(env(safe-area-inset-bottom,0px) + 14px); border-radius:16px; box-shadow:0 10px 30px -14px rgba(11,18,32,.35); overflow:hidden; }
+.sndtab { display:flex; align-items:center; gap:9px; font:inherit; font-size:13px; font-weight:500; color:var(--ink); background:none; border:0; padding:9px 14px; cursor:pointer; min-height:40px; }
+.eq { display:flex; align-items:flex-end; gap:2px; height:14px; } .eq i { width:3px; height:4px; border-radius:1px; background:var(--accent); }
+.snd.playing .eq i { animation:eq 1s ease-in-out infinite; } .snd.playing .eq i:nth-child(2) { animation-delay:-.35s; } .snd.playing .eq i:nth-child(3) { animation-delay:-.7s; } .snd.playing .eq i:nth-child(4) { animation-delay:-.15s; }
+@keyframes eq { 0%,100% { height:4px; } 50% { height:14px; } }
+.sndpanel { display:grid; grid-template-rows:0fr; transition:grid-template-rows .4s cubic-bezier(.2,.7,.2,1); }
+.sndinner { min-height:0; overflow:hidden; }
+.snd.open .sndpanel { grid-template-rows:1fr; }
+.sndtrack { margin:0; padding:0 14px; font-size:12px; color:var(--mid); }
+.sndbtns { display:flex; gap:6px; padding:8px 14px 4px; }
+.sndbtns button { width:40px; height:40px; display:grid; place-items:center; border-radius:12px; border:1px solid var(--line); background:#fff; color:var(--ink); cursor:pointer; }
+.sndbtns button:hover { border-color:var(--accent); color:var(--accent); }
+.sndbtns svg { width:18px; height:18px; fill:currentColor; }
+#sndplay .i-pause { display:none; } .snd.playing #sndplay .i-play { display:none; } .snd.playing #sndplay .i-pause { display:inline; }
+.sndvol { display:flex; align-items:center; gap:8px; padding:6px 14px 12px; color:var(--mid); } .sndvol svg { width:18px; height:18px; fill:currentColor; flex:none; }
+.sndvol input { width:118px; accent-color:var(--accent); }
+.snd.open .sndtab { width:100%; }
+@media (max-width:620px) { .snd { right:12px; bottom:auto; top:calc(env(safe-area-inset-top,0px) + 70px); } .sndlbl { display:none; } .sndtab { padding:9px 11px; } }
+/* ---------- first load: the grid fades in, then the stops ---------- */
+#gl { transition:opacity 1.6s ease; }
+body.intro #gl { opacity:0; }
+#css .card { transition:opacity 1s ease; }
+body.intro #css .card, body.intro-c #css .card { opacity:0; }
+header, .rail, .hint, .ctl, .snd { transition:opacity .9s ease; }
+body.intro header, body.intro .rail, body.intro .hint, body.intro .ctl, body.intro .snd, body.intro-c header, body.intro-c .rail, body.intro-c .hint, body.intro-c .ctl, body.intro-c .snd { opacity:0; pointer-events:none; }
+
 /* phones: narrower cards, single columns */
 @media (max-width:700px) {
   .card { width:var(--wm, 360px); padding:24px 22px 22px; }
@@ -336,7 +363,7 @@ p { margin:0; color:var(--mid); }
 @media (prefers-reduced-motion:reduce) { .hint, .rail i, .rail span { transition:none; } }
 </style>
 <script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script>
-</head><body>
+</head><body class="intro">
 <div id="void" aria-hidden="true"></div>
 <canvas id="gl" aria-hidden="true"></canvas>
 <button id="hole" type="button" hidden aria-label="A black hole"><span class="tip" id="holetip">Do not click this unless you are okay with the end.</span></button>
@@ -357,6 +384,18 @@ p { margin:0; color:var(--mid); }
 </header>
 <p class="build">Build preview</p>
 <nav class="rail glass" id="rail" aria-label="Stops"></nav>
+<div class="snd glass" id="snd">
+  <button type="button" class="sndtab" id="sndtab" aria-expanded="false" aria-controls="sndpanel"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sndlbl">Sound</span></button>
+  <div class="sndpanel" id="sndpanel" role="group" aria-label="Music"><div class="sndinner">
+    <p class="sndtrack" id="sndtrack">Track 1</p>
+    <div class="sndbtns">
+      <button type="button" id="sndplay" aria-label="Play"><svg viewBox="0 0 20 20" aria-hidden="true"><path class="i-play" d="M6 4.5v11l9-5.5z"/><path class="i-pause" d="M5.5 4.5h3v11h-3zM11.5 4.5h3v11h-3z"/></svg></button>
+      <button type="button" id="sndstop" aria-label="Stop"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5h9v9h-9z"/></svg></button>
+      <button type="button" id="sndnext" aria-label="Next track"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 4.5v11l8-5.5zM13 4.5h2.5v11H13z"/></svg></button>
+    </div>
+    <label class="sndvol"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M13 7a4 4 0 0 1 0 6M15 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><input type="range" id="sndvol" min="0" max="1" step="0.01" value="0.6" aria-label="Volume"></label>
+  </div></div>
+</div>
 <p class="hint glass" id="hint"><kbd>Scroll</kbd> to travel · <kbd>Drag</kbd> to look around</p>
 <div class="ctl"><button type="button" class="glass" id="listbtn">List view</button><button type="button" class="glass bird" id="birdbtn" aria-label="Birdseye view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 14 7 3h6l5 11H2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.2 10.5h9.6M3.6 14 8 3M16.4 14 12 3" fill="none" stroke="currentColor" stroke-width="1" opacity=".55"/></svg><span>Birdseye</span></button><span class="count glass" id="count">01 / 05</span><button type="button" class="next" id="nextbtn">Next ↑</button><button type="button" class="glass" id="backbtn">↓ Back</button></div>
 <div id="lb" hidden role="dialog" aria-modal="true" aria-label="Video player"><div class="frame" id="lbframe"></div><div class="bar"><span id="lbtitle"></span><button type="button" id="lbclose">Close · Esc</button></div></div>
@@ -486,7 +525,7 @@ let gl;
 try { gl = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, alpha: true }); } catch (e) { gl = null; }
 const listWrap = $('listwrap');
 function buildList() { if (!listWrap.childElementCount) { for (const c of $('cards').content.querySelectorAll('.card')) listWrap.append(c.cloneNode(true)); if (window.hydrate) hydrate(listWrap); wireMail(listWrap); } }
-if (!gl) { buildList(); $('list').hidden = false; $('listbtn').hidden = true; $('nextbtn').hidden = true; throw new Error('no webgl'); }
+if (!gl) { document.body.classList.remove('intro', 'intro-c'); buildList(); $('list').hidden = false; $('listbtn').hidden = true; $('nextbtn').hidden = true; throw new Error('no webgl'); }
 gl.setPixelRatio(Math.min(devicePixelRatio, 2)); gl.setClearColor(0xf6f7f9, 0);
 const css = new CSS3DRenderer({ element: $('css') });
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xf6f7f9, 2600, 9000);
@@ -716,13 +755,14 @@ function hydrate(root) {
   });
 }
 function openVideo(v, title) {
+  if (window.__snd) __snd.duck(true);
   if (v.startsWith('file:')) { $('lbframe').innerHTML = `<video src="${v.slice(5)}" controls autoplay playsinline></video>`; $('lbtitle').innerHTML = title; $('lb').hidden = false; $('lbclose').focus(); return; }
   const [id, h] = v.split('/');
   const q = new URLSearchParams({ autoplay: '1', title: '0', byline: '0', portrait: '0', dnt: '1', playsinline: '1' }); if (h) q.set('h', h);
   $('lbframe').innerHTML = `<iframe src="https://player.vimeo.com/video/${id}?${q}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="${title.replace(/"/g, '&quot;')}"></iframe>`;
   $('lbtitle').innerHTML = title; $('lb').hidden = false; $('lbclose').focus();
 }
-function closeVideo() { $('lb').hidden = true; $('lbframe').innerHTML = ''; }
+function closeVideo() { $('lb').hidden = true; $('lbframe').innerHTML = ''; if (window.__snd) __snd.duck(false); }
 $('lbclose').addEventListener('click', closeVideo);
 $('lb').addEventListener('click', e => { if (e.target === $('lb')) closeVideo(); });
 addEventListener('keydown', e => { if (e.key === 'Escape' && !$('lb').hidden) { e.stopImmediatePropagation(); closeVideo(); } }, true);
@@ -765,17 +805,30 @@ function viewFor(id) {
 }
 
 // Along grid lines: snap to a node, then height, then x, then z, corners rounded.
-function route(a, b) {
-  const snap = v => new THREE.Vector3(Math.round(v.x / G) * G, Math.round(v.y / G) * G, Math.round(v.z / G) * G);
-  const s = snap(a), e = snap(b), pts = [a.clone(), s], p = s.clone();
-  for (const ax of ['y', 'x', 'z']) if (Math.abs(p[ax] - e[ax]) > 1) { p[ax] = e[ax]; pts.push(p.clone()); }
+// Flight path. Legs run along the lattice (axis by axis, with rounded corners) and every leg moves toward the target,
+// so the camera never overshoots and doubles back. The last leg is an approach: from a grid point set back along
+// the card's facing, the camera glides straight in and settles. Trips that go against the card's facing (back up
+// the tour) fly a straight line instead, since a lattice route there would have to reverse.
+function route(a, b, look) {
+  const n = b.clone().sub(look).normalize(), dist = a.distanceTo(b);
+  const L = Math.min(G * 3.5, dist * .32);
+  if (b.clone().sub(a).dot(n) > -L * 1.2) { const p = new THREE.CurvePath(); p.add(new THREE.LineCurve3(a.clone(), b.clone())); return p; }
+  const A = b.clone().addScaledVector(n, L), toB = b.clone().sub(A);
+  const away = (v, d) => (d < 0 ? Math.ceil(v / G) : Math.floor(v / G)) * G;          // grid point set back from the card, on the far side of A
+  const Ap = new THREE.Vector3(away(A.x, toB.x), away(A.y, toB.y), away(A.z, toB.z));
+  const toward = (v, t) => (t < v ? Math.floor(v / G) : Math.ceil(v / G)) * G;        // first grid point, on the side facing the target
+  const s = new THREE.Vector3(toward(a.x, Ap.x), toward(a.y, Ap.y), toward(a.z, Ap.z));
+  const pts = [a.clone(), s.clone()], p = s.clone();
+  for (const ax of ['y', 'x', 'z']) if (Math.abs(p[ax] - Ap[ax]) > 1) { p[ax] = Ap[ax]; pts.push(p.clone()); }
   pts.push(b.clone());
   const P = pts.filter((q, i) => !i || q.distanceTo(pts[i - 1]) > 1), path = new THREE.CurvePath();
+  // a very short leg would force a tight corner, so its corner is dropped and the route cuts across instead
+  for (let i = 1; i < P.length - 1; ) { if (P.length > 3 && (P[i].distanceTo(P[i - 1]) < G * 1.5 || P[i].distanceTo(P[i + 1]) < G * 1.5) && i < P.length - 2) P.splice(i, 1); else i++; }
   let from = P[0];
   for (let i = 1; i < P.length; i++) {
     const cur = P[i], nx = P[i + 1];
     if (!nx) { path.add(new THREE.LineCurve3(from, cur)); break; }
-    const r = Math.min(G * 3.2, cur.distanceTo(from) / 2, cur.distanceTo(nx) / 2);
+    const r = Math.min(G * 3.2, cur.distanceTo(from) * .5, cur.distanceTo(nx) * (i === P.length - 2 ? .42 : .5));   // the last corner leaves a straight run-in
     const inP = cur.clone().addScaledVector(from.clone().sub(cur).normalize(), r), outP = cur.clone().addScaledVector(nx.clone().sub(cur).normalize(), r);
     if (inP.distanceTo(from) > .5) path.add(new THREE.LineCurve3(from, inP));
     path.add(new THREE.QuadraticBezierCurve3(inP, cur, outP)); from = outP;
@@ -789,6 +842,7 @@ const headMat = new THREE.PointsMaterial({ color: 0x2f5bff, size: 12, sizeAttenu
 const head = new THREE.Points(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3()]), headMat); head.renderOrder = 10; scene.add(head);
 
 const ease = t => t * t * t * (t * (t * 6 - 15) + 10);                 // smootherstep: velocity and acceleration both start and end at zero
+const glide = k => ease(Math.pow(k, .78));                              // same, with the slow-down stretched: a shorter take-off and a long settle into the card
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function eyeNow() { return camera.position.clone(); }
 function lookNow() { const d = new THREE.Vector3(); camera.getWorldDirection(d); return camera.position.clone().addScaledVector(d, Math.max(400, cam.pos.distanceTo(cam.look))); }
@@ -798,16 +852,16 @@ function go(id, opt = {}) {
   if (id !== 'overview' && !cards[id]) return;
   if (id === current && !flight) return;
   const to = viewFor(id), fromPos = eyeNow(), fromLook = lookNow();
-  tYaw = tPitch = yaw = pitch = 0; pan.y = pan.cur = 0; pan.max = 0; mark(null);
+  tYaw = tPitch = 0; pan.y = 0; pan.max = 0; mark(null);   // any drag or pan offset eases back during the flight instead of jumping
   for (const k in cards) cards[k].obj.element.style.willChange = 'transform';
   if (still) { cam.pos.copy(to.pos); cam.look.copy(to.look); arrive(id); return; }
   // a straight pull-back (end of the tour) flies a straight line instead of following the grid
-  const path = opt.straight ? new THREE.CurvePath() : route(fromPos, to.pos); if (opt.straight) path.add(new THREE.LineCurve3(fromPos, to.pos));
+  const path = opt.straight ? new THREE.CurvePath() : route(fromPos, to.pos, to.look); if (opt.straight) path.add(new THREE.LineCurve3(fromPos, to.pos));
   const len = path.curves.length ? path.getLength() : 0;
   if (len < 1) { cam.pos.copy(to.pos); cam.look.copy(to.look); arrive(id); return; }   // already there: nothing to fly
   const pts = path.getSpacedPoints(Math.max(60, Math.round(len / 20)));
   trailGeo.setFromPoints(pts); trailGeo.setDrawRange(0, 0); trail.material.opacity = opt.straight ? 0 : .95; headMat.opacity = opt.straight ? 0 : 1;
-  flight = { path, pts, t0: performance.now(), dur: Math.min(4200, Math.max(1900, 900 + len / 1.45)), fromLook, toLook: to.look, id };
+  flight = { path, pts, t0: performance.now(), dur: Math.min(4600, Math.max(2100, 1100 + len / 1.4)), fromLook, toLook: to.look, end: to.pos.clone(), id };
   current = 'flying'; navState(id);
 }
 function arrive(id) {
@@ -989,14 +1043,15 @@ function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (flight) {
     // rAF timestamps can predate the click that started the flight, so k is clamped at 0 (a negative t falls off the path)
-    const k = Math.min(1, Math.max(0, (now - flight.t0) / flight.dur)), t = ease(k);
-    const tt = Math.min(t, .9995), p = flight.path.getPointAt(tt) || flight.path.getPointAt(0), tan = flight.path.getTangentAt(Math.min(.999, tt + .01));
+    const k = Math.min(1, Math.max(0, (now - flight.t0) / flight.dur)), t = glide(k);
+    // the camera rides the path all the way to its end point (no early hold, no final snap)
+    const p = t >= .99999 ? flight.end.clone() : (flight.path.getPointAt(t) || flight.end.clone());
     // the look direction turns once, on the same curve as the motion, so nothing jolts at corners
-    const look = flight.fromLook.clone().lerp(flight.toLook, ease(Math.min(1, k / .9)));
+    const look = flight.fromLook.clone().lerp(flight.toLook, ease(Math.min(1, k / .92)));
     cam.pos.copy(p); cam.look.copy(look);
     trailGeo.setDrawRange(0, Math.max(2, Math.round(flight.pts.length * t)));
-    if (trail.material.opacity > 0) headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); { const hp = flight.path.getPointAt(Math.min(.9995, tt + .06)); if (hp) head.position.copy(hp); }
-    if (k >= 1) { const v = viewFor(flight.id); cam.pos.copy(v.pos); cam.look.copy(v.look); arrive(flight.id); }
+    if (trail.material.opacity > 0) headMat.opacity = smooth(0, .08, k) * (1 - smooth(.8, .95, k)); { const hp = flight.path.getPointAt(Math.min(.9999, t + .06)); if (hp) head.position.copy(hp); }
+    if (k >= 1) { cam.pos.copy(flight.end); cam.look.copy(flight.toLook); arrive(flight.id); }
   }
   { const k = 1 - Math.exp(-dt * 8); yaw += (tYaw - yaw) * k; pitch += (tPitch - pitch) * k; }
   if (Math.abs(tYaw - yaw) < .004) yaw = tYaw; if (Math.abs(tPitch - pitch) < .004) pitch = tPitch;
@@ -1024,7 +1079,20 @@ cam.pos.copy(OVER.pos); cam.look.copy(OVER.look);
 requestAnimationFrame(frame);
 // Opening move: a beat on the whole grid, then the camera travels in to the intro.
 const startAt = hashParts.at || (cards[location.hash.slice(1)] ? location.hash.slice(1) : '');
-setTimeout(() => go(cards[startAt] ? startAt : 'hero'), still ? 0 : 900);
+// Opening: the grid fades in, then the stops (one after another, in tour order), then the camera travels in.
+{
+  const first = cards[startAt] ? startAt : 'hero', body = document.body;
+  if (still) { body.classList.remove('intro', 'intro-c'); go(first); }
+  else {
+    requestAnimationFrame(() => requestAnimationFrame(() => { body.classList.add('intro-c'); body.classList.remove('intro'); }));
+    setTimeout(() => {
+      ORDER.forEach((k, i) => { cards[k].el.style.transitionDelay = i * 120 + 'ms'; });
+      body.classList.remove('intro-c');
+      setTimeout(() => { for (const k in cards) cards[k].el.style.transitionDelay = ''; }, 2200);
+    }, 1400);
+    setTimeout(() => go(first), 2500);
+  }
+}
 // headline auditions: #h=1..4 (Portfolio selects), #k=1..4 (intro); combine with &
 const AUD = {
   k: ['.heroh', ['Corporate video with a soft spot for <span class="grad">fintech and SaaS.</span>', 'Corporate video, fluent in <span class="grad">fintech and SaaS.</span>', 'Corporate video, at home in <span class="grad">fintech and SaaS.</span>', 'Corporate video with a weakness for <span class="grad">fintech and SaaS.</span>']],
@@ -1038,7 +1106,7 @@ function refit(id) {
   const to = viewFor(id), from = eyeNow(), path = new THREE.CurvePath(); path.add(new THREE.LineCurve3(from, to.pos));
   if (path.getLength() < 1 && lookNow().distanceTo(to.look) < 1) { arrive(id); return; }
   const pts = [from.clone(), to.pos.clone()]; trailGeo.setFromPoints(pts); trail.material.opacity = 0; headMat.opacity = 0;
-  flight = { path, pts, t0: performance.now(), dur: 700, fromLook: cam.look.clone(), toLook: to.look, id }; current = 'flying';
+  flight = { path, pts, t0: performance.now(), dur: 800, fromLook: cam.look.clone(), toLook: to.look, end: to.pos.clone(), id }; current = 'flying';
 }
 function wireMail(root, c, k) {
   const MAILTO = 'walkermotionpictures@gmail.com', ENDPOINT = 'https://formspree.io/f/xeaebrzk';   // Josiah's Walker Motion Pictures Formspree form (10-20); local because List view (no WebGL) wires this before the module finishes
@@ -1084,5 +1152,39 @@ function wireMail(root, c, k) {
 }
 for (const k in cards) wireMail(cards[k].el, cards[k], k);
 window.__wmp = { go, step, get current() { return current; }, get flight() { return flight; }, cards, camPos: () => camera.position.clone(), HOLE };   // QA
+</script>
+<script>
+// ---------- sound: starts on entry; play / pause, stop, next and volume in the Sound tab ----------
+(() => {
+  const TRACKS = [{ src: 'media/track1.m4a', title: 'Track 1' }];      // add songs here; Next steps through them and the list loops
+  const $ = id => document.getElementById(id), box = $('snd'), a = new Audio();
+  a.preload = 'auto'; a.crossOrigin = 'anonymous';
+  let i = 0, stopped = false, started = false, want = .6, ctx = null, gain = null, fadeRAF = 0;
+  try { const v = parseFloat(localStorage.getItem('wmp-vol')); if (v >= 0 && v <= 1) want = v; } catch (e) {}
+  $('sndvol').value = want;
+  // volume runs through Web Audio, because iPhones ignore the audio element's own volume
+  const graph = () => { if (ctx) return; try { const AC = window.AudioContext || window.webkitAudioContext; ctx = new AC(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(a).connect(gain).connect(ctx.destination); } catch (e) { ctx = null; gain = null; } };
+  const getV = () => gain ? gain.gain.value : a.volume, setV = v => { if (gain) gain.gain.value = v; else a.volume = v; };
+  const fadeTo = (v, ms, done) => { cancelAnimationFrame(fadeRAF); const v0 = getV(), t0 = performance.now(); const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); setV(v0 + (v - v0) * k); if (k < 1) fadeRAF = requestAnimationFrame(f); else if (done) done(); }; f(); };
+  const ui = () => { const on = !a.paused; box.classList.toggle('playing', on); $('sndplay').setAttribute('aria-label', on ? 'Pause' : 'Play'); };
+  const load = n => { i = (n + TRACKS.length) % TRACKS.length; a.src = TRACKS[i].src; $('sndtrack').textContent = TRACKS.length > 1 ? TRACKS[i].title + ' · ' + (i + 1) + ' of ' + TRACKS.length : TRACKS[i].title; };
+  const play = () => { graph(); if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {}); setV(0); return a.play().then(() => { started = true; fadeTo(want, 1800); ui(); }); };
+  a.addEventListener('ended', () => { load(i + 1); play().catch(() => {}); });
+  a.addEventListener('play', ui); a.addEventListener('pause', ui);
+  $('sndplay').addEventListener('click', () => { stopped = false; if (a.paused) play().catch(() => {}); else fadeTo(0, 300, () => a.pause()); });
+  $('sndstop').addEventListener('click', () => { stopped = true; fadeTo(0, 300, () => { a.pause(); a.currentTime = 0; }); });
+  $('sndnext').addEventListener('click', () => { stopped = false; load(i + 1); play().catch(() => {}); });
+  $('sndvol').addEventListener('input', e => { want = +e.target.value; cancelAnimationFrame(fadeRAF); setV(want); try { localStorage.setItem('wmp-vol', String(want)); } catch (err) {} });
+  $('sndtab').addEventListener('click', () => { const o = !box.classList.contains('open'); box.classList.toggle('open', o); $('sndtab').setAttribute('aria-expanded', String(o)); });
+  // Browsers hold sound back until the visitor interacts, so if the first try is refused the song starts on the first click, tap or key.
+  const evs = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
+  const off = () => evs.forEach(e => removeEventListener(e, kick, true));
+  function kick(e) { if (started || stopped) return off(); if (e && e.target && e.target.closest && e.target.closest('#snd')) return; play().then(off).catch(() => {}); }
+  evs.forEach(e => addEventListener(e, kick, { capture: true, passive: true }));
+  load(0); play().catch(() => {});
+  window.__snd = { audio: a, duck(on) { if (on) { if (!a.paused) { this.was = true; fadeTo(0, 250, () => a.pause()); } } else if (this.was) { this.was = false; play().catch(() => {}); } } };
+})();
+// safety net: if anything stops the opening sequence, show the page anyway
+setTimeout(() => document.body.classList.remove('intro', 'intro-c'), 6000);
 </script>
 </body></html>
